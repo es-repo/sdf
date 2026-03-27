@@ -1,0 +1,2 @@
+[alias]
+dev = "watch --delay 2 -x run"

@@ -1,0 +1,21 @@
+[package]
+name = "sdf"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+font8x8 = "0.3.1"
+pixels = "0.15.0"
+web-time = "1.1.0"
+winit = "0.30.13"
+
+[target.'cfg(target_arch = "wasm32")'.dependencies]
+console_error_panic_hook = "0.1.7"
+wasm-bindgen = "0.2.100"
+wasm-bindgen-futures = "0.4.50"
+
+[profile.dev]
+opt-level = 1
+debug = 1
+incremental = true
+codegen-units = 256
