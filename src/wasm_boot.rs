@@ -1,5 +1,5 @@
 use crate::viewer::Viewer;
-use sdf::scenes::{Scene, Scene1, SimplexNoise, SmoothUnion};
+use sdf::scenes::{Scene, Scene1, Scene2, SimplexNoise, SmoothUnion};
 use winit::dpi::LogicalSize;
 use winit::event_loop::{ControlFlow, EventLoop};
 
@@ -11,6 +11,7 @@ pub enum AppEvent {
 const DEFAULT_SCENE_SLUG: &str = "scene-1";
 const AVAILABLE_SCENES: &[(&str, fn() -> Box<dyn Scene>)] = &[
     ("scene-1", || Box::new(Scene1)),
+    ("scene-2", || Box::new(Scene2)),
     ("smooth-union", || Box::new(SmoothUnion)),
     ("simplex-noise", || Box::new(SimplexNoise)),
 ];
