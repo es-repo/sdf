@@ -173,3 +173,9 @@ pub fn warp(p: Vec2<f64>, scale: f64, strength: f64) -> Vec2<f64> {
 
     p + Vec2::new(offset_x, offset_y) * strength
 }
+
+pub fn smooth_union(d1: f64, d2: f64, k: f64) -> (f64, f64) {
+    let h = (0.5 + 0.5 * (d2 - d1) / k).clamp(0.0, 1.0);
+    let d = d2 * (1.0 - h) + d1 * h - k * h * (1.0 - h);
+    (d, h)
+}

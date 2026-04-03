@@ -2,8 +2,7 @@ use pixels::wgpu::Color;
 
 use crate::scenes::Scene;
 use crate::scenes::circle::Circle;
-use crate::scenes::scene_2::smooth_union;
-use crate::{ColorExt, Vec2, warp};
+use crate::{ColorExt, Vec2, smooth_union};
 
 pub struct Scene1;
 
@@ -35,9 +34,9 @@ impl Scene for Scene1 {
         };
 
         let mut circle_1_dist =
-            /*time.cos() * 2.0 * */circle_1.dist_squared_radius_squared(&coord).sin()* circle_1.dist_squared_radius_squared(&coord).cos();
+            circle_1.dist_squared_radius_squared(&coord).sin() * circle_1.dist_squared_radius_squared(&coord).cos();
         let circle_2_dist =
-            /*time.cos() * 2.0 **/ circle_2.dist_squared_radius_squared(&coord).sin()* circle_1.dist_squared_radius_squared(&coord).cos();
+            circle_2.dist_squared_radius_squared(&coord).sin() * circle_1.dist_squared_radius_squared(&coord).cos();
 
         circle_1_dist = circle_1_dist.min(circle_2_dist);
 
