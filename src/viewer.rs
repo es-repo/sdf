@@ -231,6 +231,9 @@ impl ApplicationHandler<AppEvent> for Viewer {
             label: Some("sdf-web-device"),
             required_features: pixels::wgpu::Features::empty(),
             required_limits: pixels::wgpu::Limits::downlevel_webgl2_defaults(),
+            experimental_features: pixels::wgpu::ExperimentalFeatures::disabled(),
+            memory_hints: pixels::wgpu::MemoryHints::default(),
+            trace: pixels::wgpu::Trace::Off,
         };
 
         wasm_bindgen_futures::spawn_local(async move {
