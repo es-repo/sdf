@@ -4,6 +4,7 @@ use winit::dpi::LogicalSize;
 use winit::event_loop::{ControlFlow, EventLoop};
 
 #[allow(unused_imports)]
+#[cfg(feature = "wasm_threads")]
 pub use wasm_bindgen_rayon::init_thread_pool;
 
 #[derive(Debug)]

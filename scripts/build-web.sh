@@ -15,6 +15,7 @@ rustup toolchain install "$WASM_TOOLCHAIN" --component rust-src --target wasm32-
 RUSTFLAGS='-C target-feature=+atomics,+bulk-memory' \
   cargo +"$WASM_TOOLCHAIN" build \
   -Z build-std=panic_abort,std \
+  --features wasm_threads \
   --release \
   --target wasm32-unknown-unknown
 

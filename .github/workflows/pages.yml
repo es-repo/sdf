@@ -29,7 +29,7 @@ jobs:
         run: cargo install wasm-bindgen-cli
 
       - name: Build static site
-        run: bash scripts/build-web.sh
+        run: bash scripts/build-web-single-thread.sh
 
       - uses: actions/upload-pages-artifact@v3
         with:
