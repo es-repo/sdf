@@ -75,15 +75,28 @@ impl Viewer {
         let elapsed = self.start_time.elapsed();
         let time = elapsed.as_secs_f64();
         self.fps_counter.tick();
+        let width = self.size_logical.width;
+        let height = self.size_logical.height;
+        let row_stride = width as usize * 4;
+        let height_f = height as f64;
+        let width_f = width as f64;
+        let dx = 2.0 / height_f;
 
-        frame.par_chunks_exact_mut(4).enumerate().for_each(|(i, pixel)| {
-            let x = i as u32 % self.size_logical.width;
-            let y = i as u32 / self.size_logical.width;
-            let coord = Vec2::new(x, y).to_aspect_ndc(self.size_logical.width, self.size_logical.height);
+        frame
+            .par_chunks_exact_mut(row_stride)
+            .enumerate()
+            .for_each(|(y, row)| {
+                let y = y as f64;
+                let ny = (height_f - 2.0 * (y + 0.5)) / height_f;
+                let mut nx = (1.0 - width_f) / height_f;
 
-            let color = self.scene.get_pixel_color(coord, time);
-            pixel.copy_from_slice(&color.to_u8_array());
-        });
+                for pixel in row.chunks_exact_mut(4) {
+                    let coord = Vec2::new(nx, ny);
+                    let color = self.scene.get_pixel_color(coord, time);
+                    pixel.copy_from_slice(&color.to_u8_array());
+                    nx += dx;
+                }
+            });
 
         if self.show_fps {
             let fps_text = format!("{:.0}", self.fps_counter.count());
