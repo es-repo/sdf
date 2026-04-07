@@ -11,6 +11,6 @@ pub use scene_2::Scene2;
 pub use simplex_noise::SimplexNoise;
 pub use smooth_union::SmoothUnion;
 
-pub trait Scene {
+pub trait Scene: Send + Sync {
     fn get_pixel_color(&self, coord: Vec2<f64>, time: f64) -> Color;
 }

@@ -1,6 +1,7 @@
 use crate::fps_counter::FpsCounter;
 use font8x8::UnicodeFonts;
 use pixels::Pixels;
+use rayon::prelude::*;
 use sdf::scenes::Scene;
 use sdf::{ColorExt, Vec2};
 use std::sync::Arc;
@@ -75,14 +76,14 @@ impl Viewer {
         let time = elapsed.as_secs_f64();
         self.fps_counter.tick();
 
-        for (i, pixel) in frame.chunks_exact_mut(4).enumerate() {
+        frame.par_chunks_exact_mut(4).enumerate().for_each(|(i, pixel)| {
             let x = i as u32 % self.size_logical.width;
             let y = i as u32 / self.size_logical.width;
             let coord = Vec2::new(x, y).to_aspect_ndc(self.size_logical.width, self.size_logical.height);
 
             let color = self.scene.get_pixel_color(coord, time);
             pixel.copy_from_slice(&color.to_u8_array());
-        }
+        });
 
         if self.show_fps {
             let fps_text = format!("{:.0}", self.fps_counter.count());
