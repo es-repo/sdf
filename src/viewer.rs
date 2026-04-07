@@ -75,6 +75,7 @@ impl Viewer {
         let elapsed = self.start_time.elapsed();
         let time = elapsed.as_secs_f64();
         self.fps_counter.tick();
+        let prepared_scene = self.scene.prepare_frame(time);
         let width = self.size_logical.width;
         let height = self.size_logical.height;
         let row_stride = width as usize * 4;
@@ -92,7 +93,7 @@ impl Viewer {
 
                 for pixel in row.chunks_exact_mut(4) {
                     let coord = Vec2::new(nx, ny);
-                    let color = self.scene.get_pixel_color(coord, time);
+                    let color = prepared_scene.get_pixel_color(coord, time);
                     pixel.copy_from_slice(&color.to_u8_array());
                     nx += dx;
                 }
