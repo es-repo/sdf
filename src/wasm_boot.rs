@@ -3,6 +3,9 @@ use sdf::scenes::{Scene, Scene1, Scene2, SimplexNoise, SmoothUnion};
 use winit::dpi::LogicalSize;
 use winit::event_loop::{ControlFlow, EventLoop};
 
+#[allow(unused_imports)]
+pub use wasm_bindgen_rayon::init_thread_pool;
+
 #[derive(Debug)]
 pub enum AppEvent {
     PixelsReady(pixels::Pixels<'static>),

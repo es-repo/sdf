@@ -57,9 +57,14 @@
 <body>
 <nav id="scene-links"></nav>
 <script type="module">
-    import init, {available_scene_slugs_csv, start} from "./pkg/sdf.js";
+    import init, {available_scene_slugs_csv, initThreadPool, start} from "./pkg/sdf.js";
 
     await init();
+    if (!crossOriginIsolated) {
+        throw new Error("SharedArrayBuffer is unavailable. Serve dist/ with COOP/COEP headers.");
+    }
+
+    await initThreadPool(Math.max(1, navigator.hardwareConcurrency || 1));
 
     const sceneSlugs = available_scene_slugs_csv().split(",").filter(Boolean);
     const params = new URLSearchParams(window.location.search);
