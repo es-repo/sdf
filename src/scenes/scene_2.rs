@@ -1,7 +1,7 @@
 use pixels::wgpu::Color;
 
-use crate::scenes::{Scene, SceneFrame};
 use crate::scenes::circle::Circle;
+use crate::scenes::{Scene, SceneFrame};
 use crate::{ColorExt, Vec2, smooth_union};
 
 pub struct Scene2;
@@ -9,11 +9,11 @@ pub struct Scene2;
 struct Scene2Frame {
     circle_1: Circle,
     circle_2: Circle,
-    time_sin: f64,
+    time_sin: f32,
 }
 
 impl SceneFrame for Scene2Frame {
-    fn get_pixel_color(&self, coord: Vec2<f64>, _time: f64) -> Color {
+    fn get_pixel_color(&self, coord: Vec2<f32>, _time: f32) -> Color {
         let d1 = self.circle_1.dist_squared_radius_squared(&coord);
         let d2 = self.circle_2.dist_squared_radius_squared(&coord);
 
@@ -37,27 +37,27 @@ impl SceneFrame for Scene2Frame {
             );
 
             let mut color = Color {
-                r: 0.5 + 0.5 * f,
-                g: 0.5 + 0.5 * f,
-                b: 0.5 + 0.5 * f,
+                r: (0.5 + 0.5 * f) as f64,
+                g: (0.5 + 0.5 * f) as f64,
+                b: (0.5 + 0.5 * f) as f64,
                 a: 0.0,
             };
 
             if circle_1_dist < 0.1 {
                 color = Color {
-                    r: (-circle_1_dist * 50.0).exp(),
-                    g: (-circle_1_dist * 50.0).exp(),
-                    b: (-circle_1_dist * 50.0).exp(),
-                    a: (-circle_1_dist * 50.0).exp(),
+                    r: ((-circle_1_dist * 50.0).exp()) as f64,
+                    g: ((-circle_1_dist * 50.0).exp()) as f64,
+                    b: ((-circle_1_dist * 50.0).exp()) as f64,
+                    a: ((-circle_1_dist * 50.0).exp()) as f64,
                 };
             }
 
             let wave = 0.5 + (circle_1_dist * 10.0 - self.time_sin * 5.0).sin();
 
             color.blend(Color {
-                r: 0.5 + 0.5 * wave * f,
-                g: 0.5 + 0.5 * wave * f,
-                b: 0.5 + 0.5 * f,
+                r: (0.5 + 0.6 * wave * f) as f64,
+                g: (0.5 + 0.6 * wave * f) as f64,
+                b: (0.5 + 0.6 * f) as f64,
                 a: 1.0,
             });
 
@@ -67,7 +67,7 @@ impl SceneFrame for Scene2Frame {
 }
 
 impl Scene for Scene2 {
-    fn prepare_frame(&self, time: f64) -> Box<dyn SceneFrame> {
+    fn prepare_frame(&self, time: f32) -> Box<dyn SceneFrame> {
         let time_sin = time.sin();
         let time_cos = time.cos();
         let time2_sin = (time * 2.0).sin();

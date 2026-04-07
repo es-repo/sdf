@@ -53,31 +53,31 @@ impl<T: PartialOrd + PartialEq + Clone + Copy> Vec2<T> {
 }
 
 impl Vec2<u32> {
-    pub fn to_aspect_ndc(&self, w: u32, h: u32) -> Vec2<f64> {
-        let xf = self.x as f64 + 0.5;
-        let yf = self.y as f64 + 0.5;
+    pub fn to_aspect_ndc(&self, w: u32, h: u32) -> Vec2<f32> {
+        let xf = self.x as f32 + 0.5;
+        let yf = self.y as f32 + 0.5;
 
-        let nx = (2.0 * xf - w as f64) / h as f64;
-        let ny = (h as f64 - 2.0 * yf) / h as f64;
+        let nx = (2.0 * xf - w as f32) / h as f32;
+        let ny = (h as f32 - 2.0 * yf) / h as f32;
 
         Vec2 { x: nx, y: ny }
     }
 }
 
-impl Vec2<f64> {
-    pub fn len(&self) -> f64 {
+impl Vec2<f32> {
+    pub fn len(&self) -> f32 {
         self.len_squared().sqrt()
     }
 
-    pub fn len_squared(&self) -> f64 {
+    pub fn len_squared(&self) -> f32 {
         self.x * self.x + self.y * self.y
     }
 
-    pub fn dist_squared(&self, other: &Vec2<f64>) -> f64 {
+    pub fn dist_squared(&self, other: &Vec2<f32>) -> f32 {
         (self.x - other.x) * (self.x - other.x) + (self.y - other.y) * (self.y - other.y)
     }
 
-    pub fn dist(&self, other: &Vec2<f64>) -> f64 {
+    pub fn dist(&self, other: &Vec2<f32>) -> f32 {
         self.dist_squared(other).sqrt()
     }
 
@@ -89,7 +89,7 @@ impl Vec2<f64> {
         Self::new(self.x.fract(), self.y.fract())
     }*/
 
-    pub fn dot(self, other: Self) -> f64 {
+    pub fn dot(self, other: Self) -> f32 {
         self.x * other.x + self.y * other.y
     }
 
@@ -120,13 +120,13 @@ impl Vec2<f64> {
         let x = self.dot(Self { x: 127.1, y: 311.7 });
         let y = self.dot(Self { x: 269.5, y: 183.3 });
         let p = Self { x, y };
-        (p.sin() * 43758.5453123).fract_glsl() * 2.0 - 1.0
+        (p.sin() * 43758.547).fract_glsl() * 2.0 - 1.0
     }
 
     // Adopted from https://www.shadertoy.com/view/Msf3WH
-    pub fn noise_simplex(&self) -> f64 {
-        const K1: f64 = 0.366025404; // (sqrt(3)-1)/2;
-        const K2: f64 = 0.211324865; // (3-sqrt(3))/6;
+    pub fn noise_simplex(&self) -> f32 {
+        const K1: f32 = 0.3660254; // (sqrt(3)-1)/2;
+        const K2: f32 = 0.21132487; // (3-sqrt(3))/6;
 
         let i = (*self + (self.x + self.y) * K1).floor();
         let a = *self - i + (i.x + i.y) * K2;
@@ -150,22 +150,22 @@ impl Vec2<f64> {
     pub fn fbm(
         &self,
         octaves: u32,
-        amplitude: f64,
-        gain: f64,
-        lacunarity: f64,
-        noise: impl Fn(Vec2<f64>) -> f64,
-    ) -> f64 {
+        amplitude: f32,
+        gain: f32,
+        lacunarity: f32,
+        noise: impl Fn(Vec2<f32>) -> f32,
+    ) -> f32 {
         self.fbm_with_transform(octaves, amplitude, gain, noise, |coord| coord * lacunarity)
     }
 
     pub fn fbm_with_transform(
         &self,
         octaves: u32,
-        amplitude: f64,
-        gain: f64,
-        noise: impl Fn(Vec2<f64>) -> f64,
-        transform: impl Fn(Vec2<f64>) -> Vec2<f64>,
-    ) -> f64 {
+        amplitude: f32,
+        gain: f32,
+        noise: impl Fn(Vec2<f32>) -> f32,
+        transform: impl Fn(Vec2<f32>) -> Vec2<f32>,
+    ) -> f32 {
         let mut coord = *self;
         let mut value = 0.0;
         let mut amplitude = amplitude;
@@ -180,60 +180,60 @@ impl Vec2<f64> {
     }
 }
 
-impl Add for Vec2<f64> {
-    type Output = Vec2<f64>;
+impl Add for Vec2<f32> {
+    type Output = Vec2<f32>;
 
-    fn add(self, rhs: Vec2<f64>) -> Self::Output {
+    fn add(self, rhs: Vec2<f32>) -> Self::Output {
         Vec2::new(self.x + rhs.x, self.y + rhs.y)
     }
 }
 
-impl Add<f64> for Vec2<f64> {
-    type Output = Vec2<f64>;
+impl Add<f32> for Vec2<f32> {
+    type Output = Vec2<f32>;
 
-    fn add(self, rhs: f64) -> Self::Output {
+    fn add(self, rhs: f32) -> Self::Output {
         Vec2::new(self.x + rhs, self.y + rhs)
     }
 }
 
-impl Sub<f64> for Vec2<f64> {
-    type Output = Vec2<f64>;
+impl Sub<f32> for Vec2<f32> {
+    type Output = Vec2<f32>;
 
-    fn sub(self, rhs: f64) -> Self::Output {
+    fn sub(self, rhs: f32) -> Self::Output {
         Vec2::new(self.x - rhs, self.y - rhs)
     }
 }
 
-impl Sub for Vec2<f64> {
-    type Output = Vec2<f64>;
+impl Sub for Vec2<f32> {
+    type Output = Vec2<f32>;
 
-    fn sub(self, rhs: Vec2<f64>) -> Self::Output {
+    fn sub(self, rhs: Vec2<f32>) -> Self::Output {
         Vec2::new(self.x - rhs.x, self.y - rhs.y)
     }
 }
 
-impl Mul<f64> for Vec2<f64> {
-    type Output = Vec2<f64>;
+impl Mul<f32> for Vec2<f32> {
+    type Output = Vec2<f32>;
 
-    fn mul(self, rhs: f64) -> Self::Output {
+    fn mul(self, rhs: f32) -> Self::Output {
         Vec2::new(self.x * rhs, self.y * rhs)
     }
 }
 
-impl Mul<Vec2<f64>> for Vec2<f64> {
-    type Output = Vec2<f64>;
+impl Mul<Vec2<f32>> for Vec2<f32> {
+    type Output = Vec2<f32>;
 
-    fn mul(self, rhs: Vec2<f64>) -> Self::Output {
+    fn mul(self, rhs: Vec2<f32>) -> Self::Output {
         Vec2::new(self.x * rhs.x, self.y * rhs.y)
     }
 }
 
-pub fn smooth_union(d1: f64, d2: f64, k: f64) -> (f64, f64) {
+pub fn smooth_union(d1: f32, d2: f32, k: f32) -> (f32, f32) {
     let h = (0.5 + 0.5 * (d2 - d1) / k).clamp(0.0, 1.0);
     let d = d2 * (1.0 - h) + d1 * h - k * h * (1.0 - h);
     (d, h)
 }
 
-fn step(edge: f64, x: f64) -> f64 {
+fn step(edge: f32, x: f32) -> f32 {
     if x < edge { 0.0 } else { 1.0 }
 }

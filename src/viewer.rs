@@ -73,21 +73,21 @@ impl Viewer {
         let frame = pixels.frame_mut();
 
         let elapsed = self.start_time.elapsed();
-        let time = elapsed.as_secs_f64();
+        let time = elapsed.as_secs_f64() as f32;
         self.fps_counter.tick();
         let prepared_scene = self.scene.prepare_frame(time);
         let width = self.size_logical.width;
         let height = self.size_logical.height;
         let row_stride = width as usize * 4;
-        let height_f = height as f64;
-        let width_f = width as f64;
+        let height_f = height as f32;
+        let width_f = width as f32;
         let dx = 2.0 / height_f;
 
         frame
             .par_chunks_exact_mut(row_stride)
             .enumerate()
             .for_each(|(y, row)| {
-                let y = y as f64;
+                let y = y as f32;
                 let ny = (height_f - 2.0 * (y + 0.5)) / height_f;
                 let mut nx = (1.0 - width_f) / height_f;
 

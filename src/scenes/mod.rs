@@ -12,9 +12,9 @@ pub use simplex_noise::SimplexNoise;
 pub use smooth_union::SmoothUnion;
 
 pub trait SceneFrame: Send + Sync {
-    fn get_pixel_color(&self, coord: Vec2<f64>, time: f64) -> Color;
+    fn get_pixel_color(&self, coord: Vec2<f32>, time: f32) -> Color;
 }
 
 pub trait Scene: Send + Sync {
-    fn prepare_frame(&self, time: f64) -> Box<dyn SceneFrame>;
+    fn prepare_frame(&self, time: f32) -> Box<dyn SceneFrame>;
 }

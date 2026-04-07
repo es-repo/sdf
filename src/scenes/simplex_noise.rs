@@ -6,11 +6,11 @@ use crate::scenes::{Scene, SceneFrame};
 pub struct SimplexNoise;
 
 struct SimplexNoiseFrame {
-    time: f64,
+    time: f32,
 }
 
 impl SceneFrame for SimplexNoiseFrame {
-    fn get_pixel_color(&self, coord: Vec2<f64>, _time: f64) -> Color {
+    fn get_pixel_color(&self, coord: Vec2<f32>, _time: f32) -> Color {
         let mut f;
 
         if coord.x < 0.0 && coord.y > 0.0 {
@@ -38,16 +38,16 @@ impl SceneFrame for SimplexNoiseFrame {
         f = 0.5 + 0.5 * f;
 
         Color {
-            r: f,
-            g: f,
-            b: f,
+            r: f as f64,
+            g: f as f64,
+            b: f as f64,
             a: 1.0,
         }
     }
 }
 
 impl Scene for SimplexNoise {
-    fn prepare_frame(&self, time: f64) -> Box<dyn SceneFrame> {
+    fn prepare_frame(&self, time: f32) -> Box<dyn SceneFrame> {
         Box::new(SimplexNoiseFrame { time })
     }
 }

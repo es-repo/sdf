@@ -9,12 +9,12 @@ pub struct Scene1;
 struct Scene1Frame {
     circle_1: Circle,
     circle_2: Circle,
-    time_sin: f64,
-    time_cos: f64,
+    time_sin: f32,
+    time_cos: f32,
 }
 
 impl SceneFrame for Scene1Frame {
-    fn get_pixel_color(&self, coord: Vec2<f64>, _time: f64) -> Color {
+    fn get_pixel_color(&self, coord: Vec2<f32>, _time: f32) -> Color {
         let d1 = self.circle_1.dist_squared_radius_squared(&coord);
         let d2 = self.circle_2.dist_squared_radius_squared(&coord);
 
@@ -38,10 +38,10 @@ impl SceneFrame for Scene1Frame {
 
             if circle_1_dist < 0.1 {
                 color = Color {
-                    r: (-circle_1_dist * 50.0).exp(),
-                    g: (-circle_1_dist * 50.0).exp(),
-                    b: (-circle_1_dist * 50.0).exp(),
-                    a: (-circle_1_dist * 50.0).exp(),
+                    r: ((-circle_1_dist * 50.0).exp()) as f64,
+                    g: ((-circle_1_dist * 50.0).exp()) as f64,
+                    b: ((-circle_1_dist * 50.0).exp()) as f64,
+                    a: ((-circle_1_dist * 50.0).exp()) as f64,
                 };
             }
 
@@ -49,9 +49,9 @@ impl SceneFrame for Scene1Frame {
             let wave_2 = 0.5 + (circle_1_dist * 20.0 - self.time_cos * 10.0).cos();
 
             color.blend(Color {
-                r: wave,
-                g: 0.5 * wave,
-                b: wave_2,
+                r: wave as f64,
+                g: (0.5 * wave) as f64,
+                b: wave_2 as f64,
                 a: 1.0,
             });
 
@@ -61,7 +61,7 @@ impl SceneFrame for Scene1Frame {
 }
 
 impl Scene for Scene1 {
-    fn prepare_frame(&self, time: f64) -> Box<dyn SceneFrame> {
+    fn prepare_frame(&self, time: f32) -> Box<dyn SceneFrame> {
         let time_sin = time.sin();
         let time_cos = time.cos();
         let time2_sin = (time * 2.0).sin();
