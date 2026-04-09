@@ -7,6 +7,12 @@ pub struct SimplexNoise;
 
 struct SimplexNoiseFrame {}
 
+impl Scene for SimplexNoise {
+    fn prepare_frame(&self, _time: f32) -> Box<dyn SceneFrame> {
+        Box::new(SimplexNoiseFrame {})
+    }
+}
+
 impl SceneFrame for SimplexNoiseFrame {
     fn get_pixel_color(&self, coord: Vec2<f32>, time: f32) -> Color {
         let mut f;
@@ -36,11 +42,5 @@ impl SceneFrame for SimplexNoiseFrame {
             b: f as f64,
             a: 1.0,
         }
-    }
-}
-
-impl Scene for SimplexNoise {
-    fn prepare_frame(&self, _time: f32) -> Box<dyn SceneFrame> {
-        Box::new(SimplexNoiseFrame {})
     }
 }
