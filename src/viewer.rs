@@ -15,8 +15,16 @@ use winit::window::{Window, WindowAttributes, WindowId};
 
 #[cfg(target_arch = "wasm32")]
 use crate::wasm_boot::AppEvent;
+#[cfg(target_os = "macos")]
+use core_graphics::display::CGDisplay;
+#[cfg(target_os = "macos")]
+use core_graphics::event::CGEvent;
+#[cfg(target_os = "macos")]
+use core_graphics::event_source::{CGEventSource, CGEventSourceStateID};
 #[cfg(not(target_arch = "wasm32"))]
 use winit::dpi::PhysicalPosition;
+#[cfg(target_os = "macos")]
+use winit::platform::macos::MonitorHandleExtMacOS;
 #[cfg(target_arch = "wasm32")]
 use winit::event_loop::EventLoopProxy;
 #[cfg(target_arch = "wasm32")]
@@ -168,8 +176,8 @@ impl Viewer {
     fn prepare_window(&mut self, event_loop: &ActiveEventLoop, window_attributes: WindowAttributes) -> Arc<Window> {
         let window = Arc::new(event_loop.create_window(window_attributes).unwrap());
 
-        #[cfg(not(target_arch = "wasm32"))]
-        if let Some(monitor) = event_loop.available_monitors().nth(2) {
+        #[cfg(target_os = "macos")]
+        if let Some(monitor) = monitor_under_cursor(event_loop) {
             let monitor_pos = monitor.position();
             let monitor_size = monitor.size();
             let window_size = window.outer_size();
@@ -202,6 +210,26 @@ impl Viewer {
             .with_title("SDF")
             .with_inner_size(self.size_logical)
     }
+}
+
+#[cfg(target_os = "macos")]
+fn monitor_under_cursor(event_loop: &ActiveEventLoop) -> Option<winit::monitor::MonitorHandle> {
+    let event_source = CGEventSource::new(CGEventSourceStateID::CombinedSessionState).ok()?;
+    let cursor = CGEvent::new(event_source).ok()?.location();
+
+    let cursor_display_id = CGDisplay::active_displays().ok()?.into_iter().find(|display_id| {
+        let bounds = CGDisplay::new(*display_id).bounds();
+        let min_x = bounds.origin.x;
+        let max_x = min_x + bounds.size.width;
+        let min_y = bounds.origin.y;
+        let max_y = min_y + bounds.size.height;
+
+        cursor.x >= min_x && cursor.x < max_x && cursor.y >= min_y && cursor.y < max_y
+    })?;
+
+    event_loop
+        .available_monitors()
+        .find(|monitor| monitor.native_id() == cursor_display_id)
 }
 
 #[cfg(not(target_arch = "wasm32"))]

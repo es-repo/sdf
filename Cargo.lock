@@ -1503,6 +1503,7 @@ name = "sdf"
 version = "0.1.0"
 dependencies = [
  "console_error_panic_hook",
+ "core-graphics",
  "font8x8",
  "pixels",
  "rayon",
