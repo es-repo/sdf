@@ -179,10 +179,14 @@ impl Vec2<f32> {
         value
     }
 
-    pub fn fbm_simplex_rotated(&self, octaves: u32, amplitude: f32, gain: f32) -> f32 {
-        self.fbm_with_transform(octaves, amplitude, gain, |coord| coord.noise_simplex(), |coord| {
-            Vec2::new(1.6 * coord.x + 1.2 * coord.y, -1.2 * coord.x + 1.6 * coord.y)
-        })
+    pub fn fbm_rotated(&self, octaves: u32, amplitude: f32, gain: f32) -> f32 {
+        self.fbm_with_transform(
+            octaves,
+            amplitude,
+            gain,
+            |coord| coord.noise_simplex(),
+            |coord| Vec2::new(1.6 * coord.x + 1.2 * coord.y, -1.2 * coord.x + 1.6 * coord.y),
+        )
     }
 }
 

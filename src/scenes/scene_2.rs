@@ -28,7 +28,7 @@ impl SceneFrame for Scene2Frame {
         if circle_1_dist < 0.0 {
             self.circle_1.color
         } else {
-            let f = coord.fbm_simplex_rotated(4, 0.5, 0.5);
+            let f = coord.fbm_rotated(4, 0.5, 0.5);
 
             let mut color = Color {
                 r: (0.5 + 0.5 * f) as f64,
