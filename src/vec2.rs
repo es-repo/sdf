@@ -45,6 +45,10 @@ impl Vec2<f32> {
         Self::new(self.x.floor(), self.y.floor())
     }
 
+    /*pub fn fract(self) -> Self {
+        Self::new(self.x.fract(), self.y.fract())
+    }*/
+
     pub fn dot(self, other: Self) -> f32 {
         self.x * other.x + self.y * other.y
     }
@@ -63,6 +67,8 @@ impl Vec2<f32> {
         }
     }
 
+    // Version of `fract` that corresponds to GLSL's `fract` function,
+    // where, for example fract_glsl(-1.2) = 0.8
     fn fract_glsl(self) -> Self {
         Self {
             x: self.x - self.x.floor(),
@@ -77,9 +83,10 @@ impl Vec2<f32> {
         (p.sin() * 43758.547).fract_glsl() * 2.0 - 1.0
     }
 
+    // Adopted from https://www.shadertoy.com/view/Msf3WH
     pub fn noise_simplex(&self) -> f32 {
-        const K1: f32 = 0.3660254;
-        const K2: f32 = 0.21132487;
+        const K1: f32 = 0.3660254; // (sqrt(3)-1)/2;
+        const K2: f32 = 0.21132487; // (3-sqrt(3))/6;
 
         let i = (*self + (self.x + self.y) * K1).floor();
         let a = *self - i + (i.x + i.y) * K2;
