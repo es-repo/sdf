@@ -1,5 +1,5 @@
 use crate::viewer::Viewer;
-use sdf::scenes::{Scene, Scene1, Scene2, SimplexNoise, SmoothUnion};
+use sdf::scenes::{Scene, Scene1, Scene2, SimplexNoise, SimplexNoise3d, SmoothUnion};
 use winit::dpi::LogicalSize;
 use winit::event_loop::{ControlFlow, EventLoop};
 
@@ -18,6 +18,7 @@ const AVAILABLE_SCENES: &[(&str, fn() -> Box<dyn Scene>)] = &[
     ("scene-2", || Box::new(Scene2)),
     ("smooth-union", || Box::new(SmoothUnion)),
     ("simplex-noise", || Box::new(SimplexNoise)),
+    ("simplex-noise-3d", || Box::new(SimplexNoise3d)),
 ];
 
 fn available_scene_slugs() -> impl Iterator<Item = &'static str> {

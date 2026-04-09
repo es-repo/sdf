@@ -147,6 +147,54 @@ impl Vec3<f32> {
         32.0 * (n0 + n1 + n2 + n3)
     }
 
+    pub fn fbm(
+        &self,
+        octaves: u32,
+        amplitude: f32,
+        gain: f32,
+        lacunarity: f32,
+        noise: impl Fn(Vec3<f32>) -> f32,
+    ) -> f32 {
+        self.fbm_with_transform(octaves, amplitude, gain, noise, |coord| coord * lacunarity)
+    }
+
+    pub fn fbm_with_transform(
+        &self,
+        octaves: u32,
+        amplitude: f32,
+        gain: f32,
+        noise: impl Fn(Vec3<f32>) -> f32,
+        transform: impl Fn(Vec3<f32>) -> Vec3<f32>,
+    ) -> f32 {
+        let mut coord = *self;
+        let mut value = 0.0;
+        let mut amplitude = amplitude;
+
+        for _ in 0..octaves {
+            value += amplitude * noise(coord);
+            coord = transform(coord);
+            amplitude *= gain;
+        }
+
+        value
+    }
+
+    pub fn fbm_rotated(&self, octaves: u32, amplitude: f32, gain: f32) -> f32 {
+        self.fbm_with_transform(
+            octaves,
+            amplitude,
+            gain,
+            |coord| coord.noise_simplex(),
+            |coord| {
+                Vec3::new(
+                    1.6 * coord.x + 1.2 * coord.y + 0.8 * coord.z,
+                    -1.2 * coord.x + 1.6 * coord.y - 0.8 * coord.z,
+                    -0.8 * coord.x + 0.8 * coord.y + 1.6 * coord.z,
+                )
+            },
+        )
+    }
+
     fn corner_contrib_3d(grad_index: usize, x: f32, y: f32, z: f32) -> f32 {
         let t = 0.6 - x * x - y * y - z * z;
         if t <= 0.0 {
