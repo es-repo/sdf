@@ -1,4 +1,4 @@
-use crate::Vec2;
+use crate::{Vec2, fast_floor, perm};
 use std::ops::{Add, Mul, Sub};
 
 #[derive(Clone, Copy, PartialOrd, Eq, PartialEq, Debug)]
@@ -15,6 +15,21 @@ impl<T: PartialOrd + PartialEq + Clone + Copy> Vec3<T> {
 }
 
 impl Vec3<f32> {
+    const GRAD3: [[f32; 3]; 12] = [
+        [1.0, 1.0, 0.0],
+        [-1.0, 1.0, 0.0],
+        [1.0, -1.0, 0.0],
+        [-1.0, -1.0, 0.0],
+        [1.0, 0.0, 1.0],
+        [-1.0, 0.0, 1.0],
+        [1.0, 0.0, -1.0],
+        [-1.0, 0.0, -1.0],
+        [0.0, 1.0, 1.0],
+        [0.0, -1.0, 1.0],
+        [0.0, 1.0, -1.0],
+        [0.0, -1.0, -1.0],
+    ];
+
     pub fn from_2d(v2d: Vec2<f32>, z: f32) -> Self {
         Self { x: v2d.x, y: v2d.y, z }
     }
@@ -74,49 +89,74 @@ impl Vec3<f32> {
         }
     }
 
-    fn hash(&self) -> Self {
-        let x = self.dot(Self::new(127.1, 311.7, 74.7));
-        let y = self.dot(Self::new(269.5, 183.3, 246.1));
-        let z = self.dot(Self::new(113.5, 271.9, 124.6));
-        let p = Self::new(x, y, z);
-        (p.sin() * 43758.547).fract_glsl() * 2.0 - 1.0
-    }
-
-    // Adapted to 3D simplex coordinates, following the same gradient-noise pattern as Vec2.
+    // Canonical 3D simplex noise with a fixed gradient set and permutation hashing.
     pub fn noise_simplex(&self) -> f32 {
         const F3: f32 = 1.0 / 3.0;
         const G3: f32 = 1.0 / 6.0;
 
         let s = (self.x + self.y + self.z) * F3;
-        let i = (*self + s).floor();
+        let i = fast_floor(self.x + s);
+        let j = fast_floor(self.y + s);
+        let k = fast_floor(self.z + s);
 
-        let t = (i.x + i.y + i.z) * G3;
-        let x0 = *self - i + t;
+        let t = (i + j + k) as f32 * G3;
+        let x0 = self.x - (i as f32 - t);
+        let y0 = self.y - (j as f32 - t);
+        let z0 = self.z - (k as f32 - t);
 
-        let rank = Self::new(
-            step(x0.y, x0.x) + step(x0.z, x0.x),
-            step(x0.x, x0.y) + step(x0.z, x0.y),
-            step(x0.x, x0.z) + step(x0.y, x0.z),
-        );
+        let (i1, j1, k1, i2, j2, k2) = if x0 >= y0 {
+            if y0 >= z0 {
+                (1, 0, 0, 1, 1, 0)
+            } else if x0 >= z0 {
+                (1, 0, 0, 1, 0, 1)
+            } else {
+                (0, 0, 1, 1, 0, 1)
+            }
+        } else if y0 < z0 {
+            (0, 0, 1, 0, 1, 1)
+        } else if x0 < z0 {
+            (0, 1, 0, 0, 1, 1)
+        } else {
+            (0, 1, 0, 1, 1, 0)
+        };
 
-        let i1 = Self::new(step(1.5, rank.x), step(1.5, rank.y), step(1.5, rank.z));
-        let i2 = Self::new(step(0.5, rank.x), step(0.5, rank.y), step(0.5, rank.z));
-
-        let x1 = x0 - i1 + G3;
-        let x2 = x0 - i2 + 2.0 * G3;
+        let x1 = x0 - i1 as f32 + G3;
+        let y1 = y0 - j1 as f32 + G3;
+        let z1 = z0 - k1 as f32 + G3;
+        let x2 = x0 - i2 as f32 + 2.0 * G3;
+        let y2 = y0 - j2 as f32 + 2.0 * G3;
+        let z2 = z0 - k2 as f32 + 2.0 * G3;
         let x3 = x0 - 1.0 + 3.0 * G3;
+        let y3 = y0 - 1.0 + 3.0 * G3;
+        let z3 = z0 - 1.0 + 3.0 * G3;
 
-        let h0 = (0.6 - x0.dot(x0)).max(0.0);
-        let h1 = (0.6 - x1.dot(x1)).max(0.0);
-        let h2 = (0.6 - x2.dot(x2)).max(0.0);
-        let h3 = (0.6 - x3.dot(x3)).max(0.0);
+        let ii = (i & 255) as usize;
+        let jj = (j & 255) as usize;
+        let kk = (k & 255) as usize;
 
-        let n0 = h0 * h0 * h0 * h0 * x0.dot(i.hash());
-        let n1 = h1 * h1 * h1 * h1 * x1.dot((i + i1).hash());
-        let n2 = h2 * h2 * h2 * h2 * x2.dot((i + i2).hash());
-        let n3 = h3 * h3 * h3 * h3 * x3.dot((i + 1.0).hash());
+        let gi0 = perm(ii + perm(jj + perm(kk) as usize) as usize) % 12;
+        let gi1 = perm(ii + i1 as usize + perm(jj + j1 as usize + perm(kk + k1 as usize) as usize) as usize) % 12;
+        let gi2 = perm(ii + i2 as usize + perm(jj + j2 as usize + perm(kk + k2 as usize) as usize) as usize) % 12;
+        let gi3 = perm(ii + 1 + perm(jj + 1 + perm(kk + 1) as usize) as usize) % 12;
+
+        let n0 = Self::corner_contrib_3d(gi0 as usize, x0, y0, z0);
+        let n1 = Self::corner_contrib_3d(gi1 as usize, x1, y1, z1);
+        let n2 = Self::corner_contrib_3d(gi2 as usize, x2, y2, z2);
+        let n3 = Self::corner_contrib_3d(gi3 as usize, x3, y3, z3);
 
         32.0 * (n0 + n1 + n2 + n3)
+    }
+
+    fn corner_contrib_3d(grad_index: usize, x: f32, y: f32, z: f32) -> f32 {
+        let t = 0.6 - x * x - y * y - z * z;
+        if t <= 0.0 {
+            return 0.0;
+        }
+
+        let grad = Self::GRAD3[grad_index];
+        let t2 = t * t;
+        let t4 = t2 * t2;
+        t4 * (grad[0] * x + grad[1] * y + grad[2] * z)
     }
 }
 
@@ -166,8 +206,4 @@ impl Mul<Vec3<f32>> for Vec3<f32> {
     fn mul(self, rhs: Vec3<f32>) -> Self::Output {
         Vec3::new(self.x * rhs.x, self.y * rhs.y, self.z * rhs.z)
     }
-}
-
-fn step(edge: f32, x: f32) -> f32 {
-    if x < edge { 0.0 } else { 1.0 }
 }

@@ -1,3 +1,4 @@
+use crate::{fast_floor, perm};
 use std::ops::{Add, Mul, Sub};
 
 #[derive(Clone, Copy, PartialOrd, Eq, PartialEq, Debug)]
@@ -25,6 +26,17 @@ impl Vec2<u32> {
 }
 
 impl Vec2<f32> {
+    const GRAD2: [[f32; 2]; 8] = [
+        [1.0, 0.0],
+        [-1.0, 0.0],
+        [0.0, 1.0],
+        [0.0, -1.0],
+        [1.0, 1.0],
+        [-1.0, 1.0],
+        [1.0, -1.0],
+        [-1.0, -1.0],
+    ];
+
     pub fn len(&self) -> f32 {
         self.len_squared().sqrt()
     }
@@ -76,35 +88,38 @@ impl Vec2<f32> {
         }
     }
 
-    fn hash(&self) -> Self {
-        let x = self.dot(Self { x: 127.1, y: 311.7 });
-        let y = self.dot(Self { x: 269.5, y: 183.3 });
-        let p = Self { x, y };
-        (p.sin() * 43758.547).fract_glsl() * 2.0 - 1.0
-    }
-
-    // Adopted from https://www.shadertoy.com/view/Msf3WH
+    // Canonical 2D simplex noise with a fixed gradient set and permutation hashing.
     pub fn noise_simplex(&self) -> f32 {
-        const K1: f32 = 0.3660254; // (sqrt(3)-1)/2;
-        const K2: f32 = 0.21132487; // (3-sqrt(3))/6;
+        const F2: f32 = 0.3660254; // (sqrt(3)-1)/2
+        const G2: f32 = 0.21132487; // (3-sqrt(3))/6
 
-        let i = (*self + (self.x + self.y) * K1).floor();
-        let a = *self - i + (i.x + i.y) * K2;
+        let s = (self.x + self.y) * F2;
+        let i = fast_floor(self.x + s);
+        let j = fast_floor(self.y + s);
 
-        let m = step(a.y, a.x);
-        let o = Vec2::new(m, 1.0 - m);
-        let b = a - o + K2;
-        let c = a - 1.0 + 2.0 * K2;
+        let t = (i + j) as f32 * G2;
+        let x0 = self.x - (i as f32 - t);
+        let y0 = self.y - (j as f32 - t);
 
-        let ha = (0.5 - a.dot(a)).max(0.0);
-        let hb = (0.5 - b.dot(b)).max(0.0);
-        let hc = (0.5 - c.dot(c)).max(0.0);
+        let (i1, j1) = if x0 > y0 { (1, 0) } else { (0, 1) };
 
-        let na = ha * ha * ha * ha * a.dot(i.hash());
-        let nb = hb * hb * hb * hb * b.dot((i + o).hash());
-        let nc = hc * hc * hc * hc * c.dot((i + 1.0).hash());
+        let x1 = x0 - i1 as f32 + G2;
+        let y1 = y0 - j1 as f32 + G2;
+        let x2 = x0 - 1.0 + 2.0 * G2;
+        let y2 = y0 - 1.0 + 2.0 * G2;
 
-        70.0 * (na + nb + nc)
+        let ii = (i & 255) as usize;
+        let jj = (j & 255) as usize;
+
+        let gi0 = perm(ii + perm(jj) as usize) % 8;
+        let gi1 = perm(ii + i1 as usize + perm(jj + j1 as usize) as usize) % 8;
+        let gi2 = perm(ii + 1 + perm(jj + 1) as usize) % 8;
+
+        let n0 = Self::corner_contrib_2d(gi0 as usize, x0, y0);
+        let n1 = Self::corner_contrib_2d(gi1 as usize, x1, y1);
+        let n2 = Self::corner_contrib_2d(gi2 as usize, x2, y2);
+
+        70.0 * (n0 + n1 + n2)
     }
 
     pub fn fbm(
@@ -147,6 +162,18 @@ impl Vec2<f32> {
             |coord| coord.noise_simplex(),
             |coord| Vec2::new(1.6 * coord.x + 1.2 * coord.y, -1.2 * coord.x + 1.6 * coord.y),
         )
+    }
+
+    fn corner_contrib_2d(grad_index: usize, x: f32, y: f32) -> f32 {
+        let t = 0.5 - x * x - y * y;
+        if t <= 0.0 {
+            return 0.0;
+        }
+
+        let grad = Self::GRAD2[grad_index];
+        let t2 = t * t;
+        let t4 = t2 * t2;
+        t4 * (grad[0] * x + grad[1] * y)
     }
 }
 
@@ -196,8 +223,4 @@ impl Mul<Vec2<f32>> for Vec2<f32> {
     fn mul(self, rhs: Vec2<f32>) -> Self::Output {
         Vec2::new(self.x * rhs.x, self.y * rhs.y)
     }
-}
-
-fn step(edge: f32, x: f32) -> f32 {
-    if x < edge { 0.0 } else { 1.0 }
 }

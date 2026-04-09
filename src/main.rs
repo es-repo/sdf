@@ -1,6 +1,5 @@
 #[cfg(not(target_arch = "wasm32"))]
-use sdf::scenes::Scene2;
-use sdf::scenes::{SimplexNoise, SimplexNoise3d};
+use sdf::scenes::SimplexNoise3d;
 #[cfg(not(target_arch = "wasm32"))]
 #[cfg(not(target_arch = "wasm32"))]
 use viewer::Viewer;
