@@ -26,13 +26,7 @@ impl SceneFrame for SimplexNoiseFrame {
             };
 
             let coord = coord * 5.0 + self.time;
-            f = coord.fbm_with_transform(
-                octaves,
-                0.5,
-                0.5,
-                |coord| coord.noise_simplex(),
-                |coord| Vec2::new(1.6 * coord.x + 1.2 * coord.y, -1.2 * coord.x + 1.6 * coord.y),
-            );
+            f = coord.fbm_simplex_rotated(octaves, 0.5, 0.5);
         }
 
         f = 0.5 + 0.5 * f;
