@@ -28,3 +28,4 @@ wasm-bindgen \
   "$TARGET_DIR/sdf.wasm"
 
 cp "$ROOT_DIR/index.html" "$DIST_DIR/index.html"
+cp "$ROOT_DIR/favicon.svg" "$DIST_DIR/favicon.svg"
