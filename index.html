@@ -215,16 +215,18 @@
 <section id="scene-docs" hidden></section>
 <script type="module">
     import {marked} from "https://cdn.jsdelivr.net/npm/marked/+esm";
-    import init, {available_scene_slugs_csv, initThreadPool, scene_markdown, start} from "./pkg/sdf.js";
+    import init, * as sdf from "./pkg/sdf.js";
 
     await init();
-    if (!crossOriginIsolated) {
+    if (sdf.initThreadPool && !crossOriginIsolated) {
         throw new Error("SharedArrayBuffer is unavailable. Serve dist/ with COOP/COEP headers.");
     }
 
-    await initThreadPool(Math.max(1, navigator.hardwareConcurrency || 1));
+    if (sdf.initThreadPool) {
+        await sdf.initThreadPool(Math.max(1, navigator.hardwareConcurrency || 1));
+    }
 
-    const sceneSlugs = available_scene_slugs_csv().split(",").filter(Boolean);
+    const sceneSlugs = sdf.available_scene_slugs_csv().split(",").filter(Boolean);
     const params = new URLSearchParams(window.location.search);
     const requestedScene = params.get("scene");
     const activeScene = sceneSlugs.includes(requestedScene) ? requestedScene : sceneSlugs[0];
@@ -242,7 +244,7 @@
         links.appendChild(link);
     }
 
-    const markdown = scene_markdown(activeScene);
+    const markdown = sdf.scene_markdown(activeScene);
 
     if (markdown.trim()) {
         const docs = document.getElementById("scene-docs");
@@ -252,7 +254,7 @@
         highlightCodeBlocks(docs);
     }
 
-    start(activeScene);
+    sdf.start(activeScene);
 
     function renderMarkdown(markdown) {
         const codeTabs = [];
