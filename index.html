@@ -239,7 +239,13 @@
 </head>
 <body>
 <nav>
-    <div id="scene-links"></div>
+    <div id="scene-links">
+        <a href="?scene=scene-1" data-scene-link="scene-1">scene-1</a>
+        <a href="?scene=scene-2" data-scene-link="scene-2">scene-2</a>
+        <a href="?scene=smooth-union" data-scene-link="smooth-union">smooth-union</a>
+        <a href="?scene=simplex-noise" data-scene-link="simplex-noise">simplex-noise</a>
+        <a href="?scene=simplex-noise-3d" data-scene-link="simplex-noise-3d">simplex-noise-3d</a>
+    </div>
     <a
         class="github-link"
         href="https://github.com/es-repo/sdf"
@@ -253,6 +259,18 @@
         </svg>
     </a>
 </nav>
+<script>
+    {
+        const links = [...document.querySelectorAll("[data-scene-link]")];
+        const sceneSlugs = links.map((link) => link.dataset.sceneLink);
+        const requestedScene = new URLSearchParams(window.location.search).get("scene");
+        const activeScene = sceneSlugs.includes(requestedScene) ? requestedScene : sceneSlugs[0];
+
+        for (const link of links) {
+            link.classList.toggle("active", link.dataset.sceneLink === activeScene);
+        }
+    }
+</script>
 <section id="scene-host" aria-live="polite">
     <div class="scene-loading">Loading...</div>
 </section>
@@ -272,18 +290,9 @@
     const params = new URLSearchParams(window.location.search);
     const requestedScene = params.get("scene");
     const activeScene = sceneSlugs.includes(requestedScene) ? requestedScene : sceneSlugs[0];
-    const links = document.getElementById("scene-links");
 
-    for (const slug of sceneSlugs) {
-        const link = document.createElement("a");
-        link.href = `?scene=${encodeURIComponent(slug)}`;
-        link.textContent = slug;
-
-        if (slug === activeScene) {
-            link.classList.add("active");
-        }
-
-        links.appendChild(link);
+    for (const link of document.querySelectorAll("[data-scene-link]")) {
+        link.classList.toggle("active", link.dataset.sceneLink === activeScene);
     }
 
     const docsReady = renderSceneDocs(sdf.scene_markdown(activeScene));
