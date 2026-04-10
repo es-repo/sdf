@@ -8,9 +8,10 @@
         html, body {
             margin: 0;
             width: 100%;
-            height: 100%;
+            min-height: 100%;
             background: #111;
             font-family: sans-serif;
+            color: #ddd;
         }
 
         body {
@@ -65,15 +66,130 @@
         }
 
         canvas {
+            order: 2;
             display: block;
             max-width: 100vw;
             max-height: calc(100vh - 80px);
-            margin: auto 0;
+            margin: 0 0 32px;
         }
 
         canvas:focus,
         canvas:focus-visible {
             outline: none;
+        }
+
+        #scene-docs {
+            order: 3;
+            box-sizing: border-box;
+            width: min(760px, calc(100vw - 32px));
+            margin: 0 16px 48px;
+            padding: 24px;
+            color: #ddd;
+            background: #181818;
+            border: 1px solid #333;
+            border-radius: 16px;
+            line-height: 1.55;
+        }
+
+        #scene-docs h1,
+        #scene-docs h2,
+        #scene-docs h3 {
+            margin: 0 0 12px;
+            color: #fff;
+        }
+
+        #scene-docs p {
+            margin: 0 0 14px;
+        }
+
+        #scene-docs a,
+        #scene-docs a:visited {
+            color: #fff;
+        }
+
+        #scene-docs a:hover,
+        #scene-docs a:focus-visible {
+            color: #fff;
+            text-decoration-thickness: 2px;
+        }
+
+        #scene-docs code {
+            color: #fff;
+            background: #242424;
+            border-radius: 4px;
+            padding: 2px 5px;
+        }
+
+        #scene-docs pre {
+            overflow-x: auto;
+            margin: 0 0 16px;
+            padding: 14px;
+            background: #0d0d0d;
+            border: 1px solid #2d2d2d;
+            border-radius: 10px;
+        }
+
+        #scene-docs pre code {
+            padding: 0;
+            background: transparent;
+        }
+
+        .code-token-keyword {
+            color: #ffb86c;
+        }
+
+        .code-token-type {
+            color: #8be9fd;
+        }
+
+        .code-token-number {
+            color: #bd93f9;
+        }
+
+        .code-token-string {
+            color: #f1fa8c;
+        }
+
+        .code-token-comment {
+            color: #777;
+            font-style: italic;
+        }
+
+        .code-tabs {
+            margin: 0 0 16px;
+            background: #0d0d0d;
+            border: 1px solid #2d2d2d;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        .code-tabs-buttons {
+            display: flex;
+            gap: 4px;
+            padding: 8px;
+            background: #181818;
+            border-bottom: 1px solid #2d2d2d;
+        }
+
+        .code-tabs-button {
+            color: #bbb;
+            background: transparent;
+            border: 1px solid transparent;
+            border-radius: 999px;
+            padding: 4px 10px;
+            cursor: pointer;
+        }
+
+        .code-tabs-button.active {
+            color: #111;
+            background: #ddd;
+            border-color: #ddd;
+        }
+
+        .code-tabs-panel pre {
+            margin: 0;
+            border: 0;
+            border-radius: 0;
         }
     </style>
 </head>
@@ -93,8 +209,10 @@
         </svg>
     </a>
 </nav>
+<section id="scene-docs" hidden></section>
 <script type="module">
-    import init, {available_scene_slugs_csv, initThreadPool, start} from "./pkg/sdf.js";
+    import {marked} from "https://cdn.jsdelivr.net/npm/marked/+esm";
+    import init, {available_scene_slugs_csv, initThreadPool, scene_markdown, start} from "./pkg/sdf.js";
 
     await init();
     if (!crossOriginIsolated) {
@@ -121,7 +239,181 @@
         links.appendChild(link);
     }
 
+    const markdown = scene_markdown(activeScene);
+
+    if (markdown.trim()) {
+        const docs = document.getElementById("scene-docs");
+        docs.innerHTML = renderMarkdown(markdown);
+        docs.hidden = false;
+        activateCodeTabs(docs);
+        highlightCodeBlocks(docs);
+    }
+
     start(activeScene);
+
+    function renderMarkdown(markdown) {
+        const codeTabs = [];
+        const markdownWithPlaceholders = markdown.replace(
+            /:::code-tabs[^\n]*\n([\s\S]*?)\n:::/g,
+            (_match, content) => {
+                const placeholder = `@@SDF_CODE_TABS_${codeTabs.length}@@`;
+                codeTabs.push(renderCodeTabs(content));
+                return `\n\n${placeholder}\n\n`;
+            },
+        );
+
+        let html = marked.parse(markdownWithPlaceholders);
+
+        for (const [index, codeTabsHtml] of codeTabs.entries()) {
+            const placeholder = `@@SDF_CODE_TABS_${index}@@`;
+            html = html.replace(
+                new RegExp(`<p>\\s*${escapeRegExp(placeholder)}\\s*</p>`, "g"),
+                codeTabsHtml,
+            );
+            html = html.replaceAll(placeholder, codeTabsHtml);
+        }
+
+        return html;
+    }
+
+    function renderCodeTabs(content) {
+        const codeBlocks = [...content.matchAll(/```(\w+)\n([\s\S]*?)```/g)];
+
+        if (codeBlocks.length === 0) {
+            return content;
+        }
+
+        const tabs = codeBlocks.map((block, index) => {
+            const language = block[1];
+            const code = block[2].replace(/\n$/, "");
+            const label = {
+                glsl: "GLSL",
+                wgsl: "WGSL",
+            }[language] ?? language[0].toUpperCase() + language.slice(1);
+
+            return {
+                language,
+                label,
+                code,
+                active: index === 0,
+            };
+        });
+
+        const buttons = tabs.map((tab, index) => `
+            <button
+                class="code-tabs-button${tab.active ? " active" : ""}"
+                type="button"
+                data-code-tab="${index}"
+            >${escapeHtml(tab.label)}</button>
+        `).join("");
+
+        const panels = tabs.map((tab, index) => `
+            <div class="code-tabs-panel" data-code-panel="${index}"${tab.active ? "" : " hidden"}>
+                <pre><code class="language-${escapeHtml(tab.language)}">${escapeHtml(tab.code)}</code></pre>
+            </div>
+        `).join("");
+
+        return `<div class="code-tabs"><div class="code-tabs-buttons">${buttons}</div>${panels}</div>`;
+    }
+
+    function activateCodeTabs(root) {
+        for (const codeTabs of root.querySelectorAll(".code-tabs")) {
+            const buttons = [...codeTabs.querySelectorAll("[data-code-tab]")];
+            const panels = [...codeTabs.querySelectorAll("[data-code-panel]")];
+
+            for (const button of buttons) {
+                button.addEventListener("click", () => {
+                    const activeIndex = button.dataset.codeTab;
+
+                    for (const candidate of buttons) {
+                        candidate.classList.toggle("active", candidate.dataset.codeTab === activeIndex);
+                    }
+
+                    for (const panel of panels) {
+                        panel.hidden = panel.dataset.codePanel !== activeIndex;
+                    }
+                });
+            }
+        }
+    }
+
+    function highlightCodeBlocks(root) {
+        for (const code of root.querySelectorAll("pre code")) {
+            const language = [...code.classList]
+                .find((className) => className.startsWith("language-"))
+                ?.replace("language-", "");
+
+            if (!language) {
+                continue;
+            }
+
+            code.innerHTML = highlightCode(code.textContent, language);
+        }
+    }
+
+    function highlightCode(code, language) {
+        const keywords = {
+            rust: new Set(["as", "const", "else", "fn", "for", "if", "impl", "in", "let", "loop", "match", "mod", "mut", "pub", "return", "struct", "true", "false", "use", "while"]),
+            wgsl: new Set(["const", "else", "fn", "for", "if", "let", "return", "true", "false", "var"]),
+            glsl: new Set(["const", "else", "for", "if", "return", "true", "false"]),
+        }[language] ?? new Set();
+        const types = {
+            rust: new Set(["f32", "i32", "u32", "usize", "Vec2", "Vec3"]),
+            wgsl: new Set(["f32", "i32", "u32", "vec2f", "vec3f", "vec2i", "vec3i", "vec2u", "vec3u"]),
+            glsl: new Set(["float", "int", "vec2", "vec3", "vec4", "ivec2", "ivec3", "ivec4"]),
+        }[language] ?? new Set();
+        const tokenPattern = /\/\/.*|\/\*[\s\S]*?\*\/|"(?:\\.|[^"\\])*"|'(?:\\.|[^'\\])*'|\b\d+(?:\.\d+)?(?:[fu]?\b)?|\b[A-Za-z_][A-Za-z0-9_]*\b/g;
+        let highlighted = "";
+        let lastIndex = 0;
+
+        for (const match of code.matchAll(tokenPattern)) {
+            const token = match[0];
+            highlighted += escapeHtml(code.slice(lastIndex, match.index));
+            highlighted += highlightToken(token, keywords, types);
+            lastIndex = match.index + token.length;
+        }
+
+        highlighted += escapeHtml(code.slice(lastIndex));
+
+        return highlighted;
+    }
+
+    function highlightToken(token, keywords, types) {
+        if (token.startsWith("//") || token.startsWith("/*")) {
+            return `<span class="code-token-comment">${escapeHtml(token)}</span>`;
+        }
+
+        if (token.startsWith("\"") || token.startsWith("'")) {
+            return `<span class="code-token-string">${escapeHtml(token)}</span>`;
+        }
+
+        if (/^\d/.test(token)) {
+            return `<span class="code-token-number">${escapeHtml(token)}</span>`;
+        }
+
+        if (keywords.has(token)) {
+            return `<span class="code-token-keyword">${escapeHtml(token)}</span>`;
+        }
+
+        if (types.has(token)) {
+            return `<span class="code-token-type">${escapeHtml(token)}</span>`;
+        }
+
+        return escapeHtml(token);
+    }
+
+    function escapeHtml(value) {
+        return value
+            .replaceAll("&", "&amp;")
+            .replaceAll("<", "&lt;")
+            .replaceAll(">", "&gt;")
+            .replaceAll('"', "&quot;")
+            .replaceAll("'", "&#039;");
+    }
+
+    function escapeRegExp(value) {
+        return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    }
 </script>
 </body>
 </html>

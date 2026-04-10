@@ -13,29 +13,65 @@ pub enum AppEvent {
 }
 
 const DEFAULT_SCENE_SLUG: &str = "scene-1";
-const AVAILABLE_SCENES: &[(&str, fn() -> Box<dyn Scene>)] = &[
-    ("scene-1", || Box::new(Scene1)),
-    ("scene-2", || Box::new(Scene2)),
-    ("smooth-union", || Box::new(SmoothUnion)),
-    ("simplex-noise", || Box::new(SimplexNoise)),
-    ("simplex-noise-3d", || Box::new(SimplexNoise3d)),
+struct SceneEntry {
+    slug: &'static str,
+    create: fn() -> Box<dyn Scene>,
+    markdown: Option<&'static str>,
+}
+
+const AVAILABLE_SCENES: &[SceneEntry] = &[
+    SceneEntry {
+        slug: "scene-1",
+        create: || Box::new(Scene1),
+        markdown: None,
+    },
+    SceneEntry {
+        slug: "scene-2",
+        create: || Box::new(Scene2),
+        markdown: None,
+    },
+    SceneEntry {
+        slug: "smooth-union",
+        create: || Box::new(SmoothUnion),
+        markdown: Some(include_str!("scenes/smooth_union.md")),
+    },
+    SceneEntry {
+        slug: "simplex-noise",
+        create: || Box::new(SimplexNoise),
+        markdown: Some(include_str!("scenes/simplex_noise.md")),
+    },
+    SceneEntry {
+        slug: "simplex-noise-3d",
+        create: || Box::new(SimplexNoise3d),
+        markdown: Some(include_str!("scenes/simplex_noise_3d.md")),
+    },
 ];
 
 fn available_scene_slugs() -> impl Iterator<Item = &'static str> {
-    AVAILABLE_SCENES.iter().map(|(slug, _)| *slug)
+    AVAILABLE_SCENES.iter().map(|scene| scene.slug)
 }
 
 fn create_scene(slug: &str) -> Box<dyn Scene> {
     AVAILABLE_SCENES
         .iter()
-        .find(|(candidate, _)| *candidate == slug)
-        .map(|(_, create)| create())
+        .find(|scene| scene.slug == slug)
+        .map(|scene| (scene.create)())
         .unwrap_or_else(|| Box::new(Scene1))
 }
 
 #[wasm_bindgen::prelude::wasm_bindgen]
 pub fn available_scene_slugs_csv() -> String {
     available_scene_slugs().collect::<Vec<_>>().join(",")
+}
+
+#[wasm_bindgen::prelude::wasm_bindgen]
+pub fn scene_markdown(scene_slug: &str) -> String {
+    AVAILABLE_SCENES
+        .iter()
+        .find(|scene| scene.slug == scene_slug)
+        .and_then(|scene| scene.markdown)
+        .unwrap_or_default()
+        .to_owned()
 }
 
 #[wasm_bindgen::prelude::wasm_bindgen]
