@@ -301,7 +301,8 @@
         await sdf.initThreadPool(Math.max(1, navigator.hardwareConcurrency || 1));
     }
 
-    sdf.start(activeScene);
+    const sceneSize = getSceneHostSize();
+    sdf.start(activeScene, sceneSize.width, sceneSize.height);
     await docsReady;
 
     async function renderSceneDocs(markdown) {
@@ -348,6 +349,15 @@
         });
 
         observer.observe(document.body, {childList: true});
+    }
+
+    function getSceneHostSize() {
+        const sceneHost = document.getElementById("scene-host");
+
+        return {
+            width: Math.max(1, sceneHost.clientWidth),
+            height: Math.max(1, sceneHost.clientHeight),
+        };
     }
 
     function renderMarkdown(markdown, marked) {

@@ -13,6 +13,9 @@ pub enum AppEvent {
 }
 
 const DEFAULT_SCENE_SLUG: &str = "scene-1";
+const DEFAULT_SCENE_WIDTH: u32 = 640;
+const DEFAULT_SCENE_HEIGHT: u32 = 400;
+
 struct SceneEntry {
     slug: &'static str,
     create: fn() -> Box<dyn Scene>,
@@ -75,7 +78,11 @@ pub fn scene_markdown(scene_slug: &str) -> String {
 }
 
 #[wasm_bindgen::prelude::wasm_bindgen]
-pub fn start(scene_slug: &str) -> Result<(), wasm_bindgen::JsValue> {
+pub fn start(
+    scene_slug: &str,
+    scene_width: u32,
+    scene_height: u32,
+) -> Result<(), wasm_bindgen::JsValue> {
     console_error_panic_hook::set_once();
 
     use winit::platform::web::EventLoopExtWebSys;
@@ -85,7 +92,10 @@ pub fn start(scene_slug: &str) -> Result<(), wasm_bindgen::JsValue> {
         .map_err(|err| wasm_bindgen::JsValue::from_str(&err.to_string()))?;
     event_loop.set_control_flow(ControlFlow::Poll);
 
-    let size_logical = LogicalSize::<u32>::new(640, 400);
+    let size_logical = LogicalSize::<u32>::new(
+        scene_dimension(scene_width, DEFAULT_SCENE_WIDTH),
+        scene_dimension(scene_height, DEFAULT_SCENE_HEIGHT),
+    );
     let selected_slug = if available_scene_slugs().any(|candidate| candidate == scene_slug) {
         scene_slug
     } else {
@@ -96,4 +106,12 @@ pub fn start(scene_slug: &str) -> Result<(), wasm_bindgen::JsValue> {
     event_loop.spawn_app(viewer);
 
     Ok(())
+}
+
+fn scene_dimension(value: u32, default: u32) -> u32 {
+    if value == 0 {
+        default
+    } else {
+        value.min(default)
+    }
 }
