@@ -27,9 +27,11 @@ wasm-bindgen \
   --out-dir "$PKG_DIR" \
   "$TARGET_DIR/sdf.wasm"
 
-find "$PKG_DIR/snippets" -name "workerHelpers.no-bundler.js" -exec perl -0pi -e \
-  's/await pkg\.default\(data\.module, data\.memory\);/await pkg.default({ module_or_path: data.module, memory: data.memory });/g' \
-  {} +
+if [ -d "$PKG_DIR/snippets" ]; then
+  find "$PKG_DIR/snippets" -name "workerHelpers.no-bundler.js" -exec perl -0pi -e \
+    's/await pkg\.default\(data\.module, data\.memory\);/await pkg.default({ module_or_path: data.module, memory: data.memory });/g' \
+    {} +
+fi
 
 cp "$ROOT_DIR/index.html" "$DIST_DIR/index.html"
 cp "$ROOT_DIR/favicon.svg" "$DIST_DIR/favicon.svg"

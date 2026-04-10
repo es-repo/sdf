@@ -287,31 +287,85 @@
     }
 
     const sceneSlugs = sdf.available_scene_slugs_csv().split(",").filter(Boolean);
-    const params = new URLSearchParams(window.location.search);
-    const requestedScene = params.get("scene");
-    const activeScene = sceneSlugs.includes(requestedScene) ? requestedScene : sceneSlugs[0];
+    const sceneLinks = [...document.querySelectorAll("[data-scene-link]")];
+    let currentScene = resolveScene(new URLSearchParams(window.location.search).get("scene"));
+    let docsRenderVersion = 0;
 
-    for (const link of document.querySelectorAll("[data-scene-link]")) {
-        link.classList.toggle("active", link.dataset.sceneLink === activeScene);
-    }
+    updateSceneLinks(currentScene);
 
-    const docsReady = renderSceneDocs(sdf.scene_markdown(activeScene));
+    const docsReady = renderSceneDocs(currentScene);
 
     if (sdf.initThreadPool) {
         await sdf.initThreadPool(Math.max(1, navigator.hardwareConcurrency || 1));
     }
 
     const sceneSize = getSceneHostSize();
-    sdf.start(activeScene, sceneSize.width, sceneSize.height);
+    sdf.start(currentScene, sceneSize.width, sceneSize.height);
     await docsReady;
+    observeSceneHostSize();
 
-    async function renderSceneDocs(markdown) {
+    for (const link of sceneLinks) {
+        link.addEventListener("click", async (event) => {
+            const nextScene = link.dataset.sceneLink;
+
+            if (!nextScene || nextScene === currentScene) {
+                return;
+            }
+
+            event.preventDefault();
+            await showScene(nextScene, {pushHistory: true});
+        });
+    }
+
+    window.addEventListener("popstate", async () => {
+        await showScene(new URLSearchParams(window.location.search).get("scene"), {pushHistory: false});
+    });
+
+    async function showScene(sceneSlug, {pushHistory}) {
+        const nextScene = resolveScene(sceneSlug);
+
+        if (nextScene === currentScene) {
+            return;
+        }
+
+        currentScene = nextScene;
+        updateSceneLinks(currentScene);
+
+        if (pushHistory) {
+            history.pushState({scene: currentScene}, "", `?scene=${encodeURIComponent(currentScene)}`);
+        }
+
+        sdf.switch_scene(currentScene);
+        await renderSceneDocs(currentScene);
+    }
+
+    function resolveScene(sceneSlug) {
+        return sceneSlugs.includes(sceneSlug) ? sceneSlug : sceneSlugs[0];
+    }
+
+    function updateSceneLinks(activeScene) {
+        for (const link of sceneLinks) {
+            link.classList.toggle("active", link.dataset.sceneLink === activeScene);
+        }
+    }
+
+    async function renderSceneDocs(sceneSlug) {
+        const markdown = sdf.scene_markdown(sceneSlug);
+        const docs = document.getElementById("scene-docs");
+        const renderVersion = ++docsRenderVersion;
+
         if (!markdown.trim()) {
+            docs.innerHTML = "";
+            docs.hidden = true;
             return;
         }
 
         const {marked} = await import("https://cdn.jsdelivr.net/npm/marked/+esm");
-        const docs = document.getElementById("scene-docs");
+
+        if (renderVersion !== docsRenderVersion) {
+            return;
+        }
+
         docs.innerHTML = renderMarkdown(markdown, marked);
         docs.hidden = false;
         activateCodeTabs(docs);
@@ -358,6 +412,50 @@
             width: Math.max(1, sceneHost.clientWidth),
             height: Math.max(1, sceneHost.clientHeight),
         };
+    }
+
+    function observeSceneHostSize() {
+        let lastWidth = 0;
+        let lastHeight = 0;
+        let frameId = 0;
+
+        function syncSize() {
+            frameId = 0;
+
+            const {width, height} = getSceneHostSize();
+
+            if (width === lastWidth && height === lastHeight) {
+                return;
+            }
+
+            lastWidth = width;
+            lastHeight = height;
+            sdf.resize_scene(width, height);
+        }
+
+        function scheduleSync() {
+            if (frameId !== 0) {
+                return;
+            }
+
+            frameId = requestAnimationFrame(syncSize);
+        }
+
+        scheduleSync();
+
+        if (typeof ResizeObserver === "function") {
+            const observer = new ResizeObserver(() => {
+                scheduleSync();
+            });
+
+            observer.observe(document.getElementById("scene-host"));
+        }
+
+        window.addEventListener("resize", scheduleSync);
+
+        if (window.visualViewport) {
+            window.visualViewport.addEventListener("resize", scheduleSync);
+        }
     }
 
     function renderMarkdown(markdown, marked) {

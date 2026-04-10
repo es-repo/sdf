@@ -1,20 +1,40 @@
 use crate::viewer::Viewer;
 use sdf::scenes::{Scene, Scene1, Scene2, SimplexNoise, SimplexNoise3d, SmoothUnion};
+use std::cell::RefCell;
+use std::fmt;
 use winit::dpi::LogicalSize;
-use winit::event_loop::{ControlFlow, EventLoop};
+use winit::event_loop::{ControlFlow, EventLoop, EventLoopProxy};
 
 #[allow(unused_imports)]
 #[cfg(feature = "wasm_threads")]
 pub use wasm_bindgen_rayon::init_thread_pool;
 
-#[derive(Debug)]
 pub enum AppEvent {
     PixelsReady(pixels::Pixels<'static>),
+    SwitchScene(Box<dyn Scene>),
+    ResizeScene {
+        width: u32,
+        height: u32,
+    },
+}
+
+impl fmt::Debug for AppEvent {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::PixelsReady(_) => f.write_str("PixelsReady"),
+            Self::SwitchScene(_) => f.write_str("SwitchScene"),
+            Self::ResizeScene { .. } => f.write_str("ResizeScene"),
+        }
+    }
 }
 
 const DEFAULT_SCENE_SLUG: &str = "scene-1";
 const DEFAULT_SCENE_WIDTH: u32 = 640;
 const DEFAULT_SCENE_HEIGHT: u32 = 400;
+
+thread_local! {
+    static EVENT_PROXY: RefCell<Option<EventLoopProxy<AppEvent>>> = const { RefCell::new(None) };
+}
 
 struct SceneEntry {
     slug: &'static str,
@@ -78,6 +98,41 @@ pub fn scene_markdown(scene_slug: &str) -> String {
 }
 
 #[wasm_bindgen::prelude::wasm_bindgen]
+pub fn switch_scene(scene_slug: &str) -> Result<(), wasm_bindgen::JsValue> {
+    let selected_slug = if available_scene_slugs().any(|candidate| candidate == scene_slug) {
+        scene_slug
+    } else {
+        DEFAULT_SCENE_SLUG
+    };
+
+    EVENT_PROXY.with(|event_proxy| {
+        let Some(event_proxy) = event_proxy.borrow().as_ref().cloned() else {
+            return Err(wasm_bindgen::JsValue::from_str("Viewer is not running."));
+        };
+
+        event_proxy
+            .send_event(AppEvent::SwitchScene(create_scene(selected_slug)))
+            .map_err(|_| wasm_bindgen::JsValue::from_str("Failed to switch scene."))
+    })
+}
+
+#[wasm_bindgen::prelude::wasm_bindgen]
+pub fn resize_scene(scene_width: u32, scene_height: u32) -> Result<(), wasm_bindgen::JsValue> {
+    EVENT_PROXY.with(|event_proxy| {
+        let Some(event_proxy) = event_proxy.borrow().as_ref().cloned() else {
+            return Err(wasm_bindgen::JsValue::from_str("Viewer is not running."));
+        };
+
+        event_proxy
+            .send_event(AppEvent::ResizeScene {
+                width: scene_dimension(scene_width, DEFAULT_SCENE_WIDTH),
+                height: scene_dimension(scene_height, DEFAULT_SCENE_HEIGHT),
+            })
+            .map_err(|_| wasm_bindgen::JsValue::from_str("Failed to resize scene."))
+    })
+}
+
+#[wasm_bindgen::prelude::wasm_bindgen]
 pub fn start(
     scene_slug: &str,
     scene_width: u32,
@@ -91,6 +146,11 @@ pub fn start(
         .build()
         .map_err(|err| wasm_bindgen::JsValue::from_str(&err.to_string()))?;
     event_loop.set_control_flow(ControlFlow::Poll);
+    let event_proxy = event_loop.create_proxy();
+
+    EVENT_PROXY.with(|proxy| {
+        proxy.replace(Some(event_proxy.clone()));
+    });
 
     let size_logical = LogicalSize::<u32>::new(
         scene_dimension(scene_width, DEFAULT_SCENE_WIDTH),
@@ -101,7 +161,7 @@ pub fn start(
     } else {
         DEFAULT_SCENE_SLUG
     };
-    let viewer = Viewer::new(size_logical, create_scene(selected_slug), event_loop.create_proxy());
+    let viewer = Viewer::new(size_logical, create_scene(selected_slug), event_proxy);
 
     event_loop.spawn_app(viewer);
 

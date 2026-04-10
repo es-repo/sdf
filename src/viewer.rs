@@ -173,6 +173,34 @@ impl Viewer {
         }
     }
 
+    #[cfg(target_arch = "wasm32")]
+    fn resize_scene(&mut self, width: u32, height: u32) {
+        if width == 0 || height == 0 {
+            return;
+        }
+
+        self.size_logical = LogicalSize::new(width, height);
+
+        let Some(window) = self.window.as_ref() else {
+            return;
+        };
+
+        let _ = window.request_inner_size(self.size_logical);
+
+        if let Some(pixels) = self.pixels.as_mut() {
+            let size_physical = self.size_logical.to_physical(self.scale_factor);
+
+            pixels
+                .resize_surface(size_physical.width, size_physical.height)
+                .unwrap();
+            pixels
+                .resize_buffer(self.size_logical.width, self.size_logical.height)
+                .unwrap();
+        }
+
+        window.request_redraw();
+    }
+
     fn prepare_window(&mut self, event_loop: &ActiveEventLoop, window_attributes: WindowAttributes) -> Arc<Window> {
         let window = Arc::new(event_loop.create_window(window_attributes).unwrap());
 
@@ -295,8 +323,16 @@ impl ApplicationHandler<AppEvent> for Viewer {
         match event {
             AppEvent::PixelsReady(pixels) => {
                 self.pixels = Some(pixels);
+                self.resize_scene(self.size_logical.width, self.size_logical.height);
                 self.window.as_ref().unwrap().request_redraw();
             }
+            AppEvent::SwitchScene(scene) => {
+                self.scene = scene;
+                self.start_time = Instant::now();
+                self.fps_counter.reset();
+                self.window.as_ref().unwrap().request_redraw();
+            }
+            AppEvent::ResizeScene { width, height } => self.resize_scene(width, height),
         }
     }
 
