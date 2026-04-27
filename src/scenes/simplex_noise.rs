@@ -1,7 +1,7 @@
 use pixels::wgpu::Color;
 
-use crate::Vec2;
 use crate::scenes::{Scene, SceneFrame};
+use crate::{Fbm, NoiseSimplex, Vec2};
 
 pub struct SimplexNoise;
 

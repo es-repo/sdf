@@ -1,4 +1,3 @@
-use crate::{fast_floor, perm};
 use std::ops::{Add, Mul, Sub};
 
 #[derive(Clone, Copy, PartialOrd, Eq, PartialEq, Debug)]
@@ -26,17 +25,6 @@ impl Vec2<u32> {
 }
 
 impl Vec2<f32> {
-    const GRAD2: [[f32; 2]; 8] = [
-        [1.0, 0.0],
-        [-1.0, 0.0],
-        [0.0, 1.0],
-        [0.0, -1.0],
-        [1.0, 1.0],
-        [-1.0, 1.0],
-        [1.0, -1.0],
-        [-1.0, -1.0],
-    ];
-
     pub fn len(&self) -> f32 {
         self.len_squared().sqrt()
     }
@@ -86,94 +74,6 @@ impl Vec2<f32> {
             x: self.x - self.x.floor(),
             y: self.y - self.y.floor(),
         }
-    }
-
-    // Canonical 2D simplex noise with a fixed gradient set and permutation hashing.
-    pub fn noise_simplex(&self) -> f32 {
-        const F2: f32 = 0.3660254; // (sqrt(3)-1)/2
-        const G2: f32 = 0.21132487; // (3-sqrt(3))/6
-
-        let s = (self.x + self.y) * F2;
-        let i = fast_floor(self.x + s);
-        let j = fast_floor(self.y + s);
-
-        let t = (i + j) as f32 * G2;
-        let x0 = self.x - (i as f32 - t);
-        let y0 = self.y - (j as f32 - t);
-
-        let (i1, j1) = if x0 > y0 { (1, 0) } else { (0, 1) };
-
-        let x1 = x0 - i1 as f32 + G2;
-        let y1 = y0 - j1 as f32 + G2;
-        let x2 = x0 - 1.0 + 2.0 * G2;
-        let y2 = y0 - 1.0 + 2.0 * G2;
-
-        let ii = (i & 255) as usize;
-        let jj = (j & 255) as usize;
-
-        let gi0 = perm(ii + perm(jj) as usize) % 8;
-        let gi1 = perm(ii + i1 as usize + perm(jj + j1 as usize) as usize) % 8;
-        let gi2 = perm(ii + 1 + perm(jj + 1) as usize) % 8;
-
-        let n0 = Self::corner_contrib_2d(gi0 as usize, x0, y0);
-        let n1 = Self::corner_contrib_2d(gi1 as usize, x1, y1);
-        let n2 = Self::corner_contrib_2d(gi2 as usize, x2, y2);
-
-        70.0 * (n0 + n1 + n2)
-    }
-
-    pub fn fbm(
-        &self,
-        octaves: u32,
-        amplitude: f32,
-        gain: f32,
-        lacunarity: f32,
-        noise: impl Fn(Vec2<f32>) -> f32,
-    ) -> f32 {
-        self.fbm_with_transform(octaves, amplitude, gain, noise, |coord| coord * lacunarity)
-    }
-
-    pub fn fbm_with_transform(
-        &self,
-        octaves: u32,
-        amplitude: f32,
-        gain: f32,
-        noise: impl Fn(Vec2<f32>) -> f32,
-        transform: impl Fn(Vec2<f32>) -> Vec2<f32>,
-    ) -> f32 {
-        let mut coord = *self;
-        let mut value = 0.0;
-        let mut amplitude = amplitude;
-
-        for _ in 0..octaves {
-            value += amplitude * noise(coord);
-            coord = transform(coord);
-            amplitude *= gain;
-        }
-
-        value
-    }
-
-    pub fn fbm_rotated(&self, octaves: u32, amplitude: f32, gain: f32) -> f32 {
-        self.fbm_with_transform(
-            octaves,
-            amplitude,
-            gain,
-            |coord| coord.noise_simplex(),
-            |coord| Vec2::new(1.6 * coord.x + 1.2 * coord.y, -1.2 * coord.x + 1.6 * coord.y),
-        )
-    }
-
-    fn corner_contrib_2d(grad_index: usize, x: f32, y: f32) -> f32 {
-        let t = 0.5 - x * x - y * y;
-        if t <= 0.0 {
-            return 0.0;
-        }
-
-        let grad = Self::GRAD2[grad_index];
-        let t2 = t * t;
-        let t4 = t2 * t2;
-        t4 * (grad[0] * x + grad[1] * y)
     }
 }
 
