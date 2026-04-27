@@ -26,7 +26,9 @@ jobs:
           targets: wasm32-unknown-unknown
 
       - name: Install wasm-bindgen
-        run: cargo install wasm-bindgen-cli
+        run: |
+          version="$(cargo metadata --format-version 1 --locked | jq -r '.packages[] | select(.name == "wasm-bindgen") | .version')"
+          cargo install wasm-bindgen-cli --version "$version"
 
       - name: Build static site
         run: bash scripts/build-web-single-thread.sh
