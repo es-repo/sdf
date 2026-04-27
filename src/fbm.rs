@@ -3,7 +3,7 @@ use crate::vec2::Vec2;
 use crate::vec3::Vec3;
 use std::ops::Mul;
 
-pub trait Fbm {
+pub trait Fbm: Copy + Into<Self::VecN> {
     type VecN: Copy + Mul<f32, Output = Self::VecN>;
 
     fn fbm<N>(&self, octaves: u32, amplitude: f32, gain: f32, lacunarity: f32, noise: N) -> f32
@@ -16,20 +16,9 @@ pub trait Fbm {
     fn fbm_with_transform<N, T>(&self, octaves: u32, amplitude: f32, gain: f32, noise: N, transform: T) -> f32
     where
         N: Fn(Self::VecN) -> f32,
-        T: Fn(Self::VecN) -> Self::VecN;
-
-    fn fbm_rotated(&self, octaves: u32, amplitude: f32, gain: f32) -> f32;
-}
-
-impl Fbm for Vec2<f32> {
-    type VecN = Vec2<f32>;
-
-    fn fbm_with_transform<N, T>(&self, octaves: u32, amplitude: f32, gain: f32, noise: N, transform: T) -> f32
-    where
-        N: Fn(Self::VecN) -> f32,
         T: Fn(Self::VecN) -> Self::VecN,
     {
-        let mut coord = *self;
+        let mut coord = (*self).into();
         let mut value = 0.0;
         let mut amplitude = amplitude;
 
@@ -41,6 +30,12 @@ impl Fbm for Vec2<f32> {
 
         value
     }
+
+    fn fbm_rotated(&self, octaves: u32, amplitude: f32, gain: f32) -> f32;
+}
+
+impl Fbm for Vec2<f32> {
+    type VecN = Vec2<f32>;
 
     fn fbm_rotated(&self, octaves: u32, amplitude: f32, gain: f32) -> f32 {
         self.fbm_with_transform(
@@ -55,24 +50,6 @@ impl Fbm for Vec2<f32> {
 
 impl Fbm for Vec3<f32> {
     type VecN = Vec3<f32>;
-
-    fn fbm_with_transform<N, T>(&self, octaves: u32, amplitude: f32, gain: f32, noise: N, transform: T) -> f32
-    where
-        N: Fn(Self::VecN) -> f32,
-        T: Fn(Self::VecN) -> Self::VecN,
-    {
-        let mut coord = *self;
-        let mut value = 0.0;
-        let mut amplitude = amplitude;
-
-        for _ in 0..octaves {
-            value += amplitude * noise(coord);
-            coord = transform(coord);
-            amplitude *= gain;
-        }
-
-        value
-    }
 
     fn fbm_rotated(&self, octaves: u32, amplitude: f32, gain: f32) -> f32 {
         self.fbm_with_transform(
