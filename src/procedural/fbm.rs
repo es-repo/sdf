@@ -1,4 +1,4 @@
-use crate::noise_simplex::NoiseSimplex;
+use super::noise_simplex::NoiseSimplex;
 use crate::vec2::Vec2;
 use crate::vec3::Vec3;
 use std::ops::Mul;
