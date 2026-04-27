@@ -23,10 +23,10 @@ use core_graphics::event::CGEvent;
 use core_graphics::event_source::{CGEventSource, CGEventSourceStateID};
 #[cfg(not(target_arch = "wasm32"))]
 use winit::dpi::PhysicalPosition;
-#[cfg(target_os = "macos")]
-use winit::platform::macos::MonitorHandleExtMacOS;
 #[cfg(target_arch = "wasm32")]
 use winit::event_loop::EventLoopProxy;
+#[cfg(target_os = "macos")]
+use winit::platform::macos::MonitorHandleExtMacOS;
 #[cfg(target_arch = "wasm32")]
 use winit::platform::web::WindowAttributesExtWebSys;
 
@@ -91,21 +91,18 @@ impl Viewer {
         let width_f = width as f32;
         let dx = 2.0 / height_f;
 
-        frame
-            .par_chunks_exact_mut(row_stride)
-            .enumerate()
-            .for_each(|(y, row)| {
-                let y = y as f32;
-                let ny = (height_f - 2.0 * (y + 0.5)) / height_f;
-                let mut nx = (1.0 - width_f) / height_f;
+        frame.par_chunks_exact_mut(row_stride).enumerate().for_each(|(y, row)| {
+            let y = y as f32;
+            let ny = (height_f - 2.0 * (y + 0.5)) / height_f;
+            let mut nx = (1.0 - width_f) / height_f;
 
-                for pixel in row.chunks_exact_mut(4) {
-                    let coord = Vec2::new(nx, ny);
-                    let color = prepared_scene.get_pixel_color(coord, time);
-                    pixel.copy_from_slice(&color.to_u8_array());
-                    nx += dx;
-                }
-            });
+            for pixel in row.chunks_exact_mut(4) {
+                let coord = Vec2::new(nx, ny);
+                let color = prepared_scene.get_pixel_color(coord, time);
+                pixel.copy_from_slice(&color.to_u8_array());
+                nx += dx;
+            }
+        });
 
         if self.show_fps {
             let fps_text = format!("{:.0}", self.fps_counter.count());

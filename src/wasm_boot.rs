@@ -12,10 +12,7 @@ pub use wasm_bindgen_rayon::init_thread_pool;
 pub enum AppEvent {
     PixelsReady(pixels::Pixels<'static>),
     SwitchScene(Box<dyn Scene>),
-    ResizeScene {
-        width: u32,
-        height: u32,
-    },
+    ResizeScene { width: u32, height: u32 },
 }
 
 impl fmt::Debug for AppEvent {
@@ -133,11 +130,7 @@ pub fn resize_scene(scene_width: u32, scene_height: u32) -> Result<(), wasm_bind
 }
 
 #[wasm_bindgen::prelude::wasm_bindgen]
-pub fn start(
-    scene_slug: &str,
-    scene_width: u32,
-    scene_height: u32,
-) -> Result<(), wasm_bindgen::JsValue> {
+pub fn start(scene_slug: &str, scene_width: u32, scene_height: u32) -> Result<(), wasm_bindgen::JsValue> {
     console_error_panic_hook::set_once();
 
     use winit::platform::web::EventLoopExtWebSys;
@@ -169,9 +162,5 @@ pub fn start(
 }
 
 fn scene_dimension(value: u32, default: u32) -> u32 {
-    if value == 0 {
-        default
-    } else {
-        value.min(default)
-    }
+    if value == 0 { default } else { value.min(default) }
 }

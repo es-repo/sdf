@@ -1,5 +1,5 @@
-use crate::scenes::{Scene, SceneFrame};
 use crate::scenes::circle::Circle;
+use crate::scenes::{Scene, SceneFrame};
 use crate::{Vec2, smooth_union};
 use pixels::wgpu::Color;
 

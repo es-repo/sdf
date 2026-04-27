@@ -1,7 +1,7 @@
 use pixels::wgpu::Color;
 
-use crate::scenes::{Scene, SceneFrame};
 use crate::scenes::circle::Circle;
+use crate::scenes::{Scene, SceneFrame};
 use crate::{ColorExt, Vec2, smooth_union};
 
 pub struct Scene1;
