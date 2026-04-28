@@ -1,8 +1,10 @@
 pub mod color_ext;
 pub mod geometry;
+pub mod math;
 pub mod procedural;
 pub mod scenes;
 
 pub use color_ext::ColorExt;
 pub use geometry::{Circle, Vec2, Vec3};
+pub use math::lerp;
 pub use procedural::{Fbm, NoiseSimplex, smooth_union};

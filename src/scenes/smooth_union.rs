@@ -1,5 +1,5 @@
 use crate::scenes::{Scene, SceneFrame};
-use crate::{Circle, Vec2, smooth_union};
+use crate::{Circle, Vec2, lerp, smooth_union};
 use pixels::wgpu::Color;
 
 pub struct SmoothUnion;
@@ -19,9 +19,9 @@ impl SceneFrame for SmoothUnionFrame {
         if d < 0.0 {
             let h = h as f64;
             return Color {
-                r: self.circle_2.color.r * (1.0 - h) + self.circle_1.color.r * h,
-                g: self.circle_2.color.g * (1.0 - h) + self.circle_1.color.g * h,
-                b: self.circle_2.color.b * (1.0 - h) + self.circle_1.color.b * h,
+                r: lerp(self.circle_2.color.r, self.circle_1.color.r, h),
+                g: lerp(self.circle_2.color.g, self.circle_1.color.g, h),
+                b: lerp(self.circle_2.color.b, self.circle_1.color.b, h),
                 a: 1.0,
             };
         }
