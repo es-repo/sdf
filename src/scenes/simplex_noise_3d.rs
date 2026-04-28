@@ -31,7 +31,7 @@ impl SceneFrame for SimplexNoise3dFrame {
             };
 
             let coord3d = Vec3::from_2d(coord * scale + time_scaled, time_scaled);
-            f = coord3d.fbm_rotated(octaves, 0.5, 0.5);
+            f = coord3d.fbm_rotated(octaves, 0.5, 0.5, |coord| coord.noise_simplex());
         }
 
         f = 0.5 + 0.5 * f;

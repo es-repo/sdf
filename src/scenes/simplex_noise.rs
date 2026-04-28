@@ -32,7 +32,7 @@ impl SceneFrame for SimplexNoiseFrame {
             };
 
             let coord = coord * scale + time_scaled;
-            f = coord.fbm_rotated(octaves, 0.5, 0.5);
+            f = coord.fbm_rotated(octaves, 0.5, 0.5, |coord| coord.noise_simplex());
         }
 
         f = 0.5 + 0.5 * f;

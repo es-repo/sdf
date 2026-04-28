@@ -2,7 +2,7 @@ use pixels::wgpu::Color;
 
 use crate::scenes::circle::Circle;
 use crate::scenes::{Scene, SceneFrame};
-use crate::{ColorExt, Fbm, Vec2, smooth_union};
+use crate::{ColorExt, Fbm, NoiseSimplex, Vec2, smooth_union};
 
 pub struct Scene2;
 
@@ -28,7 +28,7 @@ impl SceneFrame for Scene2Frame {
         if circle_1_dist < 0.0 {
             self.circle_1.color
         } else {
-            let f = coord.fbm_rotated(4, 0.5, 0.5);
+            let f = coord.fbm_rotated(4, 0.5, 0.5, |coord| coord.noise_simplex());
 
             let mut color = Color {
                 r: (0.5 + 0.5 * f) as f64,
