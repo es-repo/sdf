@@ -1,4 +1,4 @@
-use crate::{Vec2, Vec3};
+use crate::{Vec2, Vec3, floor_i32};
 
 const GRAD2: [[f32; 2]; 8] = [
     [1.0, 0.0],
@@ -50,8 +50,8 @@ impl NoiseSimplex for Vec2<f32> {
         const G2: f32 = 0.21132487; // (3-sqrt(3))/6
 
         let s = (self.x + self.y) * F2;
-        let i = fast_floor(self.x + s);
-        let j = fast_floor(self.y + s);
+        let i = floor_i32(self.x + s);
+        let j = floor_i32(self.y + s);
 
         let t = (i + j) as f32 * G2;
         let x0 = self.x - (i as f32 - t);
@@ -85,9 +85,9 @@ impl NoiseSimplex for Vec3<f32> {
         const G3: f32 = 1.0 / 6.0;
 
         let s = (self.x + self.y + self.z) * F3;
-        let i = fast_floor(self.x + s);
-        let j = fast_floor(self.y + s);
-        let k = fast_floor(self.z + s);
+        let i = floor_i32(self.x + s);
+        let j = floor_i32(self.y + s);
+        let k = floor_i32(self.z + s);
 
         let t = (i + j + k) as f32 * G3;
         let x0 = self.x - (i as f32 - t);
@@ -164,8 +164,4 @@ fn corner_contrib_3d(grad_index: usize, x: f32, y: f32, z: f32) -> f32 {
 
 fn perm(i: usize) -> u8 {
     PERM[i & 255]
-}
-
-fn fast_floor(x: f32) -> i32 {
-    x.floor() as i32
 }

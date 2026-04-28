@@ -6,5 +6,5 @@ pub mod scenes;
 
 pub use color_ext::ColorExt;
 pub use geometry::{Circle, Vec2, Vec3};
-pub use math::lerp;
+pub use math::{floor_i32, lerp};
 pub use procedural::{Fbm, NoiseSimplex, smooth_union};

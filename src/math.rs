@@ -1,5 +1,10 @@
 use std::ops::{Add, Mul, Sub};
 
+/// Returns the largest integer less than or equal to `x`.
+pub fn floor_i32(x: f32) -> i32 {
+    x.floor() as i32
+}
+
 /// Linearly interpolates from `a` to `b` by `t`.
 ///
 /// This is equivalent to `a + (b - a) * t`: `t = 0` returns `a`,
