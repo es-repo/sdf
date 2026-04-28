@@ -1,5 +1,4 @@
-use crate::vec2::Vec2;
-use crate::vec3::Vec3;
+use crate::{Vec2, Vec3};
 
 const GRAD2: [[f32; 2]; 8] = [
     [1.0, 0.0],

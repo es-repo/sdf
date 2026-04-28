@@ -1,4 +1,3 @@
-mod circle;
 mod scene_1;
 mod scene_2;
 mod simplex_noise;

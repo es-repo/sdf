@@ -1,4 +1,4 @@
-use crate::Vec2;
+use super::Vec2;
 use pixels::wgpu::Color;
 
 pub struct Circle {

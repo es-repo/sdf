@@ -1,5 +1,4 @@
-use crate::vec2::Vec2;
-use crate::vec3::Vec3;
+use crate::{Vec2, Vec3};
 use std::ops::Mul;
 
 pub trait Fbm: Copy + Into<Self::VecN> {

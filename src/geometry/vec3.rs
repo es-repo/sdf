@@ -1,4 +1,4 @@
-use crate::Vec2;
+use super::Vec2;
 use std::ops::{Add, Mul, Sub};
 
 #[derive(Clone, Copy, PartialOrd, Eq, PartialEq, Debug)]
