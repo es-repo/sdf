@@ -49,6 +49,29 @@ impl Vec3<f32> {
         self.x * other.x + self.y * other.y + self.z * other.z
     }
 
+    pub fn rotate(self, axis: Self, angle: f32) -> Self {
+        let axis_len = axis.len();
+        if axis_len == 0.0 {
+            return self;
+        }
+
+        let axis = axis * (1.0 / axis_len);
+        let (sin, cos) = angle.sin_cos();
+        let one_minus_cos = 1.0 - cos;
+
+        Self::new(
+            self.x * (cos + axis.x * axis.x * one_minus_cos)
+                + self.y * (axis.x * axis.y * one_minus_cos - axis.z * sin)
+                + self.z * (axis.x * axis.z * one_minus_cos + axis.y * sin),
+            self.x * (axis.y * axis.x * one_minus_cos + axis.z * sin)
+                + self.y * (cos + axis.y * axis.y * one_minus_cos)
+                + self.z * (axis.y * axis.z * one_minus_cos - axis.x * sin),
+            self.x * (axis.z * axis.x * one_minus_cos - axis.y * sin)
+                + self.y * (axis.z * axis.y * one_minus_cos + axis.x * sin)
+                + self.z * (cos + axis.z * axis.z * one_minus_cos),
+        )
+    }
+
     pub fn sin(&self) -> Self {
         Self {
             x: self.x.sin(),

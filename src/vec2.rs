@@ -53,6 +53,11 @@ impl Vec2<f32> {
         self.x * other.x + self.y * other.y
     }
 
+    pub fn rotate(self, angle: f32) -> Self {
+        let (sin, cos) = angle.sin_cos();
+        Self::new(self.x * cos - self.y * sin, self.x * sin + self.y * cos)
+    }
+
     pub fn sin(&self) -> Self {
         Self {
             x: self.x.sin(),
