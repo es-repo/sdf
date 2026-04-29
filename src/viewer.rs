@@ -128,12 +128,28 @@ impl Viewer {
         let scene = self.scene.as_mut();
 
         let full_output = egui.context.run(raw_input, |context| {
-            egui::Window::new("Domain Warping")
-                .default_pos(egui::pos2(12.0, 12.0))
+            let original_style = context.style();
+            let mut compact_style = (*original_style).clone();
+            compact_style
+                .text_styles
+                .insert(egui::TextStyle::Heading, egui::FontId::proportional(13.0));
+            compact_style.spacing.icon_width = 12.0;
+            compact_style.spacing.interact_size.y = 16.0;
+            compact_style.spacing.window_margin = egui::Margin::symmetric(6, 2);
+            let compact_frame = egui::Frame::window(&compact_style);
+            context.set_style(compact_style);
+
+            egui::Window::new("Parameters")
+                .anchor(egui::Align2::RIGHT_TOP, egui::vec2(0.0, 0.0))
                 .default_width(220.0)
+                .frame(compact_frame)
+                .resizable(false)
+                .collapsible(true)
                 .show(context, |ui| {
                     scene.ui(ui);
                 });
+
+            context.set_style(original_style);
         });
 
         egui.state.handle_platform_output(window, full_output.platform_output);
