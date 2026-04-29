@@ -21,9 +21,7 @@ use core_graphics::display::CGDisplay;
 use core_graphics::event::CGEvent;
 #[cfg(target_os = "macos")]
 use core_graphics::event_source::{CGEventSource, CGEventSourceStateID};
-#[cfg(not(target_arch = "wasm32"))]
 use egui_wgpu::{Renderer, RendererOptions, ScreenDescriptor};
-#[cfg(not(target_arch = "wasm32"))]
 use egui_winit::State as EguiWinitState;
 #[cfg(not(target_arch = "wasm32"))]
 use winit::dpi::PhysicalPosition;
@@ -38,7 +36,6 @@ pub struct Viewer {
     window: Option<Arc<Window>>,
     pixels: Option<Pixels<'static>>,
     scene: Box<dyn Scene>,
-    #[cfg(not(target_arch = "wasm32"))]
     egui: Option<EguiState>,
     #[cfg(target_arch = "wasm32")]
     event_proxy: EventLoopProxy<AppEvent>,
@@ -49,21 +46,18 @@ pub struct Viewer {
     show_fps: bool,
 }
 
-#[cfg(not(target_arch = "wasm32"))]
 struct EguiState {
     context: egui::Context,
     state: EguiWinitState,
     renderer: Renderer,
 }
 
-#[cfg(not(target_arch = "wasm32"))]
 struct EguiFrame {
     paint_jobs: Vec<egui::ClippedPrimitive>,
     screen_descriptor: ScreenDescriptor,
     textures_delta: egui::TexturesDelta,
 }
 
-#[cfg(not(target_arch = "wasm32"))]
 impl EguiState {
     fn new(window: &Window, pixels: &Pixels<'static>) -> Self {
         let context = egui::Context::default();
@@ -111,6 +105,7 @@ impl Viewer {
             window: None,
             pixels: None,
             scene,
+            egui: None,
             event_proxy,
             size_logical,
             start_time: Instant::now(),
@@ -120,7 +115,6 @@ impl Viewer {
         }
     }
 
-    #[cfg(not(target_arch = "wasm32"))]
     fn prepare_egui_frame(&mut self) -> Option<EguiFrame> {
         let window = self.window.as_ref()?;
         let egui = self.egui.as_mut()?;
@@ -176,7 +170,6 @@ impl Viewer {
         let elapsed = self.start_time.elapsed();
         let time = elapsed.as_secs_f64() as f32;
         self.fps_counter.tick();
-        #[cfg(not(target_arch = "wasm32"))]
         let egui_frame = self.prepare_egui_frame();
         let prepared_scene = self.scene.prepare_frame(time);
         let width = self.size_logical.width;
@@ -217,15 +210,11 @@ impl Viewer {
             }
         }
 
-        #[cfg(not(target_arch = "wasm32"))]
         self.render_with_egui(egui_frame);
-        #[cfg(target_arch = "wasm32")]
-        self.pixels.as_ref().unwrap().render().unwrap();
 
         self.window.as_ref().unwrap().request_redraw();
     }
 
-    #[cfg(not(target_arch = "wasm32"))]
     fn render_with_egui(&mut self, egui_frame: Option<EguiFrame>) {
         let Some(egui_frame) = egui_frame else {
             self.pixels.as_ref().unwrap().render().unwrap();
@@ -341,7 +330,6 @@ impl Viewer {
         }
     }
 
-    #[cfg(not(target_arch = "wasm32"))]
     fn handle_gui_window_event(&mut self, event: &WindowEvent) -> bool {
         let Some(window) = self.window.as_ref() else {
             return false;
@@ -356,11 +344,6 @@ impl Viewer {
         }
 
         response.consumed
-    }
-
-    #[cfg(target_arch = "wasm32")]
-    fn handle_gui_window_event(&mut self, _event: &WindowEvent) -> bool {
-        false
     }
 
     #[cfg(target_arch = "wasm32")]
@@ -513,6 +496,9 @@ impl ApplicationHandler<AppEvent> for Viewer {
     fn user_event(&mut self, _event_loop: &ActiveEventLoop, event: AppEvent) {
         match event {
             AppEvent::PixelsReady(pixels) => {
+                if let Some(window) = self.window.as_ref() {
+                    self.egui = Some(EguiState::new(window, &pixels));
+                }
                 self.pixels = Some(pixels);
                 self.resize_scene(self.size_logical.width, self.size_logical.height);
                 self.window.as_ref().unwrap().request_redraw();

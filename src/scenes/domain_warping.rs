@@ -50,7 +50,6 @@ impl Scene for DomainWarping {
         })
     }
 
-    #[cfg(not(target_arch = "wasm32"))]
     fn ui(&mut self, ui: &mut egui::Ui) {
         ui.add(egui::Slider::new(&mut self.params.scale, 0.1..=16.0).text("Scale"));
         ui.add(egui::Slider::new(&mut self.params.warp_strength, 0.0..=1.0).text("Strength"));
