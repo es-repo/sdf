@@ -2,7 +2,7 @@ use crate::fps_counter::FpsCounter;
 use font8x8::UnicodeFonts;
 use pixels::Pixels;
 use rayon::prelude::*;
-use sdf::scenes::Scene;
+use sdf::scenes::SceneInstance;
 use sdf::{ColorExt, Vec2};
 use std::sync::Arc;
 use web_time::Instant;
@@ -35,7 +35,7 @@ use winit::platform::web::WindowAttributesExtWebSys;
 pub struct Viewer {
     window: Option<Arc<Window>>,
     pixels: Option<Pixels<'static>>,
-    scene: Box<dyn Scene>,
+    scene: SceneInstance,
     egui: Option<EguiState>,
     #[cfg(target_arch = "wasm32")]
     event_proxy: EventLoopProxy<AppEvent>,
@@ -85,7 +85,7 @@ impl EguiState {
 
 impl Viewer {
     #[cfg(not(target_arch = "wasm32"))]
-    pub fn new(size_logical: LogicalSize<u32>, scene: Box<dyn Scene>) -> Self {
+    pub fn new(size_logical: LogicalSize<u32>, scene: SceneInstance) -> Self {
         Self {
             window: None,
             pixels: None,
@@ -100,7 +100,7 @@ impl Viewer {
     }
 
     #[cfg(target_arch = "wasm32")]
-    pub fn new(size_logical: LogicalSize<u32>, scene: Box<dyn Scene>, event_proxy: EventLoopProxy<AppEvent>) -> Self {
+    pub fn new(size_logical: LogicalSize<u32>, scene: SceneInstance, event_proxy: EventLoopProxy<AppEvent>) -> Self {
         Self {
             window: None,
             pixels: None,
@@ -116,10 +116,10 @@ impl Viewer {
     }
 
     fn prepare_egui_frame(&mut self) -> Option<EguiFrame> {
+        let scene = self.scene.parameterized_scene_mut()?;
         let window = self.window.as_ref()?;
         let egui = self.egui.as_mut()?;
         let raw_input = egui.state.take_egui_input(window);
-        let scene = self.scene.as_mut();
 
         let full_output = egui.context.run(raw_input, |context| {
             let original_style = context.style();
@@ -140,7 +140,7 @@ impl Viewer {
                 .resizable(false)
                 .collapsible(true)
                 .show(context, |ui| {
-                    scene.ui(ui);
+                    scene.parameters_ui(ui);
                 });
 
             context.set_style(original_style);
@@ -331,6 +331,10 @@ impl Viewer {
     }
 
     fn handle_gui_window_event(&mut self, event: &WindowEvent) -> bool {
+        if self.scene.parameterized_scene().is_none() {
+            return false;
+        }
+
         let Some(window) = self.window.as_ref() else {
             return false;
         };

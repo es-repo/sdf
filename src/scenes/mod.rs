@@ -20,6 +20,50 @@ pub trait SceneFrame: Send + Sync {
 
 pub trait Scene: Send + Sync {
     fn prepare_frame(&self, time: f32) -> Box<dyn SceneFrame>;
+}
 
-    fn ui(&mut self, _ui: &mut egui::Ui) {}
+pub trait ParameterizedScene: Scene {
+    fn parameters_ui(&mut self, ui: &mut egui::Ui);
+}
+
+pub enum SceneInstance {
+    Plain(Box<dyn Scene>),
+    Parameterized(Box<dyn ParameterizedScene>),
+}
+
+impl SceneInstance {
+    pub fn plain<T>(scene: T) -> Self
+    where
+        T: Scene + 'static,
+    {
+        Self::Plain(Box::new(scene))
+    }
+
+    pub fn parameterized<T>(scene: T) -> Self
+    where
+        T: ParameterizedScene + 'static,
+    {
+        Self::Parameterized(Box::new(scene))
+    }
+
+    pub fn prepare_frame(&self, time: f32) -> Box<dyn SceneFrame> {
+        match self {
+            Self::Plain(scene) => scene.prepare_frame(time),
+            Self::Parameterized(scene) => scene.prepare_frame(time),
+        }
+    }
+
+    pub fn parameterized_scene(&self) -> Option<&dyn ParameterizedScene> {
+        match self {
+            Self::Plain(_) => None,
+            Self::Parameterized(scene) => Some(scene.as_ref()),
+        }
+    }
+
+    pub fn parameterized_scene_mut(&mut self) -> Option<&mut dyn ParameterizedScene> {
+        match self {
+            Self::Plain(_) => None,
+            Self::Parameterized(scene) => Some(scene.as_mut()),
+        }
+    }
 }

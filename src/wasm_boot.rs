@@ -1,5 +1,5 @@
 use crate::viewer::Viewer;
-use sdf::scenes::{DomainWarping, Scene, Scene1, Scene2, SimplexNoise, SimplexNoise3d, SmoothUnion};
+use sdf::scenes::{DomainWarping, Scene1, Scene2, SceneInstance, SimplexNoise, SimplexNoise3d, SmoothUnion};
 use std::cell::RefCell;
 use std::fmt;
 use winit::dpi::LogicalSize;
@@ -11,7 +11,7 @@ pub use wasm_bindgen_rayon::init_thread_pool;
 
 pub enum AppEvent {
     PixelsReady(pixels::Pixels<'static>),
-    SwitchScene(Box<dyn Scene>),
+    SwitchScene(SceneInstance),
     ResizeScene { width: u32, height: u32 },
 }
 
@@ -35,39 +35,39 @@ thread_local! {
 
 struct SceneEntry {
     slug: &'static str,
-    create: fn() -> Box<dyn Scene>,
+    create: fn() -> SceneInstance,
     markdown: Option<&'static str>,
 }
 
 const AVAILABLE_SCENES: &[SceneEntry] = &[
     SceneEntry {
         slug: "scene-1",
-        create: || Box::new(Scene1),
+        create: || SceneInstance::plain(Scene1),
         markdown: None,
     },
     SceneEntry {
         slug: "scene-2",
-        create: || Box::new(Scene2),
+        create: || SceneInstance::plain(Scene2),
         markdown: None,
     },
     SceneEntry {
         slug: "domain-warping",
-        create: || Box::new(DomainWarping::default()),
+        create: || SceneInstance::parameterized(DomainWarping::default()),
         markdown: None,
     },
     SceneEntry {
         slug: "smooth-union",
-        create: || Box::new(SmoothUnion),
+        create: || SceneInstance::plain(SmoothUnion),
         markdown: Some(include_str!("scenes/smooth_union.md")),
     },
     SceneEntry {
         slug: "simplex-noise",
-        create: || Box::new(SimplexNoise),
+        create: || SceneInstance::plain(SimplexNoise),
         markdown: Some(include_str!("scenes/simplex_noise.md")),
     },
     SceneEntry {
         slug: "simplex-noise-3d",
-        create: || Box::new(SimplexNoise3d),
+        create: || SceneInstance::plain(SimplexNoise3d),
         markdown: Some(include_str!("scenes/simplex_noise_3d.md")),
     },
 ];
@@ -76,12 +76,12 @@ fn available_scene_slugs() -> impl Iterator<Item = &'static str> {
     AVAILABLE_SCENES.iter().map(|scene| scene.slug)
 }
 
-fn create_scene(slug: &str) -> Box<dyn Scene> {
+fn create_scene(slug: &str) -> SceneInstance {
     AVAILABLE_SCENES
         .iter()
         .find(|scene| scene.slug == slug)
         .map(|scene| (scene.create)())
-        .unwrap_or_else(|| Box::new(Scene1))
+        .unwrap_or_else(|| SceneInstance::plain(Scene1))
 }
 
 #[wasm_bindgen::prelude::wasm_bindgen]

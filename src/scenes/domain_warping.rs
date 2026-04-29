@@ -1,4 +1,4 @@
-use crate::scenes::{Scene, SceneFrame};
+use crate::scenes::{ParameterizedScene, Scene, SceneFrame};
 use crate::{Circle, Fbm, NoiseSimplex, Vec2};
 use pixels::wgpu::Color;
 
@@ -49,8 +49,10 @@ impl Scene for DomainWarping {
             time_scaled: time * 0.25,
         })
     }
+}
 
-    fn ui(&mut self, ui: &mut egui::Ui) {
+impl ParameterizedScene for DomainWarping {
+    fn parameters_ui(&mut self, ui: &mut egui::Ui) {
         ui.add(egui::Slider::new(&mut self.params.scale, 0.1..=16.0).text("Scale"));
         ui.add(egui::Slider::new(&mut self.params.warp_strength, 0.0..=1.0).text("Strength"));
         ui.add(egui::Slider::new(&mut self.params.octaves, 1..=8).text("Octaves"));
