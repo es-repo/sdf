@@ -66,7 +66,7 @@ impl ParameterizedScene for DomainWarping {
 impl SceneFrame for DomainWarpingFrame {
     fn get_pixel_color(&self, coord: Vec2<f32>, _time: f32) -> Color {
         let noise_coord = coord * self.params.scale + self.time_scaled;
-        let offset = noise_coord.fbm_rotated(self.params.octaves, 0.5, 0.5, |coord| coord.noise_simplex())
+        let offset = noise_coord.fbm(self.params.octaves, 0.5, 0.5, 2.0, |coord| coord.noise_simplex())
             * self.params.warp_strength;
         let warped_coord = coord + offset;
 

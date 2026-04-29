@@ -53,7 +53,7 @@ const AVAILABLE_SCENES: &[SceneEntry] = &[
     SceneEntry {
         slug: "domain-warping",
         create: || SceneInstance::parameterized(DomainWarping::default()),
-        markdown: None,
+        markdown: Some(include_str!("scenes/domain_warping.md")),
     },
     SceneEntry {
         slug: "smooth-union",
