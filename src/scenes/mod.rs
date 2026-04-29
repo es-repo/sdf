@@ -1,3 +1,4 @@
+mod domain_warping;
 mod scene_1;
 mod scene_2;
 mod simplex_noise;
@@ -5,6 +6,7 @@ mod simplex_noise_3d;
 mod smooth_union;
 
 use crate::Vec2;
+pub use domain_warping::DomainWarping;
 use pixels::wgpu::Color;
 pub use scene_1::Scene1;
 pub use scene_2::Scene2;
