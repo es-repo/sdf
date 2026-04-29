@@ -14,11 +14,11 @@ pub struct Scene3Params {
 impl Default for Scene3Params {
     fn default() -> Self {
         Self {
-            scale: 3.0,
+            scale: 2.0,
             amplitude: 0.5,
             gain: 0.5,
             octaves: 4,
-            warp_iterations: 2,
+            warp_iterations: 4,
         }
     }
 }
