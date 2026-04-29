@@ -30,11 +30,15 @@ pub struct Scene3 {
 
 struct Scene3Frame {
     params: Scene3Params,
+    time_scaled: f32,
 }
 
 impl Scene for Scene3 {
-    fn prepare_frame(&self, _time: f32) -> Box<dyn SceneFrame> {
-        Box::new(Scene3Frame { params: self.params })
+    fn prepare_frame(&self, time: f32) -> Box<dyn SceneFrame> {
+        Box::new(Scene3Frame {
+            params: self.params,
+            time_scaled: time * 0.2,
+        })
     }
 }
 
@@ -53,10 +57,8 @@ impl ParameterizedScene for Scene3 {
 }
 
 impl SceneFrame for Scene3Frame {
-    fn get_pixel_color(&self, coord: Vec2<f32>, time: f32) -> Color {
-        let time_scaled = time * 0.2;
-
-        let mut coord3d = Vec3::from_2d(coord * self.params.scale + time_scaled, time_scaled);
+    fn get_pixel_color(&self, coord: Vec2<f32>, _time: f32) -> Color {
+        let mut coord3d = Vec3::from_2d(coord * self.params.scale + self.time_scaled, self.time_scaled);
 
         let mut f = 1.0;
         for _i in 0..self.params.warp_iterations {

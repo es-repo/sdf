@@ -48,20 +48,20 @@ This scene uses simplex noise layered with fractal Brownian motion, or FBM, to c
 :::code-tabs domain-warping-offset
 ```rust
 let noise_coord = coord * scale + time_scaled;
-let offset = noise_coord.fbm(octaves, 0.5, 0.5, lacunarity, |coord| coord.noise_simplex())
+let offset = noise_coord.fbm(octaves, amplitude, gain, lacunarity, |coord| coord.noise_simplex())
     * warp_strength;
 let warped_coord = coord + offset;
 ```
 
 ```wgsl
 let noise_coord = coord * scale + time_scaled;
-let offset = fbm(noise_coord, octaves, 0.5, 0.5, lacunarity) * warp_strength;
+let offset = fbm(noise_coord, octaves, amplitude, gain, lacunarity) * warp_strength;
 let warped_coord = coord + vec2f(offset);
 ```
 
 ```glsl
 vec2 noiseCoord = coord * scale + timeScaled;
-float offset = fbm(noiseCoord, octaves, 0.5, 0.5, lacunarity) * warpStrength;
+float offset = fbm(noiseCoord, octaves, amplitude, gain, lacunarity) * warpStrength;
 vec2 warpedCoord = coord + vec2(offset);
 ```
 :::
@@ -95,6 +95,10 @@ vec2 warpedCoord = coord + offset;
 
 `warp_strength` controls how far the coordinate is moved before evaluating the circle SDF. A value of `0.0` disables the warp. Larger values make the circle boundary bend more strongly.
 
+`amplitude` controls the strength of the first FBM octave before `warp_strength` is applied.
+
+`gain` controls how quickly each following octave fades. A smaller gain keeps the warp smoother; a larger gain preserves more fine detail.
+
 `octaves` controls how many FBM layers are added together. One octave is smooth and simple. More octaves add finer detail on top of the broad deformation.
 
 `lacunarity` controls how much the noise frequency increases between octaves. The default value is `2.0`, so each octave samples the noise field at twice the previous frequency.
@@ -122,7 +126,5 @@ coord *= lacunarity;
 amplitude *= gain;
 ```
 :::
-
-Higher lacunarity values make the added FBM detail shrink faster from octave to octave. Lower values keep neighboring octaves closer in scale.
 
 After arbitrary warping, the returned SDF value is no longer a perfect Euclidean distance to the visible boundary. For this scene, that is fine: the sign of the field still gives a useful inside/outside test, and the warped boundary is the visual effect.

@@ -6,6 +6,8 @@ use pixels::wgpu::Color;
 pub struct DomainWarpingParams {
     pub scale: f32,
     pub warp_strength: f32,
+    pub amplitude: f32,
+    pub gain: f32,
     pub octaves: u32,
     pub lacunarity: f32,
 }
@@ -15,6 +17,8 @@ impl Default for DomainWarpingParams {
         Self {
             scale: 3.0,
             warp_strength: 0.05,
+            amplitude: 0.5,
+            gain: 0.5,
             octaves: 4,
             lacunarity: 2.0,
         }
@@ -57,6 +61,8 @@ impl ParameterizedScene for DomainWarping {
     fn parameters_ui(&mut self, ui: &mut egui::Ui) {
         ui.add(egui::Slider::new(&mut self.params.scale, 0.1..=16.0).text("Scale"));
         ui.add(egui::Slider::new(&mut self.params.warp_strength, 0.0..=1.0).text("Strength"));
+        ui.add(egui::Slider::new(&mut self.params.amplitude, 0.0..=2.0).text("Amplitude"));
+        ui.add(egui::Slider::new(&mut self.params.gain, 0.0..=1.0).text("Gain"));
         ui.add(egui::Slider::new(&mut self.params.octaves, 1..=8).text("Octaves"));
         ui.add(egui::Slider::new(&mut self.params.lacunarity, 1.0..=4.0).text("Lacunarity"));
 
@@ -69,9 +75,13 @@ impl ParameterizedScene for DomainWarping {
 impl SceneFrame for DomainWarpingFrame {
     fn get_pixel_color(&self, coord: Vec2<f32>, _time: f32) -> Color {
         let noise_coord = coord * self.params.scale + self.time_scaled;
-        let offset = noise_coord.fbm(self.params.octaves, 0.5, 0.5, self.params.lacunarity, |coord| {
-            coord.noise_simplex()
-        }) * self.params.warp_strength;
+        let offset = noise_coord.fbm(
+            self.params.octaves,
+            self.params.amplitude,
+            self.params.gain,
+            self.params.lacunarity,
+            |coord| coord.noise_simplex(),
+        ) * self.params.warp_strength;
 
         let warped_coord = coord + offset;
 

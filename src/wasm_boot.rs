@@ -1,5 +1,5 @@
 use crate::viewer::Viewer;
-use sdf::scenes::{DomainWarping, Scene1, Scene2, SceneInstance, SimplexNoise, SimplexNoise3d, SmoothUnion};
+use sdf::scenes::{DomainWarping, Scene1, Scene2, Scene3, SceneInstance, SimplexNoise, SimplexNoise3d, SmoothUnion};
 use std::cell::RefCell;
 use std::fmt;
 use winit::dpi::LogicalSize;
@@ -48,6 +48,11 @@ const AVAILABLE_SCENES: &[SceneEntry] = &[
     SceneEntry {
         slug: "scene-2",
         create: || SceneInstance::plain(Scene2),
+        markdown: None,
+    },
+    SceneEntry {
+        slug: "scene-3",
+        create: || SceneInstance::parameterized(Scene3::default()),
         markdown: None,
     },
     SceneEntry {
