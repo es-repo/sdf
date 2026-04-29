@@ -44,7 +44,7 @@ impl Scene for Scene3 {
 
 impl ParameterizedScene for Scene3 {
     fn parameters_ui(&mut self, ui: &mut egui::Ui) {
-        ui.add(egui::Slider::new(&mut self.params.scale, 0.1..=16.0).text("Scale"));
+        ui.add(egui::Slider::new(&mut self.params.scale, 0.1..=8.0).text("Scale"));
         ui.add(egui::Slider::new(&mut self.params.amplitude, 0.0..=2.0).text("Amplitude"));
         ui.add(egui::Slider::new(&mut self.params.gain, 0.0..=1.0).text("Gain"));
         ui.add(egui::Slider::new(&mut self.params.octaves, 1..=8).text("Octaves"));
