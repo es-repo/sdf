@@ -14,6 +14,11 @@ web-time = "1.1.0"
 winit = "0.30.13"
 rayon = "1.11.0"
 
+[target.'cfg(not(target_arch = "wasm32"))'.dependencies]
+egui = "0.33.0"
+egui-wgpu = "0.33.0"
+egui-winit = "0.33.0"
+
 [target.'cfg(target_arch = "wasm32")'.dependencies]
 console_error_panic_hook = "0.1.7"
 wasm-bindgen = "0.2.117"

@@ -20,4 +20,7 @@ pub trait SceneFrame: Send + Sync {
 
 pub trait Scene: Send + Sync {
     fn prepare_frame(&self, time: f32) -> Box<dyn SceneFrame>;
+
+    #[cfg(not(target_arch = "wasm32"))]
+    fn ui(&mut self, _ui: &mut egui::Ui) {}
 }

@@ -22,6 +22,10 @@ use core_graphics::event::CGEvent;
 #[cfg(target_os = "macos")]
 use core_graphics::event_source::{CGEventSource, CGEventSourceStateID};
 #[cfg(not(target_arch = "wasm32"))]
+use egui_wgpu::{Renderer, RendererOptions, ScreenDescriptor};
+#[cfg(not(target_arch = "wasm32"))]
+use egui_winit::State as EguiWinitState;
+#[cfg(not(target_arch = "wasm32"))]
 use winit::dpi::PhysicalPosition;
 #[cfg(target_arch = "wasm32")]
 use winit::event_loop::EventLoopProxy;
@@ -34,6 +38,8 @@ pub struct Viewer {
     window: Option<Arc<Window>>,
     pixels: Option<Pixels<'static>>,
     scene: Box<dyn Scene>,
+    #[cfg(not(target_arch = "wasm32"))]
+    egui: Option<EguiState>,
     #[cfg(target_arch = "wasm32")]
     event_proxy: EventLoopProxy<AppEvent>,
     size_logical: LogicalSize<u32>,
@@ -43,6 +49,46 @@ pub struct Viewer {
     show_fps: bool,
 }
 
+#[cfg(not(target_arch = "wasm32"))]
+struct EguiState {
+    context: egui::Context,
+    state: EguiWinitState,
+    renderer: Renderer,
+}
+
+#[cfg(not(target_arch = "wasm32"))]
+struct EguiFrame {
+    paint_jobs: Vec<egui::ClippedPrimitive>,
+    screen_descriptor: ScreenDescriptor,
+    textures_delta: egui::TexturesDelta,
+}
+
+#[cfg(not(target_arch = "wasm32"))]
+impl EguiState {
+    fn new(window: &Window, pixels: &Pixels<'static>) -> Self {
+        let context = egui::Context::default();
+        let state = EguiWinitState::new(
+            context.clone(),
+            egui::ViewportId::ROOT,
+            window,
+            Some(window.scale_factor() as f32),
+            None,
+            None,
+        );
+        let renderer = Renderer::new(
+            &pixels.context().device,
+            pixels.surface_texture_format(),
+            RendererOptions::default(),
+        );
+
+        Self {
+            context,
+            state,
+            renderer,
+        }
+    }
+}
+
 impl Viewer {
     #[cfg(not(target_arch = "wasm32"))]
     pub fn new(size_logical: LogicalSize<u32>, scene: Box<dyn Scene>) -> Self {
@@ -50,6 +96,7 @@ impl Viewer {
             window: None,
             pixels: None,
             scene,
+            egui: None,
             size_logical,
             start_time: Instant::now(),
             fps_counter: FpsCounter::new(),
@@ -73,16 +120,48 @@ impl Viewer {
         }
     }
 
-    fn render(&mut self) {
-        let Some(pixels) = self.pixels.as_mut() else {
-            return;
-        };
+    #[cfg(not(target_arch = "wasm32"))]
+    fn prepare_egui_frame(&mut self) -> Option<EguiFrame> {
+        let window = self.window.as_ref()?;
+        let egui = self.egui.as_mut()?;
+        let raw_input = egui.state.take_egui_input(window);
+        let scene = self.scene.as_mut();
 
-        let frame = pixels.frame_mut();
+        let full_output = egui.context.run(raw_input, |context| {
+            egui::Window::new("Domain Warping")
+                .default_pos(egui::pos2(12.0, 12.0))
+                .default_width(220.0)
+                .show(context, |ui| {
+                    scene.ui(ui);
+                });
+        });
+
+        egui.state.handle_platform_output(window, full_output.platform_output);
+
+        let pixels_per_point = full_output.pixels_per_point;
+        let paint_jobs = egui.context.tessellate(full_output.shapes, pixels_per_point);
+        let surface_size = window.inner_size();
+
+        Some(EguiFrame {
+            paint_jobs,
+            screen_descriptor: ScreenDescriptor {
+                size_in_pixels: [surface_size.width, surface_size.height],
+                pixels_per_point,
+            },
+            textures_delta: full_output.textures_delta,
+        })
+    }
+
+    fn render(&mut self) {
+        if self.pixels.is_none() {
+            return;
+        }
 
         let elapsed = self.start_time.elapsed();
         let time = elapsed.as_secs_f64() as f32;
         self.fps_counter.tick();
+        #[cfg(not(target_arch = "wasm32"))]
+        let egui_frame = self.prepare_egui_frame();
         let prepared_scene = self.scene.prepare_frame(time);
         let width = self.size_logical.width;
         let height = self.size_logical.height;
@@ -91,45 +170,121 @@ impl Viewer {
         let width_f = width as f32;
         let dx = 2.0 / height_f;
 
-        frame.par_chunks_exact_mut(row_stride).enumerate().for_each(|(y, row)| {
-            let y = y as f32;
-            let ny = (height_f - 2.0 * (y + 0.5)) / height_f;
-            let mut nx = (1.0 - width_f) / height_f;
+        {
+            let frame = self.pixels.as_mut().unwrap().frame_mut();
 
-            for pixel in row.chunks_exact_mut(4) {
-                let coord = Vec2::new(nx, ny);
-                let color = prepared_scene.get_pixel_color(coord, time);
-                pixel.copy_from_slice(&color.to_u8_array());
-                nx += dx;
+            frame.par_chunks_exact_mut(row_stride).enumerate().for_each(|(y, row)| {
+                let y = y as f32;
+                let ny = (height_f - 2.0 * (y + 0.5)) / height_f;
+                let mut nx = (1.0 - width_f) / height_f;
+
+                for pixel in row.chunks_exact_mut(4) {
+                    let coord = Vec2::new(nx, ny);
+                    let color = prepared_scene.get_pixel_color(coord, time);
+                    pixel.copy_from_slice(&color.to_u8_array());
+                    nx += dx;
+                }
+            });
+
+            if self.show_fps {
+                let fps_text = format!("{:.0}", self.fps_counter.count());
+                draw_text(
+                    frame,
+                    self.size_logical.width,
+                    self.size_logical.height,
+                    &fps_text,
+                    16,
+                    16,
+                    4,
+                    [255, 255, 255, 255],
+                );
             }
-        });
-
-        if self.show_fps {
-            let fps_text = format!("{:.0}", self.fps_counter.count());
-            draw_text(
-                frame,
-                self.size_logical.width,
-                self.size_logical.height,
-                &fps_text,
-                16,
-                16,
-                4,
-                [255, 255, 255, 255],
-            );
         }
 
-        pixels.render().unwrap();
+        #[cfg(not(target_arch = "wasm32"))]
+        self.render_with_egui(egui_frame);
+        #[cfg(target_arch = "wasm32")]
+        self.pixels.as_ref().unwrap().render().unwrap();
+
         self.window.as_ref().unwrap().request_redraw();
     }
 
+    #[cfg(not(target_arch = "wasm32"))]
+    fn render_with_egui(&mut self, egui_frame: Option<EguiFrame>) {
+        let Some(egui_frame) = egui_frame else {
+            self.pixels.as_ref().unwrap().render().unwrap();
+            return;
+        };
+        let Some(egui) = self.egui.as_mut() else {
+            self.pixels.as_ref().unwrap().render().unwrap();
+            return;
+        };
+
+        self.pixels
+            .as_ref()
+            .unwrap()
+            .render_with(|encoder, render_target, context| {
+                context.scaling_renderer.render(encoder, render_target);
+
+                for (texture_id, image_delta) in &egui_frame.textures_delta.set {
+                    egui.renderer
+                        .update_texture(&context.device, &context.queue, *texture_id, image_delta);
+                }
+
+                let command_buffers = egui.renderer.update_buffers(
+                    &context.device,
+                    &context.queue,
+                    encoder,
+                    &egui_frame.paint_jobs,
+                    &egui_frame.screen_descriptor,
+                );
+
+                context.queue.submit(command_buffers);
+
+                {
+                    let render_pass = encoder.begin_render_pass(&pixels::wgpu::RenderPassDescriptor {
+                        label: Some("egui_render_pass"),
+                        color_attachments: &[Some(pixels::wgpu::RenderPassColorAttachment {
+                            view: render_target,
+                            resolve_target: None,
+                            ops: pixels::wgpu::Operations {
+                                load: pixels::wgpu::LoadOp::Load,
+                                store: pixels::wgpu::StoreOp::Store,
+                            },
+                            depth_slice: None,
+                        })],
+                        depth_stencil_attachment: None,
+                        timestamp_writes: None,
+                        occlusion_query_set: None,
+                    });
+
+                    egui.renderer.render(
+                        &mut render_pass.forget_lifetime(),
+                        &egui_frame.paint_jobs,
+                        &egui_frame.screen_descriptor,
+                    );
+                }
+
+                for texture_id in &egui_frame.textures_delta.free {
+                    egui.renderer.free_texture(texture_id);
+                }
+
+                Ok(())
+            })
+            .unwrap();
+    }
+
     fn handle_window_event(&mut self, event_loop: &ActiveEventLoop, event: WindowEvent) {
+        let gui_consumed = self.handle_gui_window_event(&event);
+
         match event {
             WindowEvent::CloseRequested => event_loop.exit(),
 
             WindowEvent::RedrawRequested => self.render(),
 
             WindowEvent::KeyboardInput { event, .. } => {
-                if event.state == ElementState::Pressed
+                if !gui_consumed
+                    && event.state == ElementState::Pressed
                     && !event.repeat
                     && matches!(event.physical_key, PhysicalKey::Code(KeyCode::KeyF))
                 {
@@ -168,6 +323,28 @@ impl Viewer {
 
             _ => {}
         }
+    }
+
+    #[cfg(not(target_arch = "wasm32"))]
+    fn handle_gui_window_event(&mut self, event: &WindowEvent) -> bool {
+        let Some(window) = self.window.as_ref() else {
+            return false;
+        };
+        let Some(egui) = self.egui.as_mut() else {
+            return false;
+        };
+
+        let response = egui.state.on_window_event(window, event);
+        if response.repaint {
+            window.request_redraw();
+        }
+
+        response.consumed
+    }
+
+    #[cfg(target_arch = "wasm32")]
+    fn handle_gui_window_event(&mut self, _event: &WindowEvent) -> bool {
+        false
     }
 
     #[cfg(target_arch = "wasm32")]
@@ -264,7 +441,7 @@ impl ApplicationHandler<()> for Viewer {
             return;
         }
 
-        self.prepare_window(event_loop, self.base_window_attributes());
+        let window = self.prepare_window(event_loop, self.base_window_attributes());
         let surface_texture = self.create_surface_texture();
 
         let pixels = pixels::PixelsBuilder::new(self.size_logical.width, self.size_logical.height, surface_texture)
@@ -272,6 +449,7 @@ impl ApplicationHandler<()> for Viewer {
             .build()
             .unwrap();
 
+        self.egui = Some(EguiState::new(&window, &pixels));
         self.pixels = Some(pixels);
     }
 
