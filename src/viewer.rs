@@ -116,10 +116,22 @@ impl Viewer {
     }
 
     fn prepare_egui_frame(&mut self) -> Option<EguiFrame> {
+        let surface_size = self.size_logical.to_physical(self.scale_factor);
         let scene = self.scene.parameterized_scene_mut()?;
         let window = self.window.as_ref()?;
         let egui = self.egui.as_mut()?;
-        let raw_input = egui.state.take_egui_input(window);
+        let mut raw_input = egui.state.take_egui_input(window);
+
+        // On web, window.inner_size() can lag behind the CSS-sized canvas.
+        // Keep egui layout and scissor rectangles tied to the pixels surface.
+        let pixels_per_point = egui_winit::pixels_per_point(&egui.context, window);
+        let screen_size_in_points = egui::vec2(
+            surface_size.width as f32 / pixels_per_point,
+            surface_size.height as f32 / pixels_per_point,
+        );
+        let screen_rect = egui::Rect::from_min_size(egui::Pos2::ZERO, screen_size_in_points);
+        raw_input.screen_rect = Some(screen_rect);
+        raw_input.viewports.entry(raw_input.viewport_id).or_default().inner_rect = Some(screen_rect);
 
         let full_output = egui.context.run(raw_input, |context| {
             let original_style = context.style();
@@ -150,7 +162,6 @@ impl Viewer {
 
         let pixels_per_point = full_output.pixels_per_point;
         let paint_jobs = egui.context.tessellate(full_output.shapes, pixels_per_point);
-        let surface_size = window.inner_size();
 
         Some(EguiFrame {
             paint_jobs,
