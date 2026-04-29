@@ -48,20 +48,20 @@ This scene uses simplex noise layered with fractal Brownian motion, or FBM, to c
 :::code-tabs domain-warping-offset
 ```rust
 let noise_coord = coord * scale + time_scaled;
-let offset = noise_coord.fbm(octaves, 0.5, 0.5, 2.0, |coord| coord.noise_simplex())
+let offset = noise_coord.fbm(octaves, 0.5, 0.5, lacunarity, |coord| coord.noise_simplex())
     * warp_strength;
 let warped_coord = coord + offset;
 ```
 
 ```wgsl
 let noise_coord = coord * scale + time_scaled;
-let offset = fbm(noise_coord, octaves, 0.5, 0.5, 2.0) * warp_strength;
+let offset = fbm(noise_coord, octaves, 0.5, 0.5, lacunarity) * warp_strength;
 let warped_coord = coord + vec2f(offset);
 ```
 
 ```glsl
 vec2 noiseCoord = coord * scale + timeScaled;
-float offset = fbm(noiseCoord, octaves, 0.5, 0.5, 2.0) * warpStrength;
+float offset = fbm(noiseCoord, octaves, 0.5, 0.5, lacunarity) * warpStrength;
 vec2 warpedCoord = coord + vec2(offset);
 ```
 :::
@@ -97,6 +97,8 @@ vec2 warpedCoord = coord + offset;
 
 `octaves` controls how many FBM layers are added together. One octave is smooth and simple. More octaves add finer detail on top of the broad deformation.
 
+`lacunarity` controls how much the noise frequency increases between octaves. The default value is `2.0`, so each octave samples the noise field at twice the previous frequency.
+
 ## Why FBM Is Used
 
 A single simplex-noise sample creates one smooth field. FBM combines several samples at increasing frequencies and decreasing amplitudes:
@@ -121,6 +123,6 @@ amplitude *= gain;
 ```
 :::
 
-In this scene the lacunarity is `2.0`, so each octave samples the noise field at twice the previous frequency.
+Higher lacunarity values make the added FBM detail shrink faster from octave to octave. Lower values keep neighboring octaves closer in scale.
 
 After arbitrary warping, the returned SDF value is no longer a perfect Euclidean distance to the visible boundary. For this scene, that is fine: the sign of the field still gives a useful inside/outside test, and the warped boundary is the visual effect.
