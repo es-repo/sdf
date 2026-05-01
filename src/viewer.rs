@@ -1,13 +1,13 @@
 use crate::fps_counter::FpsCounter;
 use font8x8::UnicodeFonts;
-use pixels::Pixels;
+use pixels::{Pixels, ScalingMode};
 use rayon::prelude::*;
 use sdf::scenes::SceneInstance;
 use sdf::{ColorExt, Vec2};
 use std::sync::Arc;
 use web_time::Instant;
 use winit::application::ApplicationHandler;
-use winit::dpi::LogicalSize;
+use winit::dpi::{LogicalSize, PhysicalSize};
 use winit::event::{ElementState, WindowEvent};
 use winit::event_loop::ActiveEventLoop;
 use winit::keyboard::{KeyCode, PhysicalKey};
@@ -116,14 +116,20 @@ impl Viewer {
     }
 
     fn prepare_egui_frame(&mut self) -> Option<EguiFrame> {
-        let surface_size = self.size_logical.to_physical(self.scale_factor);
         let scene = self.scene.parameterized_scene_mut()?;
         let window = self.window.as_ref()?;
         let egui = self.egui.as_mut()?;
         let mut raw_input = egui.state.take_egui_input(window);
 
-        // On web, window.inner_size() can lag behind the CSS-sized canvas.
-        // Keep egui layout and scissor rectangles tied to the pixels surface.
+        // Browser device-pixel sizes can truncate fractional CSS pixels while
+        // LogicalSize::to_physical can round them up. Keep egui's scissor
+        // rectangles no larger than the actual render target.
+        let expected_surface_size = self.size_logical.to_physical::<u32>(self.scale_factor);
+        let window_surface_size = window.inner_size();
+        let surface_size = PhysicalSize::new(
+            expected_surface_size.width.min(window_surface_size.width),
+            expected_surface_size.height.min(window_surface_size.height),
+        );
         let pixels_per_point = egui_winit::pixels_per_point(&egui.context, window);
         let screen_size_in_points = egui::vec2(
             surface_size.width as f32 / pixels_per_point,
@@ -458,10 +464,11 @@ impl ApplicationHandler<()> for Viewer {
         let window = self.prepare_window(event_loop, self.base_window_attributes());
         let surface_texture = self.create_surface_texture();
 
-        let pixels = pixels::PixelsBuilder::new(self.size_logical.width, self.size_logical.height, surface_texture)
+        let mut pixels = pixels::PixelsBuilder::new(self.size_logical.width, self.size_logical.height, surface_texture)
             .enable_vsync(true)
             .build()
             .unwrap();
+        pixels.set_scaling_mode(ScalingMode::Fill);
 
         self.egui = Some(EguiState::new(&window, &pixels));
         self.pixels = Some(pixels);
@@ -496,13 +503,14 @@ impl ApplicationHandler<AppEvent> for Viewer {
         };
 
         wasm_bindgen_futures::spawn_local(async move {
-            let pixels = pixels::PixelsBuilder::new(width, height, surface_texture)
+            let mut pixels = pixels::PixelsBuilder::new(width, height, surface_texture)
                 .wgpu_backend(pixels::wgpu::Backends::GL)
                 .device_descriptor(device_descriptor)
                 .enable_vsync(true)
                 .build_async()
                 .await
                 .unwrap();
+            pixels.set_scaling_mode(ScalingMode::Fill);
 
             proxy.send_event(AppEvent::PixelsReady(pixels)).unwrap();
         });
