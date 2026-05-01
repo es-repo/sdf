@@ -6,6 +6,7 @@ pub trait ColorExt {
     fn blend(&self, dst: Color) -> Color;
     fn lerp(&self, other: Color, t: f32) -> Color;
     fn lerp_gray(&self, value: f32, t: f32) -> Color;
+    fn with_alpha(&self, alpha: f64) -> Color;
 }
 
 impl ColorExt for Color {
@@ -60,5 +61,14 @@ impl ColorExt for Color {
             },
             t,
         )
+    }
+
+    fn with_alpha(&self, alpha: f64) -> Color {
+        Color {
+            r: self.r,
+            g: self.g,
+            b: self.b,
+            a: alpha,
+        }
     }
 }
