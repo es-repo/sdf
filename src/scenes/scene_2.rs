@@ -52,9 +52,7 @@ impl SceneFrame for Scene2Frame {
                 g: (0.5 + 0.6 * wave * f) as f64,
                 b: (0.5 + 0.6 * f) as f64,
                 a: 1.0,
-            });
-
-            color
+            })
         }
     }
 }
