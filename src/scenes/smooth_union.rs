@@ -32,12 +32,12 @@ impl SceneFrame for SmoothUnionFrame {
 
 impl Scene for SmoothUnion {
     fn prepare_frame(&self, time: f32) -> Box<dyn SceneFrame> {
-        let half_time = time * 0.5;
+        let time_scaled = time * 0.5;
 
         Box::new(SmoothUnionFrame {
             circle_1: Circle {
                 radius: 0.3,
-                center: Vec2::new(0.5 * half_time.sin(), 0.0),
+                center: Vec2::new(0.5 * time_scaled.sin(), 0.0),
                 color: Color {
                     r: 1.0,
                     g: 0.3,
@@ -47,7 +47,7 @@ impl Scene for SmoothUnion {
             },
             circle_2: Circle {
                 radius: 0.3,
-                center: Vec2::new(-0.5 * half_time.cos(), 0.0),
+                center: Vec2::new(-0.5 * time_scaled.cos(), 0.0),
                 color: Color {
                     r: 0.3,
                     g: 1.0,

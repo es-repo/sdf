@@ -9,12 +9,12 @@ pub struct Circle {
 
 impl Circle {
     #[allow(dead_code)]
-    pub fn dist_squared(&self, other: &Vec2<f32>) -> f32 {
-        self.center.dist_squared(other) - self.radius
+    pub fn dist_squared(&self, v: &Vec2<f32>) -> f32 {
+        self.center.dist_squared(v) - self.radius
     }
 
-    pub fn dist_squared_radius_squared(&self, other: &Vec2<f32>) -> f32 {
-        self.center.dist_squared(other) - self.radius * self.radius
+    pub fn dist_squared_radius_squared(&self, v: &Vec2<f32>) -> f32 {
+        self.center.dist_squared(v) - self.radius * self.radius
     }
 }
 
