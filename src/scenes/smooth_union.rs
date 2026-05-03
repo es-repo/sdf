@@ -1,5 +1,5 @@
 use crate::scenes::{Scene, SceneFrame};
-use crate::{Circle, Vec2, lerp, smooth_union};
+use crate::{Circle, Sdf, Vec2, lerp, smooth_union};
 use pixels::wgpu::Color;
 
 pub struct SmoothUnion;

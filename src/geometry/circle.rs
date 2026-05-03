@@ -1,4 +1,4 @@
-use super::Vec2;
+use super::{Sdf, Vec2};
 use pixels::wgpu::Color;
 
 pub struct Circle {
@@ -16,8 +16,10 @@ impl Circle {
     pub fn dist_squared_radius_squared(&self, other: &Vec2<f32>) -> f32 {
         self.center.dist_squared(other) - self.radius * self.radius
     }
+}
 
-    pub fn dist(&self, other: &Vec2<f32>) -> f32 {
-        self.center.dist(other) - self.radius
+impl Sdf for Circle {
+    fn dist(&self, v: &Vec2<f32>) -> f32 {
+        self.center.dist(v) - self.radius
     }
 }
