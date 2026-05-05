@@ -1,5 +1,5 @@
 use crate::scenes::{ParameterizedScene, Scene, SceneFrame};
-use crate::{Fbm, NoiseSimplex, Vec2, Vec3};
+use crate::{ColorExt, Fbm, NoiseSimplex, Vec2, Vec3};
 use pixels::wgpu::Color;
 
 #[derive(Clone, Copy)]
@@ -71,11 +71,6 @@ impl SceneFrame for Scene3Frame {
 
         f = 0.5 + 0.5 * f;
 
-        Color {
-            r: (f * f) as f64,
-            g: f as f64,
-            b: f as f64,
-            a: 1.0,
-        }
+        Color::rgb(f * f, f, f)
     }
 }

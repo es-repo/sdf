@@ -1,7 +1,7 @@
 use pixels::wgpu::Color;
 
 use crate::scenes::{Scene, SceneFrame};
-use crate::{Fbm, NoiseSimplex, Vec2};
+use crate::{ColorExt, Fbm, NoiseSimplex, Vec2};
 
 pub struct SimplexNoise;
 
@@ -37,11 +37,6 @@ impl SceneFrame for SimplexNoiseFrame {
 
         f = 0.5 + 0.5 * f;
 
-        Color {
-            r: f as f64,
-            g: f as f64,
-            b: f as f64,
-            a: 1.0,
-        }
+        Color::rgb(f, f, f)
     }
 }

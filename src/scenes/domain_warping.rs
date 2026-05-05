@@ -1,5 +1,5 @@
 use crate::scenes::{ParameterizedScene, Scene, SceneFrame};
-use crate::{Circle, Fbm, NoiseSimplex, Sdf, Vec2};
+use crate::{Circle, ColorExt, Fbm, NoiseSimplex, Sdf, Vec2};
 use pixels::wgpu::Color;
 
 #[derive(Clone, Copy)]
@@ -41,12 +41,7 @@ impl Scene for DomainWarping {
         let circle = Circle {
             center: Vec2::new(0.0, 0.0),
             radius: 0.5,
-            color: Color {
-                r: 0.3,
-                g: 1.0,
-                b: 0.4,
-                a: 1.0,
-            },
+            color: Color::rgb(0.3, 1.0, 0.4),
         };
 
         Box::new(DomainWarpingFrame {
@@ -87,6 +82,10 @@ impl SceneFrame for DomainWarpingFrame {
 
         let dist = self.circle.dist(&warped_coord);
 
-        if dist < 0.0 { self.circle.color } else { Color::BLACK }
+        if dist < 0.0 {
+            self.circle.color
+        } else {
+            Color::BLACK
+        }
     }
 }

@@ -1,7 +1,7 @@
 use pixels::wgpu::Color;
 
 use crate::scenes::{Scene, SceneFrame};
-use crate::{Circle, ColorExt, Fbm, NoiseSimplex, Vec2, smooth_union};
+use crate::{smooth_union, Circle, ColorExt, Fbm, NoiseSimplex, Vec2};
 
 pub struct Scene2;
 
@@ -29,30 +29,17 @@ impl SceneFrame for Scene2Frame {
         } else {
             let f = coord.fbm_rotated(4, 0.5, 0.5, |coord| coord.noise_simplex());
 
-            let mut color = Color {
-                r: (0.5 + 0.5 * f) as f64,
-                g: (0.5 + 0.5 * f) as f64,
-                b: (0.5 + 0.5 * f) as f64,
-                a: 0.0,
-            };
+            let value = 0.5 + 0.5 * f;
+            let mut color = Color::rgba(value, value, value, 0.0);
 
             if circle_1_dist < 0.1 {
-                color = Color {
-                    r: ((-circle_1_dist * 50.0).exp()) as f64,
-                    g: ((-circle_1_dist * 50.0).exp()) as f64,
-                    b: ((-circle_1_dist * 50.0).exp()) as f64,
-                    a: ((-circle_1_dist * 50.0).exp()) as f64,
-                };
+                let value = (-circle_1_dist * 50.0).exp();
+                color = Color::rgba(value, value, value, value);
             }
 
             let wave = 0.5 + (circle_1_dist * 10.0 - self.time_sin * 5.0).sin();
 
-            color.blend(Color {
-                r: (0.5 + 0.6 * wave * f) as f64,
-                g: (0.5 + 0.6 * wave * f) as f64,
-                b: (0.5 + 0.6 * f) as f64,
-                a: 1.0,
-            })
+            color.blend(Color::rgb(0.5 + 0.6 * wave * f, 0.5 + 0.6 * wave * f, 0.5 + 0.6 * f))
         }
     }
 }
@@ -68,22 +55,12 @@ impl Scene for Scene2 {
             circle_1: Circle {
                 radius: 0.0,
                 center: Vec2::new(0.5 * time2_sin, 0.35 * time_sin * time2_cos),
-                color: Color {
-                    r: 1.0,
-                    g: 0.9,
-                    b: 0.9,
-                    a: 1.0,
-                },
+                color: Color::rgb(1.0, 0.9, 0.9),
             },
             circle_2: Circle {
                 radius: 0.0,
                 center: Vec2::new(-0.5 * time2_sin, 0.35 * time_cos * time2_sin),
-                color: Color {
-                    r: 1.0,
-                    g: 0.3,
-                    b: 0.4,
-                    a: 1.0,
-                },
+                color: Color::rgb(1.0, 0.3, 0.4),
             },
             time_sin,
         })
