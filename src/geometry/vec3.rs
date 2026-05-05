@@ -41,6 +41,10 @@ impl Vec3<f32> {
         Self::new(self.x.floor(), self.y.floor(), self.z.floor())
     }
 
+    pub fn abs(self) -> Self {
+        Self::new(self.x.abs(), self.y.abs(), self.z.abs())
+    }
+
     /*pub fn fract(self) -> Self {
         Self::new(self.x.fract(), self.y.fract(), self.z.fract())
     }*/

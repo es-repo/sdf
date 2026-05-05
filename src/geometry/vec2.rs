@@ -45,6 +45,10 @@ impl Vec2<f32> {
         Self::new(self.x.floor(), self.y.floor())
     }
 
+    pub fn abs(self) -> Self {
+        Self::new(self.x.abs(), self.y.abs())
+    }
+
     /*pub fn fract(self) -> Self {
         Self::new(self.x.fract(), self.y.fract())
     }*/
