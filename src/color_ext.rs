@@ -2,6 +2,19 @@ use crate::lerp;
 use pixels::wgpu::Color;
 
 pub trait ColorExt {
+    /// Creates an opaque color from normalized RGB channels.
+    fn rgb(r: f32, g: f32, b: f32) -> Self
+    where
+        Self: Sized,
+    {
+        Self::rgba(r, g, b, 1.0)
+    }
+
+    /// Creates a color from normalized RGBA channels.
+    fn rgba(r: f32, g: f32, b: f32, a: f32) -> Self
+    where
+        Self: Sized;
+
     /// Converts normalized RGBA channels to 8-bit channel values.
     fn to_u8_array(&self) -> [u8; 4];
 
@@ -19,6 +32,15 @@ pub trait ColorExt {
 }
 
 impl ColorExt for Color {
+    fn rgba(r: f32, g: f32, b: f32, a: f32) -> Self {
+        Self {
+            r: r as f64,
+            g: g as f64,
+            b: b as f64,
+            a: a as f64,
+        }
+    }
+
     fn to_u8_array(&self) -> [u8; 4] {
         [
             (self.r * 255.0) as u8,
