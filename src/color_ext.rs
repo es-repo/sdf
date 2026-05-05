@@ -2,10 +2,19 @@ use crate::lerp;
 use pixels::wgpu::Color;
 
 pub trait ColorExt {
+    /// Converts normalized RGBA channels to 8-bit channel values.
     fn to_u8_array(&self) -> [u8; 4];
+
+    /// Alpha-composites this color over the destination color.
     fn blend(&self, dst: Color) -> Color;
+
+    /// Linearly interpolates each channel toward another color.
     fn lerp(&self, other: Color, t: f32) -> Color;
+
+    /// Linearly interpolates RGB channels toward a gray value, preserving alpha.
     fn lerp_gray(&self, value: f32, t: f32) -> Color;
+
+    /// Returns this color with a replaced alpha channel.
     fn with_alpha(&self, alpha: f64) -> Color;
 }
 
