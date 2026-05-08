@@ -49,12 +49,24 @@ impl Vec2<f32> {
         Self::new(self.x.abs(), self.y.abs())
     }
 
+    pub fn min(self, other: Self) -> Self {
+        Self::new(self.x.min(other.x), self.y.min(other.y))
+    }
+
+    pub fn max(self, other: Self) -> Self {
+        Self::new(self.x.max(other.x), self.y.max(other.y))
+    }
+
     /*pub fn fract(self) -> Self {
         Self::new(self.x.fract(), self.y.fract())
     }*/
 
     pub fn dot(self, other: Self) -> f32 {
         self.x * other.x + self.y * other.y
+    }
+
+    pub fn cross(self, other: Self) -> f32 {
+        self.x * other.y - self.y * other.x
     }
 
     pub fn rotate(self, angle: f32) -> Self {

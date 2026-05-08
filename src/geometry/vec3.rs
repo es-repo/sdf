@@ -45,12 +45,28 @@ impl Vec3<f32> {
         Self::new(self.x.abs(), self.y.abs(), self.z.abs())
     }
 
+    pub fn min(self, other: Self) -> Self {
+        Self::new(self.x.min(other.x), self.y.min(other.y), self.z.min(other.z))
+    }
+
+    pub fn max(self, other: Self) -> Self {
+        Self::new(self.x.max(other.x), self.y.max(other.y), self.z.max(other.z))
+    }
+
     /*pub fn fract(self) -> Self {
         Self::new(self.x.fract(), self.y.fract(), self.z.fract())
     }*/
 
     pub fn dot(self, other: Self) -> f32 {
         self.x * other.x + self.y * other.y + self.z * other.z
+    }
+
+    pub fn cross(self, other: Self) -> Self {
+        Self::new(
+            self.y * other.z - self.z * other.y,
+            self.z * other.x - self.x * other.z,
+            self.x * other.y - self.y * other.x,
+        )
     }
 
     pub fn rotate(self, axis: Self, angle: f32) -> Self {
