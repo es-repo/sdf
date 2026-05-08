@@ -21,9 +21,11 @@ impl SceneFrame for SdfFrame {
         let r_dist = self.rectangle.dist_round(&coord, r);
         let t_dist = self.triangle.dist_round(&coord, r);
 
-        let smooth_blend_radius = 0.1 + (0.5 + 0.5 * time.sin()) * 0.3;
+        let (dist, color) = min_pair((c_dist, self.circle.color), (r_dist, self.rectangle.color));
+        let (dist, color) = min_pair((dist, color), (t_dist, self.triangle.color));
 
-        /*let (dist, color) = smooth_union_color(
+        /*let smooth_blend_radius = 0.1 + (0.5 + 0.5 * time.sin()) * 0.3;
+                let (dist, color) = smooth_union_color(
                     c_dist,
                     self.circle.color,
                     r_dist,
@@ -33,17 +35,20 @@ impl SceneFrame for SdfFrame {
 
                 let (dist, color) = smooth_union_color(dist, color, t_dist, self.triangle.color, smooth_blend_radius);
         */
-        let (dist, color) = min_pair((c_dist, self.circle.color), (r_dist, self.rectangle.color));
-        let (dist, color) = min_pair((dist, color), (t_dist, self.triangle.color));
-
         if dist < 0.0 {
             let c = Color::rgb(1.0, 1.0, 1.0);
+            /*let c = Color::rgb(
+                0.5 + (dist * 150.0).sin(),
+                0.5 + (dist * 150.0).sin(),
+                0.5 + (dist * 150.0).sin(),
+            );*/
             let t = dist.abs() / self.circle.radius;
             color.lerp(c, t)
         } else if dist < 0.02 {
             Color::rgb(1.0, 1.0, 1.0)
         } else {
-            let c = Color::rgb(0.1, 0.1, 0.5);
+            let c = Color::rgb(0.1, 0.1, (dist * 150.0).sin());
+
             let t = dist / 1.0;
             Color::BLACK.lerp(c, t)
         }
