@@ -1,5 +1,7 @@
 use crate::viewer::Viewer;
-use sdf::scenes::{DomainWarping, Scene1, Scene2, Scene3, SceneInstance, SimplexNoise, SimplexNoise3d, SmoothUnion};
+use sdf::scenes::{
+    DomainWarping, Scene1, Scene2, Scene3, SceneInstance, Sdf, SimplexNoise, SimplexNoise3d, SmoothUnion,
+};
 use std::cell::RefCell;
 use std::fmt;
 use winit::dpi::LogicalSize;
@@ -54,6 +56,11 @@ const AVAILABLE_SCENES: &[SceneEntry] = &[
         slug: "scene-3",
         create: || SceneInstance::parameterized(Scene3::default()),
         markdown: None,
+    },
+    SceneEntry {
+        slug: "sdf",
+        create: || SceneInstance::plain(Sdf),
+        markdown: Some(include_str!("scenes/sdf.md")),
     },
     SceneEntry {
         slug: "domain-warping",
@@ -172,5 +179,9 @@ pub fn start(scene_slug: &str, scene_width: u32, scene_height: u32) -> Result<()
 }
 
 fn scene_dimension(value: u32, default: u32) -> u32 {
-    if value == 0 { default } else { value.min(default) }
+    if value == 0 {
+        default
+    } else {
+        value.min(default)
+    }
 }

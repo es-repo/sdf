@@ -1,8 +1,6 @@
 use crate::geometry::{Circle, Rectangle, Triangle};
 use crate::scenes::{Scene, SceneFrame};
-use crate::smooth_union::smooth_union_color;
-use crate::{ColorExt, Sdf as _, Vec2, min_pair, smooth_union};
-use egui_wgpu::wgpu::naga::back::msl::TranslationInfo;
+use crate::{ColorExt, Sdf as _, Vec2, min_pair};
 use pixels::wgpu::Color;
 
 pub struct Sdf;
