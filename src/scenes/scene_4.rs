@@ -81,9 +81,9 @@ impl Scene for Scene4 {
         let time_scaled = time * 0.5;
         let bass = audio.bass.clamp(0.0, 1.0) * self.params.volume;
         let triangle_center = Vec2::new(time_scaled.cos(), 0.3 * time_scaled.sin());
-        let circle_scale = 1.0 + bass * 0.65;
-        let rectangle_scale = 1.0 + bass * 0.6;
-        let triangle_scale = 1.0 + bass * 0.65;
+        let circle_scale = 0.7 + bass * 1.2;
+        let rectangle_scale = 0.7 + bass * 1.2;
+        let triangle_scale = 0.7 + bass * 1.2;
 
         Box::new(Scene4Frame {
             circle: Circle {
