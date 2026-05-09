@@ -187,6 +187,7 @@ impl Viewer {
                 .frame(compact_frame)
                 .resizable(false)
                 .collapsible(true)
+                .default_open(false)
                 .show(context, |ui| {
                     scene.parameters_ui(ui);
                 });
