@@ -1,14 +1,20 @@
 #[cfg(not(target_arch = "wasm32"))]
 use rodio::Source;
 use sdf::{AUDIO_SPECTRUM_BINS, AudioAnalysis};
+#[cfg(target_arch = "wasm32")]
+use std::cell::Cell;
 #[cfg(not(target_arch = "wasm32"))]
 use std::fs::File;
 #[cfg(not(target_arch = "wasm32"))]
 use std::path::{Path, PathBuf};
+#[cfg(target_arch = "wasm32")]
+use std::rc::Rc;
 #[cfg(not(target_arch = "wasm32"))]
 use std::time::Instant;
 #[cfg(target_arch = "wasm32")]
 use wasm_bindgen::JsValue;
+#[cfg(target_arch = "wasm32")]
+use web_sys::js_sys::Uint8Array;
 #[cfg(target_arch = "wasm32")]
 use web_sys::{AnalyserNode, AudioContext, HtmlAudioElement, MediaElementAudioSourceNode};
 
@@ -38,10 +44,12 @@ pub struct AudioTrack {
     context: AudioContext,
     analyser: AnalyserNode,
     frequency_data: Vec<u8>,
+    frequency_data_js: Uint8Array,
     analysis: AudioAnalysis,
     volume: f32,
     audio: Option<HtmlAudioElement>,
     source: Option<MediaElementAudioSourceNode>,
+    playing: Rc<Cell<bool>>,
     current_track: Option<&'static str>,
 }
 
@@ -243,10 +251,12 @@ impl AudioTrack {
             context,
             analyser,
             frequency_data: vec![0; 1024],
+            frequency_data_js: Uint8Array::new_with_length(1024),
             analysis: AudioAnalysis::default(),
             volume: 1.0,
             audio: None,
             source: None,
+            playing: Rc::new(Cell::new(false)),
             current_track: None,
         })
     }
@@ -261,6 +271,7 @@ impl AudioTrack {
 
         self.stop_current();
         self.current_track = track;
+        self.playing = Rc::new(Cell::new(false));
 
         let Some(track) = track else {
             return;
@@ -300,16 +311,19 @@ impl AudioTrack {
     }
 
     pub fn analysis(&mut self) -> AudioAnalysis {
-        if self.current_track.is_none() {
+        if self.current_track.is_none() || !self.playing.get() {
             return AudioAnalysis::default();
         }
 
         let expected_len = self.analyser.frequency_bin_count() as usize;
         if self.frequency_data.len() != expected_len {
             self.frequency_data.resize(expected_len, 0);
+            self.frequency_data_js = Uint8Array::new_with_length(expected_len as u32);
         }
 
-        self.analyser.get_byte_frequency_data(&mut self.frequency_data);
+        self.analyser
+            .get_byte_frequency_data_with_u8_array(&self.frequency_data_js);
+        self.frequency_data_js.copy_to(&mut self.frequency_data);
         self.analysis = frequency_bytes_to_analysis(&self.frequency_data, self.context.sample_rate());
         self.analysis
     }
@@ -323,6 +337,8 @@ impl AudioTrack {
     }
 
     fn stop_current(&mut self) {
+        self.playing.set(false);
+
         if let Some(audio) = &self.audio {
             let _ = audio.pause();
             audio.set_current_time(0.0);
@@ -337,29 +353,42 @@ impl AudioTrack {
     }
 
     fn resume_and_play(&self) {
-        match self.context.resume() {
-            Ok(promise) => {
-                wasm_bindgen_futures::spawn_local(async move {
+        let context = self.context.clone();
+        let Some(audio) = self.audio.clone() else {
+            return;
+        };
+        let playing = Rc::clone(&self.playing);
+
+        wasm_bindgen_futures::spawn_local(async move {
+            match context.resume() {
+                Ok(promise) => {
                     if let Err(error) = wasm_bindgen_futures::JsFuture::from(promise).await {
                         log_js_error("Failed to resume audio context", error);
+                        return;
                     }
-                });
+                }
+                Err(error) => {
+                    log_js_error("Failed to resume audio context", error);
+                    return;
+                }
             }
-            Err(error) => log_js_error("Failed to resume audio context", error),
-        }
 
-        if let Some(audio) = &self.audio {
             match audio.play() {
                 Ok(promise) => {
-                    wasm_bindgen_futures::spawn_local(async move {
-                        if let Err(error) = wasm_bindgen_futures::JsFuture::from(promise).await {
-                            log_js_error("Failed to play audio", error);
-                        }
-                    });
+                    if let Err(error) = wasm_bindgen_futures::JsFuture::from(promise).await {
+                        log_js_error("Failed to play audio", error);
+                        playing.set(false);
+                        return;
+                    }
+
+                    playing.set(true);
                 }
-                Err(error) => log_js_error("Failed to play audio", error),
+                Err(error) => {
+                    log_js_error("Failed to play audio", error);
+                    playing.set(false);
+                }
             }
-        }
+        });
     }
 
     fn track_path(&self, track: &str) -> String {
