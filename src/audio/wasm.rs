@@ -1,20 +1,19 @@
-use super::analysis::{MAX_FREQUENCY, MIN_FREQUENCY};
-use super::{AUDIO_SPECTRUM_BINS, AudioAnalysis};
-use std::cell::Cell;
+use super::AudioAnalysis;
+use super::analysis::{AudioSmoother, DecodedTrack};
+use std::cell::{Cell, RefCell};
 use std::rc::Rc;
-use wasm_bindgen::JsValue;
-use web_sys::js_sys::Uint8Array;
-use web_sys::{AnalyserNode, AudioContext, HtmlAudioElement, MediaElementAudioSourceNode};
+use wasm_bindgen::{JsCast, JsValue};
+use wasm_bindgen_futures::JsFuture;
+use web_sys::js_sys::ArrayBuffer;
+use web_sys::{AudioBuffer, AudioContext, HtmlAudioElement, Response};
 
 pub struct AudioTrack {
     base_path: String,
     context: AudioContext,
-    analyser: AnalyserNode,
-    frequency_data: Vec<u8>,
-    frequency_data_js: Uint8Array,
+    analysis_track: Rc<RefCell<Option<DecodedTrack>>>,
+    smoother: AudioSmoother,
     volume: f32,
     audio: Option<HtmlAudioElement>,
-    source: Option<MediaElementAudioSourceNode>,
     playing: Rc<Cell<bool>>,
     current_track: Option<&'static str>,
 }
@@ -28,31 +27,14 @@ impl AudioTrack {
                 return None;
             }
         };
-        let analyser = match context.create_analyser() {
-            Ok(analyser) => analyser,
-            Err(error) => {
-                log_js_error("Failed to create audio analyser", error);
-                return None;
-            }
-        };
-
-        analyser.set_fft_size(2048);
-        analyser.set_smoothing_time_constant(super::analysis::SMOOTHING_FACTOR as f64);
-
-        if let Err(error) = analyser.connect_with_audio_node(&context.destination()) {
-            log_js_error("Failed to connect audio analyser", error);
-            return None;
-        }
 
         Some(Self {
             base_path: base_path.into(),
             context,
-            analyser,
-            frequency_data: vec![0; 1024],
-            frequency_data_js: Uint8Array::new_with_length(1024),
+            analysis_track: Rc::new(RefCell::new(None)),
+            smoother: AudioSmoother::new(),
             volume: 1.0,
             audio: None,
-            source: None,
             playing: Rc::new(Cell::new(false)),
             current_track: None,
         })
@@ -69,6 +51,8 @@ impl AudioTrack {
         self.stop_current();
         self.current_track = track;
         self.playing = Rc::new(Cell::new(false));
+        self.analysis_track = Rc::new(RefCell::new(None));
+        self.smoother.reset();
 
         let Some(track) = track else {
             return;
@@ -87,23 +71,8 @@ impl AudioTrack {
         audio.set_loop(true);
         audio.set_volume(self.volume as f64);
 
-        let source = match self.context.create_media_element_source(&audio) {
-            Ok(source) => source,
-            Err(error) => {
-                log_js_error("Failed to create media audio source", error);
-                self.current_track = None;
-                return;
-            }
-        };
-
-        if let Err(error) = source.connect_with_audio_node(&self.analyser) {
-            log_js_error("Failed to connect media audio source", error);
-            self.current_track = None;
-            return;
-        }
-
         self.audio = Some(audio);
-        self.source = Some(source);
+        self.load_analysis_track(path);
         self.resume_and_play();
     }
 
@@ -112,16 +81,16 @@ impl AudioTrack {
             return AudioAnalysis::default();
         }
 
-        let expected_len = self.analyser.frequency_bin_count() as usize;
-        if self.frequency_data.len() != expected_len {
-            self.frequency_data.resize(expected_len, 0);
-            self.frequency_data_js = Uint8Array::new_with_length(expected_len as u32);
-        }
+        let Some(audio) = &self.audio else {
+            return AudioAnalysis::default();
+        };
+        let analysis_track = self.analysis_track.borrow();
+        let Some(track) = analysis_track.as_ref() else {
+            return AudioAnalysis::default();
+        };
 
-        self.analyser
-            .get_byte_frequency_data_with_u8_array(&self.frequency_data_js);
-        self.frequency_data_js.copy_to(&mut self.frequency_data);
-        frequency_bytes_to_analysis(&self.frequency_data, self.context.sample_rate())
+        let analysis = track.analyze(audio.current_time() as f32);
+        self.smoother.smooth(analysis)
     }
 
     pub fn set_volume(&mut self, volume: f32) {
@@ -140,12 +109,9 @@ impl AudioTrack {
             audio.set_current_time(0.0);
         }
 
-        if let Some(source) = &self.source {
-            let _ = source.disconnect();
-        }
-
         self.audio = None;
-        self.source = None;
+        self.analysis_track.borrow_mut().take();
+        self.smoother.reset();
     }
 
     fn resume_and_play(&self) {
@@ -158,7 +124,7 @@ impl AudioTrack {
         wasm_bindgen_futures::spawn_local(async move {
             match context.resume() {
                 Ok(promise) => {
-                    if let Err(error) = wasm_bindgen_futures::JsFuture::from(promise).await {
+                    if let Err(error) = JsFuture::from(promise).await {
                         log_js_error("Failed to resume audio context", error);
                         return;
                     }
@@ -171,7 +137,7 @@ impl AudioTrack {
 
             match audio.play() {
                 Ok(promise) => {
-                    if let Err(error) = wasm_bindgen_futures::JsFuture::from(promise).await {
+                    if let Err(error) = JsFuture::from(promise).await {
                         log_js_error("Failed to play audio", error);
                         playing.set(false);
                         return;
@@ -182,6 +148,22 @@ impl AudioTrack {
                 Err(error) => {
                     log_js_error("Failed to play audio", error);
                     playing.set(false);
+                }
+            }
+        });
+    }
+
+    fn load_analysis_track(&self, path: String) {
+        let context = self.context.clone();
+        let analysis_track = Rc::clone(&self.analysis_track);
+
+        wasm_bindgen_futures::spawn_local(async move {
+            match fetch_decoded_track(&context, &path).await {
+                Ok(track) => {
+                    analysis_track.replace(Some(track));
+                }
+                Err(error) => {
+                    log_js_error("Failed to prepare audio analysis", error);
                 }
             }
         });
@@ -198,36 +180,48 @@ impl AudioTrack {
     }
 }
 
-fn log_js_error(message: &str, error: JsValue) {
-    web_sys::console::error_2(&JsValue::from_str(message), &error);
+async fn fetch_decoded_track(context: &AudioContext, path: &str) -> Result<DecodedTrack, JsValue> {
+    let window = web_sys::window().ok_or_else(|| JsValue::from_str("Window is not available"))?;
+    let response = JsFuture::from(window.fetch_with_str(path)).await?;
+    let response = response.dyn_into::<Response>()?;
+    let array_buffer = JsFuture::from(response.array_buffer()?).await?;
+    let array_buffer = array_buffer.dyn_into::<ArrayBuffer>()?;
+    let audio_buffer = JsFuture::from(context.decode_audio_data(&array_buffer)?).await?;
+    let audio_buffer = audio_buffer.dyn_into::<AudioBuffer>()?;
+
+    audio_buffer_to_track(&audio_buffer).map_err(|error| JsValue::from_str(&error))
 }
 
-fn frequency_bytes_to_analysis(data: &[u8], sample_rate: f32) -> AudioAnalysis {
-    let mut spectrum = [0.0; AUDIO_SPECTRUM_BINS];
+fn audio_buffer_to_track(buffer: &AudioBuffer) -> Result<DecodedTrack, String> {
+    let channels = buffer.number_of_channels() as usize;
+    let sample_rate = buffer.sample_rate() as u32;
+    let frame_count = buffer.length() as usize;
 
-    if data.is_empty() {
-        return AudioAnalysis::default();
+    if channels == 0 || sample_rate == 0 || frame_count == 0 {
+        return Err("decoded audio has no samples".to_owned());
     }
 
-    let nyquist = sample_rate * 0.5;
-    let max_frequency = MAX_FREQUENCY.min(nyquist.max(MIN_FREQUENCY));
-    let frequency_to_index = |frequency: f32| -> usize {
-        ((frequency / nyquist) * data.len() as f32)
-            .floor()
-            .clamp(0.0, (data.len() - 1) as f32) as usize
-    };
+    let mut channel_data = Vec::with_capacity(channels);
 
-    for (bin, value) in spectrum.iter_mut().enumerate() {
-        let start_t = bin as f32 / AUDIO_SPECTRUM_BINS as f32;
-        let end_t = (bin + 1) as f32 / AUDIO_SPECTRUM_BINS as f32;
-        let start_frequency = MIN_FREQUENCY * (max_frequency / MIN_FREQUENCY).powf(start_t);
-        let end_frequency = MIN_FREQUENCY * (max_frequency / MIN_FREQUENCY).powf(end_t);
-        let start = frequency_to_index(start_frequency);
-        let end = frequency_to_index(end_frequency).max(start + 1).min(data.len());
-        let sum = data[start..end].iter().map(|value| *value as f32 / 255.0).sum::<f32>();
-
-        *value = sum / (end - start) as f32;
+    for channel in 0..channels {
+        channel_data.push(
+            buffer
+                .get_channel_data(channel as u32)
+                .map_err(|_| format!("failed to read audio channel {channel}"))?,
+        );
     }
 
-    AudioAnalysis::from_spectrum(spectrum)
+    let mut samples = Vec::with_capacity(frame_count * channels);
+
+    for frame in 0..frame_count {
+        for channel in &channel_data {
+            samples.push(channel[frame]);
+        }
+    }
+
+    DecodedTrack::new(samples, sample_rate, channels)
+}
+
+fn log_js_error(message: &str, error: JsValue) {
+    web_sys::console::error_2(&JsValue::from_str(message), &error);
 }
