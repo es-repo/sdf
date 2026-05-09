@@ -1,7 +1,7 @@
 use crate::geometry::{Circle, Rectangle, Triangle};
 use crate::scenes::{ParameterizedScene, Scene, SceneFrame};
 use crate::smooth_union::smooth_union_color;
-use crate::{AudioAnalysis, ColorExt, Sdf as _, Vec2, smoothstep};
+use crate::{AudioAnalysis, ColorExt, Sdf as _, Vec2};
 use pixels::wgpu::Color;
 
 const AUDIO_TRACK: &str = "assets/audio/shadertoy_track1.mp3";
@@ -79,7 +79,7 @@ impl Scene for Scene4 {
 
     fn prepare_frame_with_audio(&self, time: f32, audio: &AudioAnalysis) -> Box<dyn SceneFrame> {
         let time_scaled = time * 0.5;
-        let bass = audio.bass.clamp(0.0, 1.0);
+        let bass = audio.bass.clamp(0.0, 1.0) * self.params.volume;
         let triangle_center = Vec2::new(time_scaled.cos(), 0.3 * time_scaled.sin());
         let circle_scale = 1.0 + bass * 0.65;
         let rectangle_scale = 1.0 + bass * 0.6;
