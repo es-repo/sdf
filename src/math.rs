@@ -22,11 +22,7 @@ where
 /// The second value is carried along unchanged. Floating-point values are
 /// compared with `total_cmp`, so `NaN` ordering is deterministic.
 pub fn min_pair<T>(a: (f32, T), b: (f32, T)) -> (f32, T) {
-    if a.0.total_cmp(&b.0).is_le() {
-        a
-    } else {
-        b
-    }
+    if a.0.total_cmp(&b.0).is_le() { a } else { b }
 }
 
 /// Returns the pair whose first value is larger.
@@ -34,11 +30,7 @@ pub fn min_pair<T>(a: (f32, T), b: (f32, T)) -> (f32, T) {
 /// The second value is carried along unchanged. Floating-point values are
 /// compared with `total_cmp`, so `NaN` ordering is deterministic.
 pub fn max_pair<T>(a: (f32, T), b: (f32, T)) -> (f32, T) {
-    if a.0.total_cmp(&b.0).is_ge() {
-        a
-    } else {
-        b
-    }
+    if a.0.total_cmp(&b.0).is_ge() { a } else { b }
 }
 
 /// Returns the interpolation parameter for `value` between `a` and `b`.

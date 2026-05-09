@@ -1,4 +1,4 @@
-use crate::{lerp, ColorExt};
+use crate::{ColorExt, lerp};
 use pixels::wgpu::Color;
 
 /// Blends two signed distances into a smooth union.

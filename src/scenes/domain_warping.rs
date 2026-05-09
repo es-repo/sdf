@@ -82,10 +82,6 @@ impl SceneFrame for DomainWarpingFrame {
 
         let dist = self.circle.dist(&warped_coord);
 
-        if dist < 0.0 {
-            self.circle.color
-        } else {
-            Color::BLACK
-        }
+        if dist < 0.0 { self.circle.color } else { Color::BLACK }
     }
 }
