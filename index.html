@@ -358,7 +358,9 @@
     const audioToggle = document.getElementById("audio-toggle");
     let currentScene = resolveScene(new URLSearchParams(window.location.search).get("scene"));
     let docsRenderVersion = 0;
+    let hasUserInteracted = navigator.userActivation?.hasBeenActive ?? false;
     let audioEnabled = false;
+    let audioUserMuted = false;
 
     updateSceneLinks(currentScene);
     updateAudioToggle(currentScene);
@@ -371,6 +373,7 @@
 
     const sceneSize = getSceneHostSize();
     sdf.start(currentScene, sceneSize.width, sceneSize.height);
+    maybeAutoEnableAudio();
     await docsReady;
     observeSceneHostSize();
 
@@ -387,17 +390,18 @@
         });
     }
 
+    document.addEventListener("pointerdown", handleUserInteraction, {capture: true});
+    document.addEventListener("keydown", handleUserInteraction, {capture: true});
+
     audioToggle.addEventListener("click", () => {
-        audioEnabled = !audioEnabled;
+        const nextAudioEnabled = !audioEnabled;
+        const previousAudioUserMuted = audioUserMuted;
 
-        try {
-            sdf.set_audio_enabled(audioEnabled);
-        } catch (error) {
-            audioEnabled = !audioEnabled;
-            console.error(error);
+        audioUserMuted = !nextAudioEnabled;
+
+        if (!setAudioEnabled(nextAudioEnabled)) {
+            audioUserMuted = previousAudioUserMuted;
         }
-
-        updateAudioToggle(currentScene);
     });
 
     window.addEventListener("popstate", async () => {
@@ -420,6 +424,7 @@
         }
 
         sdf.switch_scene(currentScene);
+        maybeAutoEnableAudio();
         await renderSceneDocs(currentScene);
     }
 
@@ -442,6 +447,46 @@
         audioToggle.setAttribute("aria-label", label);
         audioToggle.setAttribute("aria-pressed", String(audioEnabled));
         audioToggle.classList.toggle("active", audioEnabled);
+    }
+
+    function handleUserInteraction(event) {
+        hasUserInteracted = true;
+
+        if (audioToggle.contains(event.target)) {
+            return;
+        }
+
+        if (event.target instanceof Element && event.target.closest("[data-scene-link]")) {
+            return;
+        }
+
+        maybeAutoEnableAudio();
+    }
+
+    function maybeAutoEnableAudio() {
+        if (!hasUserInteracted || audioEnabled || audioUserMuted || !sdf.scene_has_audio(currentScene)) {
+            return;
+        }
+
+        setAudioEnabled(true);
+    }
+
+    function setAudioEnabled(enabled) {
+        const previousAudioEnabled = audioEnabled;
+
+        audioEnabled = enabled;
+
+        try {
+            sdf.set_audio_enabled(audioEnabled);
+        } catch (error) {
+            audioEnabled = previousAudioEnabled;
+            console.error(error);
+            updateAudioToggle(currentScene);
+            return false;
+        }
+
+        updateAudioToggle(currentScene);
+        return true;
     }
 
     async function renderSceneDocs(sceneSlug) {
