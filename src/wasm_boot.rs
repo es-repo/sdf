@@ -15,6 +15,7 @@ pub enum AppEvent {
     PixelsReady(pixels::Pixels<'static>),
     SwitchScene(SceneInstance),
     ResizeScene { width: u32, height: u32 },
+    SetAudioEnabled(bool),
 }
 
 impl fmt::Debug for AppEvent {
@@ -23,6 +24,7 @@ impl fmt::Debug for AppEvent {
             Self::PixelsReady(_) => f.write_str("PixelsReady"),
             Self::SwitchScene(_) => f.write_str("SwitchScene"),
             Self::ResizeScene { .. } => f.write_str("ResizeScene"),
+            Self::SetAudioEnabled(_) => f.write_str("SetAudioEnabled"),
         }
     }
 }
@@ -117,6 +119,15 @@ pub fn scene_markdown(scene_slug: &str) -> String {
 }
 
 #[wasm_bindgen::prelude::wasm_bindgen]
+pub fn scene_has_audio(scene_slug: &str) -> bool {
+    AVAILABLE_SCENES
+        .iter()
+        .find(|scene| scene.slug == scene_slug)
+        .map(|scene| (scene.create)().audio_track().is_some())
+        .unwrap_or(false)
+}
+
+#[wasm_bindgen::prelude::wasm_bindgen]
 pub fn switch_scene(scene_slug: &str) -> Result<(), wasm_bindgen::JsValue> {
     let selected_slug = if available_scene_slugs().any(|candidate| candidate == scene_slug) {
         scene_slug
@@ -132,6 +143,19 @@ pub fn switch_scene(scene_slug: &str) -> Result<(), wasm_bindgen::JsValue> {
         event_proxy
             .send_event(AppEvent::SwitchScene(create_scene(selected_slug)))
             .map_err(|_| wasm_bindgen::JsValue::from_str("Failed to switch scene."))
+    })
+}
+
+#[wasm_bindgen::prelude::wasm_bindgen]
+pub fn set_audio_enabled(enabled: bool) -> Result<(), wasm_bindgen::JsValue> {
+    EVENT_PROXY.with(|event_proxy| {
+        let Some(event_proxy) = event_proxy.borrow().as_ref().cloned() else {
+            return Err(wasm_bindgen::JsValue::from_str("Viewer is not running."));
+        };
+
+        event_proxy
+            .send_event(AppEvent::SetAudioEnabled(enabled))
+            .map_err(|_| wasm_bindgen::JsValue::from_str("Failed to update audio state."))
     })
 }
 

@@ -46,6 +46,8 @@ pub struct Viewer {
     fps_counter: FpsCounter,
     show_fps: bool,
     audio_track: Option<AudioTrack>,
+    #[cfg(target_arch = "wasm32")]
+    audio_enabled: bool,
 }
 
 struct EguiState {
@@ -116,12 +118,21 @@ impl Viewer {
             show_fps: false,
             scale_factor: 1.0,
             audio_track: None,
+            audio_enabled: false,
         }
     }
 
     fn sync_scene_audio(&mut self) {
         let track = self.scene.audio_track();
         let volume = self.scene.audio_volume();
+
+        if !self.is_audio_enabled() {
+            if let Some(audio_track) = self.audio_track.as_mut() {
+                audio_track.play(None);
+            }
+
+            return;
+        }
 
         if track.is_some() && self.audio_track.is_none() {
             self.audio_track = AudioTrack::new(audio_base_path());
@@ -143,6 +154,26 @@ impl Viewer {
 
     fn audio_analysis(&mut self) -> AudioAnalysis {
         self.audio_track.as_mut().map(AudioTrack::analysis).unwrap_or_default()
+    }
+
+    #[cfg(not(target_arch = "wasm32"))]
+    fn is_audio_enabled(&self) -> bool {
+        true
+    }
+
+    #[cfg(target_arch = "wasm32")]
+    fn is_audio_enabled(&self) -> bool {
+        self.audio_enabled
+    }
+
+    #[cfg(target_arch = "wasm32")]
+    fn set_audio_enabled(&mut self, enabled: bool) {
+        self.audio_enabled = enabled;
+        self.sync_scene_audio();
+
+        if let Some(window) = self.window.as_ref() {
+            window.request_redraw();
+        }
     }
 
     fn prepare_egui_frame(&mut self) -> Option<EguiFrame> {
@@ -574,6 +605,7 @@ impl ApplicationHandler<AppEvent> for Viewer {
                 self.window.as_ref().unwrap().request_redraw();
             }
             AppEvent::ResizeScene { width, height } => self.resize_scene(width, height),
+            AppEvent::SetAudioEnabled(enabled) => self.set_audio_enabled(enabled),
         }
     }
 

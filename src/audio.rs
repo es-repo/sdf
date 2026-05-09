@@ -337,10 +337,28 @@ impl AudioTrack {
     }
 
     fn resume_and_play(&self) {
-        let _ = self.context.resume();
+        match self.context.resume() {
+            Ok(promise) => {
+                wasm_bindgen_futures::spawn_local(async move {
+                    if let Err(error) = wasm_bindgen_futures::JsFuture::from(promise).await {
+                        log_js_error("Failed to resume audio context", error);
+                    }
+                });
+            }
+            Err(error) => log_js_error("Failed to resume audio context", error),
+        }
 
         if let Some(audio) = &self.audio {
-            let _ = audio.play();
+            match audio.play() {
+                Ok(promise) => {
+                    wasm_bindgen_futures::spawn_local(async move {
+                        if let Err(error) = wasm_bindgen_futures::JsFuture::from(promise).await {
+                            log_js_error("Failed to play audio", error);
+                        }
+                    });
+                }
+                Err(error) => log_js_error("Failed to play audio", error),
+            }
         }
     }
 
