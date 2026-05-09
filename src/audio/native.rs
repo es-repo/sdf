@@ -1,4 +1,4 @@
-use super::analysis::{MAX_FREQUENCY, MIN_FREQUENCY};
+use super::analysis::{AudioSmoother, MAX_FREQUENCY, MIN_FREQUENCY};
 use super::{AUDIO_SPECTRUM_BINS, AudioAnalysis};
 use rodio::Source;
 use std::fs::File;
@@ -11,6 +11,7 @@ pub struct AudioTrack {
     player: Option<rodio::Player>,
     analysis_track: Option<DecodedTrack>,
     started_at: Option<Instant>,
+    smoother: AudioSmoother,
     volume: f32,
     current_track: Option<&'static str>,
 }
@@ -38,6 +39,7 @@ impl AudioTrack {
             player: None,
             analysis_track: None,
             started_at: None,
+            smoother: AudioSmoother::new(),
             volume: 1.0,
             current_track: None,
         })
@@ -98,7 +100,8 @@ impl AudioTrack {
             return AudioAnalysis::default();
         };
 
-        track.analyze(started_at.elapsed().as_secs_f32())
+        let analysis = track.analyze(started_at.elapsed().as_secs_f32());
+        self.smoother.smooth(analysis)
     }
 
     pub fn set_volume(&mut self, volume: f32) {
@@ -113,6 +116,7 @@ impl AudioTrack {
         self.player = None;
         self.analysis_track = None;
         self.started_at = None;
+        self.smoother.reset();
     }
 }
 

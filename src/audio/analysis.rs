@@ -1,6 +1,7 @@
 pub const AUDIO_SPECTRUM_BINS: usize = 64;
 pub(super) const MIN_FREQUENCY: f32 = 40.0;
 pub(super) const MAX_FREQUENCY: f32 = 12_000.0;
+pub(super) const SMOOTHING_FACTOR: f32 = 0.8;
 
 #[derive(Clone, Copy, Debug)]
 pub struct AudioAnalysis {
@@ -47,6 +48,49 @@ impl AudioAnalysis {
 impl Default for AudioAnalysis {
     fn default() -> Self {
         Self::silence()
+    }
+}
+
+#[cfg(not(target_arch = "wasm32"))]
+pub(super) struct AudioSmoother {
+    spectrum: [f32; AUDIO_SPECTRUM_BINS],
+    initialized: bool,
+}
+
+#[cfg(not(target_arch = "wasm32"))]
+impl AudioSmoother {
+    pub(super) const fn new() -> Self {
+        Self {
+            spectrum: [0.0; AUDIO_SPECTRUM_BINS],
+            initialized: false,
+        }
+    }
+
+    pub(super) fn smooth(&mut self, analysis: AudioAnalysis) -> AudioAnalysis {
+        if !self.initialized {
+            self.spectrum = analysis.spectrum;
+            self.initialized = true;
+
+            return analysis;
+        }
+
+        for (previous, current) in self.spectrum.iter_mut().zip(analysis.spectrum) {
+            *previous = *previous * SMOOTHING_FACTOR + current * (1.0 - SMOOTHING_FACTOR);
+        }
+
+        AudioAnalysis::from_spectrum(self.spectrum)
+    }
+
+    pub(super) fn reset(&mut self) {
+        self.spectrum = [0.0; AUDIO_SPECTRUM_BINS];
+        self.initialized = false;
+    }
+}
+
+#[cfg(not(target_arch = "wasm32"))]
+impl Default for AudioSmoother {
+    fn default() -> Self {
+        Self::new()
     }
 }
 

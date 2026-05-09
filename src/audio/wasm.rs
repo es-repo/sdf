@@ -37,7 +37,7 @@ impl AudioTrack {
         };
 
         analyser.set_fft_size(2048);
-        analyser.set_smoothing_time_constant(0.55);
+        analyser.set_smoothing_time_constant(super::analysis::SMOOTHING_FACTOR as f64);
 
         if let Err(error) = analyser.connect_with_audio_node(&context.destination()) {
             log_js_error("Failed to connect audio analyser", error);
