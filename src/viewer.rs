@@ -1,3 +1,4 @@
+use crate::audio::AudioTrack;
 use crate::fps_counter::FpsCounter;
 use font8x8::UnicodeFonts;
 use pixels::{Pixels, ScalingMode};
@@ -44,6 +45,7 @@ pub struct Viewer {
     start_time: Instant,
     fps_counter: FpsCounter,
     show_fps: bool,
+    audio_track: Option<AudioTrack>,
 }
 
 struct EguiState {
@@ -96,6 +98,7 @@ impl Viewer {
             fps_counter: FpsCounter::new(),
             show_fps: false,
             scale_factor: 1.0,
+            audio_track: None,
         }
     }
 
@@ -112,6 +115,19 @@ impl Viewer {
             fps_counter: FpsCounter::new(),
             show_fps: false,
             scale_factor: 1.0,
+            audio_track: None,
+        }
+    }
+
+    fn sync_scene_audio(&mut self) {
+        let track = self.scene.audio_track();
+
+        if track.is_some() && self.audio_track.is_none() {
+            self.audio_track = AudioTrack::new(audio_base_path());
+        }
+
+        if let Some(audio_track) = self.audio_track.as_mut() {
+            audio_track.play(track);
         }
     }
 
@@ -305,15 +321,20 @@ impl Viewer {
             WindowEvent::RedrawRequested => self.render(),
 
             WindowEvent::KeyboardInput { event, .. } => {
-                if !gui_consumed
-                    && event.state == ElementState::Pressed
-                    && !event.repeat
-                    && matches!(event.physical_key, PhysicalKey::Code(KeyCode::KeyF))
-                {
-                    self.show_fps = !self.show_fps;
-                    self.window.as_ref().unwrap().request_redraw();
+                if event.state == ElementState::Pressed && !event.repeat {
+                    self.sync_scene_audio();
+
+                    if !gui_consumed && matches!(event.physical_key, PhysicalKey::Code(KeyCode::KeyF)) {
+                        self.show_fps = !self.show_fps;
+                        self.window.as_ref().unwrap().request_redraw();
+                    }
                 }
             }
+
+            WindowEvent::MouseInput {
+                state: ElementState::Pressed,
+                ..
+            } => self.sync_scene_audio(),
 
             WindowEvent::Resized(size_physical) => {
                 if size_physical.width > 0 && size_physical.height > 0 {
@@ -472,6 +493,7 @@ impl ApplicationHandler<()> for Viewer {
 
         self.egui = Some(EguiState::new(&window, &pixels));
         self.pixels = Some(pixels);
+        self.sync_scene_audio();
     }
 
     fn window_event(&mut self, event_loop: &ActiveEventLoop, _window_id: WindowId, event: WindowEvent) {
@@ -524,12 +546,14 @@ impl ApplicationHandler<AppEvent> for Viewer {
                 }
                 self.pixels = Some(pixels);
                 self.resize_scene(self.size_logical.width, self.size_logical.height);
+                self.sync_scene_audio();
                 self.window.as_ref().unwrap().request_redraw();
             }
             AppEvent::SwitchScene(scene) => {
                 self.scene = scene;
                 self.start_time = Instant::now();
                 self.fps_counter.reset();
+                self.sync_scene_audio();
                 self.window.as_ref().unwrap().request_redraw();
             }
             AppEvent::ResizeScene { width, height } => self.resize_scene(width, height),
@@ -539,6 +563,16 @@ impl ApplicationHandler<AppEvent> for Viewer {
     fn window_event(&mut self, event_loop: &ActiveEventLoop, _window_id: WindowId, event: WindowEvent) {
         self.handle_window_event(event_loop, event);
     }
+}
+
+#[cfg(not(target_arch = "wasm32"))]
+fn audio_base_path() -> &'static str {
+    env!("CARGO_MANIFEST_DIR")
+}
+
+#[cfg(target_arch = "wasm32")]
+fn audio_base_path() -> &'static str {
+    ""
 }
 
 fn draw_text(frame: &mut [u8], width: u32, height: u32, text: &str, x: i32, y: i32, scale: i32, color: [u8; 4]) {

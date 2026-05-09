@@ -2,6 +2,7 @@ mod domain_warping;
 mod scene_1;
 mod scene_2;
 mod scene_3;
+mod scene_4;
 mod sdf;
 mod simplex_noise;
 mod simplex_noise_3d;
@@ -13,6 +14,7 @@ use pixels::wgpu::Color;
 pub use scene_1::Scene1;
 pub use scene_2::Scene2;
 pub use scene_3::Scene3;
+pub use scene_4::Scene4;
 pub use sdf::Sdf;
 pub use simplex_noise::SimplexNoise;
 pub use simplex_noise_3d::SimplexNoise3d;
@@ -24,6 +26,10 @@ pub trait SceneFrame: Send + Sync {
 
 pub trait Scene: Send + Sync {
     fn prepare_frame(&self, time: f32) -> Box<dyn SceneFrame>;
+
+    fn audio_track(&self) -> Option<&'static str> {
+        None
+    }
 }
 
 pub trait ParameterizedScene: Scene {
@@ -54,6 +60,13 @@ impl SceneInstance {
         match self {
             Self::Plain(scene) => scene.prepare_frame(time),
             Self::Parameterized(scene) => scene.prepare_frame(time),
+        }
+    }
+
+    pub fn audio_track(&self) -> Option<&'static str> {
+        match self {
+            Self::Plain(scene) => scene.audio_track(),
+            Self::Parameterized(scene) => scene.audio_track(),
         }
     }
 

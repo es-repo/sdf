@@ -21,3 +21,4 @@ wasm-bindgen \
 
 cp "$ROOT_DIR/index.html" "$DIST_DIR/index.html"
 cp "$ROOT_DIR/favicon.svg" "$DIST_DIR/favicon.svg"
+cp -R "$ROOT_DIR/assets" "$DIST_DIR/assets"

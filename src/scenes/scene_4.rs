@@ -1,17 +1,20 @@
 use crate::geometry::{Circle, Rectangle, Triangle};
 use crate::scenes::{Scene, SceneFrame};
+use crate::smooth_union::smooth_union_color;
 use crate::{ColorExt, Sdf as _, Vec2, min_pair};
 use pixels::wgpu::Color;
 
-pub struct Sdf;
+const AUDIO_TRACK: &str = "assets/audio/shadertoy_track1.mp3";
 
-struct SdfFrame {
+pub struct Scene4;
+
+struct Scene4Frame {
     circle: Circle,
     rectangle: Rectangle,
     triangle: Triangle,
 }
 
-impl SceneFrame for SdfFrame {
+impl SceneFrame for Scene4Frame {
     fn get_pixel_color(&self, coord: Vec2<f32>, time: f32) -> Color {
         let r = (0.5 + 0.5 * time.sin()) * 0.1;
 
@@ -22,8 +25,24 @@ impl SceneFrame for SdfFrame {
         let (dist, color) = min_pair((c_dist, self.circle.color), (r_dist, self.rectangle.color));
         let (dist, color) = min_pair((dist, color), (t_dist, self.triangle.color));
 
+        let smooth_blend_radius = 0.1 + (0.5 + 0.5 * time.sin()) * 0.3;
+        let (dist, color) = smooth_union_color(
+            c_dist,
+            self.circle.color,
+            r_dist,
+            self.rectangle.color,
+            smooth_blend_radius,
+        );
+
+        let (dist, color) = smooth_union_color(dist, color, t_dist, self.triangle.color, smooth_blend_radius);
+
         if dist < 0.0 {
-            let c = Color::rgb(1.0, 1.0, 1.0);
+            //let c = Color::rgb(1.0, 1.0, 1.0);
+            let c = Color::rgb(
+                0.5 + (dist * 250.0 + time).sin(),
+                0.5 + (dist * 250.0).sin(),
+                0.5 + (dist * 250.0).sin(),
+            );
             let t = dist.abs() / self.circle.radius;
             color.lerp(c, t)
         } else if dist < 0.02 {
@@ -37,11 +56,15 @@ impl SceneFrame for SdfFrame {
     }
 }
 
-impl Scene for Sdf {
+impl Scene for Scene4 {
+    fn audio_track(&self) -> Option<&'static str> {
+        Some(AUDIO_TRACK)
+    }
+
     fn prepare_frame(&self, time: f32) -> Box<dyn SceneFrame> {
         let time_scaled = time * 0.5;
 
-        Box::new(SdfFrame {
+        Box::new(Scene4Frame {
             circle: Circle {
                 radius: 0.2,
                 center: Vec2::new(0.8 * (time_scaled + 0.2).cos(), 0.8 * time.sin()),

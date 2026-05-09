@@ -1,6 +1,6 @@
 use crate::viewer::Viewer;
 use sdf::scenes::{
-    DomainWarping, Scene1, Scene2, Scene3, SceneInstance, Sdf, SimplexNoise, SimplexNoise3d, SmoothUnion,
+    DomainWarping, Scene1, Scene2, Scene3, Scene4, SceneInstance, Sdf, SimplexNoise, SimplexNoise3d, SmoothUnion,
 };
 use std::cell::RefCell;
 use std::fmt;
@@ -55,6 +55,11 @@ const AVAILABLE_SCENES: &[SceneEntry] = &[
     SceneEntry {
         slug: "scene-3",
         create: || SceneInstance::parameterized(Scene3::default()),
+        markdown: None,
+    },
+    SceneEntry {
+        slug: "scene-4",
+        create: || SceneInstance::plain(Scene4),
         markdown: None,
     },
     SceneEntry {
@@ -179,9 +184,5 @@ pub fn start(scene_slug: &str, scene_width: u32, scene_height: u32) -> Result<()
 }
 
 fn scene_dimension(value: u32, default: u32) -> u32 {
-    if value == 0 {
-        default
-    } else {
-        value.min(default)
-    }
+    if value == 0 { default } else { value.min(default) }
 }

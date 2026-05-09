@@ -1,4 +1,4 @@
-use sdf::scenes::{Scene1, Scene2, Sdf};
+use sdf::scenes::{Scene1, Scene2, Scene4, Sdf};
 #[cfg(not(target_arch = "wasm32"))]
 use sdf::scenes::{Scene3, SceneInstance};
 #[cfg(not(target_arch = "wasm32"))]
@@ -9,6 +9,7 @@ use winit::dpi::LogicalSize;
 #[cfg(not(target_arch = "wasm32"))]
 use winit::event_loop::{ControlFlow, EventLoop};
 
+mod audio;
 mod fps_counter;
 mod viewer;
 #[cfg(target_arch = "wasm32")]
@@ -20,7 +21,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     event_loop.set_control_flow(ControlFlow::Poll);
 
     let size_logical = LogicalSize::<u32>::new(640, 400);
-    let mut viewer = Viewer::new(size_logical, SceneInstance::plain(Sdf));
+    let mut viewer = Viewer::new(size_logical, SceneInstance::plain(Scene4));
 
     event_loop.run_app(&mut viewer)?;
 
