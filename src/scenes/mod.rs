@@ -8,7 +8,7 @@ mod simplex_noise;
 mod simplex_noise_3d;
 mod smooth_union;
 
-use crate::Vec2;
+use crate::{AudioAnalysis, Vec2};
 pub use domain_warping::DomainWarping;
 use pixels::wgpu::Color;
 pub use scene_1::Scene1;
@@ -22,10 +22,18 @@ pub use smooth_union::SmoothUnion;
 
 pub trait SceneFrame: Send + Sync {
     fn get_pixel_color(&self, coord: Vec2<f32>, time: f32) -> Color;
+
+    fn get_pixel_color_with_audio(&self, coord: Vec2<f32>, time: f32, _audio: &AudioAnalysis) -> Color {
+        self.get_pixel_color(coord, time)
+    }
 }
 
 pub trait Scene: Send + Sync {
     fn prepare_frame(&self, time: f32) -> Box<dyn SceneFrame>;
+
+    fn prepare_frame_with_audio(&self, time: f32, _audio: &AudioAnalysis) -> Box<dyn SceneFrame> {
+        self.prepare_frame(time)
+    }
 
     fn audio_track(&self) -> Option<&'static str> {
         None
@@ -60,6 +68,13 @@ impl SceneInstance {
         match self {
             Self::Plain(scene) => scene.prepare_frame(time),
             Self::Parameterized(scene) => scene.prepare_frame(time),
+        }
+    }
+
+    pub fn prepare_frame_with_audio(&self, time: f32, audio: &AudioAnalysis) -> Box<dyn SceneFrame> {
+        match self {
+            Self::Plain(scene) => scene.prepare_frame_with_audio(time, audio),
+            Self::Parameterized(scene) => scene.prepare_frame_with_audio(time, audio),
         }
     }
 

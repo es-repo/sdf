@@ -1,7 +1,5 @@
-use sdf::scenes::{Scene1, Scene2, Scene4, Sdf};
 #[cfg(not(target_arch = "wasm32"))]
-use sdf::scenes::{Scene3, SceneInstance};
-#[cfg(not(target_arch = "wasm32"))]
+use sdf::scenes::{Scene4, SceneInstance};
 #[cfg(not(target_arch = "wasm32"))]
 use viewer::Viewer;
 #[cfg(not(target_arch = "wasm32"))]

@@ -4,7 +4,7 @@ use font8x8::UnicodeFonts;
 use pixels::{Pixels, ScalingMode};
 use rayon::prelude::*;
 use sdf::scenes::SceneInstance;
-use sdf::{ColorExt, Vec2};
+use sdf::{AudioAnalysis, ColorExt, Vec2};
 use std::sync::Arc;
 use web_time::Instant;
 use winit::application::ApplicationHandler;
@@ -131,6 +131,10 @@ impl Viewer {
         }
     }
 
+    fn audio_analysis(&mut self) -> AudioAnalysis {
+        self.audio_track.as_mut().map(AudioTrack::analysis).unwrap_or_default()
+    }
+
     fn prepare_egui_frame(&mut self) -> Option<EguiFrame> {
         let scene = self.scene.parameterized_scene_mut()?;
         let window = self.window.as_ref()?;
@@ -204,7 +208,8 @@ impl Viewer {
         let time = elapsed.as_secs_f64() as f32;
         self.fps_counter.tick();
         let egui_frame = self.prepare_egui_frame();
-        let prepared_scene = self.scene.prepare_frame(time);
+        let audio_analysis = self.audio_analysis();
+        let prepared_scene = self.scene.prepare_frame_with_audio(time, &audio_analysis);
         let width = self.size_logical.width;
         let height = self.size_logical.height;
         let row_stride = width as usize * 4;
@@ -222,7 +227,7 @@ impl Viewer {
 
                 for pixel in row.chunks_exact_mut(4) {
                     let coord = Vec2::new(nx, ny);
-                    let color = prepared_scene.get_pixel_color(coord, time);
+                    let color = prepared_scene.get_pixel_color_with_audio(coord, time, &audio_analysis);
                     pixel.copy_from_slice(&color.to_u8_array());
                     nx += dx;
                 }
