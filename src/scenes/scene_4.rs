@@ -1,12 +1,26 @@
 use crate::geometry::{Circle, Rectangle, Triangle};
-use crate::scenes::{Scene, SceneFrame};
+use crate::scenes::{ParameterizedScene, Scene, SceneFrame};
 use crate::smooth_union::smooth_union_color;
 use crate::{AudioAnalysis, ColorExt, Sdf as _, Vec2, smoothstep};
 use pixels::wgpu::Color;
 
 const AUDIO_TRACK: &str = "assets/audio/shadertoy_track1.mp3";
 
-pub struct Scene4;
+#[derive(Clone, Copy)]
+pub struct Scene4Params {
+    pub volume: f32,
+}
+
+impl Default for Scene4Params {
+    fn default() -> Self {
+        Self { volume: 1.0 }
+    }
+}
+
+#[derive(Default)]
+pub struct Scene4 {
+    params: Scene4Params,
+}
 
 struct Scene4Frame {
     circle: Circle,
@@ -55,6 +69,10 @@ impl Scene for Scene4 {
         Some(AUDIO_TRACK)
     }
 
+    fn audio_volume(&self) -> f32 {
+        self.params.volume
+    }
+
     fn prepare_frame(&self, time: f32) -> Box<dyn SceneFrame> {
         self.prepare_frame_with_audio(time, &AudioAnalysis::default())
     }
@@ -62,11 +80,10 @@ impl Scene for Scene4 {
     fn prepare_frame_with_audio(&self, time: f32, audio: &AudioAnalysis) -> Box<dyn SceneFrame> {
         let time_scaled = time * 0.5;
         let bass = audio.bass.clamp(0.0, 1.0);
-        let bass_pulse = smoothstep(0.03, 0.35, bass);
         let triangle_center = Vec2::new(time_scaled.cos(), 0.3 * time_scaled.sin());
-        let circle_scale = 1.0 + bass_pulse * 0.35;
-        let rectangle_scale = 1.0 + bass_pulse * 0.3;
-        let triangle_scale = 1.0 + bass_pulse * 0.35;
+        let circle_scale = 1.0 + bass * 0.65;
+        let rectangle_scale = 1.0 + bass * 0.6;
+        let triangle_scale = 1.0 + bass * 0.65;
 
         Box::new(Scene4Frame {
             circle: Circle {
@@ -92,5 +109,15 @@ impl Scene for Scene4 {
             round_radius: (0.5 + 0.5 * time.sin()) * 0.1,
             smooth_blend_radius: 0.1 + (0.5 + 0.5 * time.sin()) * 0.3,
         })
+    }
+}
+
+impl ParameterizedScene for Scene4 {
+    fn parameters_ui(&mut self, ui: &mut egui::Ui) {
+        ui.add(egui::Slider::new(&mut self.params.volume, 0.0..=1.0).text("Volume"));
+
+        if ui.button("Reset").clicked() {
+            self.params = Scene4Params::default();
+        }
     }
 }

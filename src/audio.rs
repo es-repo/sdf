@@ -20,6 +20,7 @@ pub struct AudioTrack {
     analysis_track: Option<DecodedTrack>,
     started_at: Option<Instant>,
     analysis: AudioAnalysis,
+    volume: f32,
     current_track: Option<&'static str>,
 }
 
@@ -38,6 +39,7 @@ pub struct AudioTrack {
     analyser: AnalyserNode,
     frequency_data: Vec<u8>,
     analysis: AudioAnalysis,
+    volume: f32,
     audio: Option<HtmlAudioElement>,
     source: Option<MediaElementAudioSourceNode>,
     current_track: Option<&'static str>,
@@ -61,6 +63,7 @@ impl AudioTrack {
             analysis_track: None,
             started_at: None,
             analysis: AudioAnalysis::default(),
+            volume: 1.0,
             current_track: None,
         })
     }
@@ -98,6 +101,7 @@ impl AudioTrack {
 
         let player = rodio::Player::connect_new(self.output.mixer());
         player.append(source);
+        player.set_volume(self.volume);
         self.player = Some(player);
 
         match DecodedTrack::load(&path) {
@@ -121,6 +125,14 @@ impl AudioTrack {
 
         self.analysis = track.analyze(started_at.elapsed().as_secs_f32());
         self.analysis
+    }
+
+    pub fn set_volume(&mut self, volume: f32) {
+        self.volume = volume.clamp(0.0, 1.0);
+
+        if let Some(player) = &self.player {
+            player.set_volume(self.volume);
+        }
     }
 
     fn stop_current(&mut self) {
@@ -232,6 +244,7 @@ impl AudioTrack {
             analyser,
             frequency_data: vec![0; 1024],
             analysis: AudioAnalysis::default(),
+            volume: 1.0,
             audio: None,
             source: None,
             current_track: None,
@@ -264,6 +277,7 @@ impl AudioTrack {
         };
 
         audio.set_loop(true);
+        audio.set_volume(self.volume as f64);
 
         let source = match self.context.create_media_element_source(&audio) {
             Ok(source) => source,
@@ -298,6 +312,14 @@ impl AudioTrack {
         self.analyser.get_byte_frequency_data(&mut self.frequency_data);
         self.analysis = frequency_bytes_to_analysis(&self.frequency_data, self.context.sample_rate());
         self.analysis
+    }
+
+    pub fn set_volume(&mut self, volume: f32) {
+        self.volume = volume.clamp(0.0, 1.0);
+
+        if let Some(audio) = &self.audio {
+            audio.set_volume(self.volume as f64);
+        }
     }
 
     fn stop_current(&mut self) {

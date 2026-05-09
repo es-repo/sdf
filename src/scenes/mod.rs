@@ -38,6 +38,10 @@ pub trait Scene: Send + Sync {
     fn audio_track(&self) -> Option<&'static str> {
         None
     }
+
+    fn audio_volume(&self) -> f32 {
+        1.0
+    }
 }
 
 pub trait ParameterizedScene: Scene {
@@ -82,6 +86,13 @@ impl SceneInstance {
         match self {
             Self::Plain(scene) => scene.audio_track(),
             Self::Parameterized(scene) => scene.audio_track(),
+        }
+    }
+
+    pub fn audio_volume(&self) -> f32 {
+        match self {
+            Self::Plain(scene) => scene.audio_volume(),
+            Self::Parameterized(scene) => scene.audio_volume(),
         }
     }
 

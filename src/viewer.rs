@@ -121,6 +121,7 @@ impl Viewer {
 
     fn sync_scene_audio(&mut self) {
         let track = self.scene.audio_track();
+        let volume = self.scene.audio_volume();
 
         if track.is_some() && self.audio_track.is_none() {
             self.audio_track = AudioTrack::new(audio_base_path());
@@ -128,6 +129,15 @@ impl Viewer {
 
         if let Some(audio_track) = self.audio_track.as_mut() {
             audio_track.play(track);
+            audio_track.set_volume(volume);
+        }
+    }
+
+    fn sync_audio_volume(&mut self) {
+        let volume = self.scene.audio_volume();
+
+        if let Some(audio_track) = self.audio_track.as_mut() {
+            audio_track.set_volume(volume);
         }
     }
 
@@ -208,6 +218,7 @@ impl Viewer {
         let time = elapsed.as_secs_f64() as f32;
         self.fps_counter.tick();
         let egui_frame = self.prepare_egui_frame();
+        self.sync_audio_volume();
         let audio_analysis = self.audio_analysis();
         let prepared_scene = self.scene.prepare_frame_with_audio(time, &audio_analysis);
         let width = self.size_logical.width;

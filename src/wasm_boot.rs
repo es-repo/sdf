@@ -59,7 +59,7 @@ const AVAILABLE_SCENES: &[SceneEntry] = &[
     },
     SceneEntry {
         slug: "scene-4",
-        create: || SceneInstance::plain(Scene4),
+        create: || SceneInstance::parameterized(Scene4::default()),
         markdown: None,
     },
     SceneEntry {
