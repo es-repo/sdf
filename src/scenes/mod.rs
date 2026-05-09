@@ -8,7 +8,7 @@ mod simplex_noise;
 mod simplex_noise_3d;
 mod smooth_union;
 
-use crate::{AudioAnalysis, Vec2};
+use crate::{Vec2, audio::AudioAnalysis};
 pub use domain_warping::DomainWarping;
 use pixels::wgpu::Color;
 pub use scene_1::Scene1;

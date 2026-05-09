@@ -1,10 +1,10 @@
-use crate::audio::AudioTrack;
 use crate::fps_counter::FpsCounter;
 use font8x8::UnicodeFonts;
 use pixels::{Pixels, ScalingMode};
 use rayon::prelude::*;
+use sdf::audio::{AudioAnalysis, AudioTrack};
 use sdf::scenes::SceneInstance;
-use sdf::{AudioAnalysis, ColorExt, Vec2};
+use sdf::{ColorExt, Vec2};
 use std::sync::Arc;
 use web_time::Instant;
 use winit::application::ApplicationHandler;

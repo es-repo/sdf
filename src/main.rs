@@ -7,7 +7,6 @@ use winit::dpi::LogicalSize;
 #[cfg(not(target_arch = "wasm32"))]
 use winit::event_loop::{ControlFlow, EventLoop};
 
-mod audio;
 mod fps_counter;
 mod viewer;
 #[cfg(target_arch = "wasm32")]
