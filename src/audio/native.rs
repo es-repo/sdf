@@ -1,3 +1,4 @@
+use super::analysis::{MAX_FREQUENCY, MIN_FREQUENCY};
 use super::{AUDIO_SPECTRUM_BINS, AudioAnalysis};
 use rodio::Source;
 use std::fs::File;
@@ -10,7 +11,6 @@ pub struct AudioTrack {
     player: Option<rodio::Player>,
     analysis_track: Option<DecodedTrack>,
     started_at: Option<Instant>,
-    analysis: AudioAnalysis,
     volume: f32,
     current_track: Option<&'static str>,
 }
@@ -38,7 +38,6 @@ impl AudioTrack {
             player: None,
             analysis_track: None,
             started_at: None,
-            analysis: AudioAnalysis::default(),
             volume: 1.0,
             current_track: None,
         })
@@ -99,8 +98,7 @@ impl AudioTrack {
             return AudioAnalysis::default();
         };
 
-        self.analysis = track.analyze(started_at.elapsed().as_secs_f32());
-        self.analysis
+        track.analyze(started_at.elapsed().as_secs_f32())
     }
 
     pub fn set_volume(&mut self, volume: f32) {
@@ -115,7 +113,6 @@ impl AudioTrack {
         self.player = None;
         self.analysis_track = None;
         self.started_at = None;
-        self.analysis = AudioAnalysis::default();
     }
 }
 
@@ -188,9 +185,6 @@ impl DecodedTrack {
 }
 
 fn log_frequency(bin: usize, bin_count: usize, sample_rate: u32) -> f32 {
-    const MIN_FREQUENCY: f32 = 40.0;
-    const MAX_FREQUENCY: f32 = 12_000.0;
-
     let nyquist = sample_rate as f32 * 0.5;
     let max_frequency = MAX_FREQUENCY.min(nyquist.max(MIN_FREQUENCY));
     let t = bin as f32 / (bin_count.saturating_sub(1).max(1)) as f32;

@@ -1,3 +1,4 @@
+use super::analysis::{MAX_FREQUENCY, MIN_FREQUENCY};
 use super::{AUDIO_SPECTRUM_BINS, AudioAnalysis};
 use std::cell::Cell;
 use std::rc::Rc;
@@ -11,7 +12,6 @@ pub struct AudioTrack {
     analyser: AnalyserNode,
     frequency_data: Vec<u8>,
     frequency_data_js: Uint8Array,
-    analysis: AudioAnalysis,
     volume: f32,
     audio: Option<HtmlAudioElement>,
     source: Option<MediaElementAudioSourceNode>,
@@ -50,7 +50,6 @@ impl AudioTrack {
             analyser,
             frequency_data: vec![0; 1024],
             frequency_data_js: Uint8Array::new_with_length(1024),
-            analysis: AudioAnalysis::default(),
             volume: 1.0,
             audio: None,
             source: None,
@@ -122,8 +121,7 @@ impl AudioTrack {
         self.analyser
             .get_byte_frequency_data_with_u8_array(&self.frequency_data_js);
         self.frequency_data_js.copy_to(&mut self.frequency_data);
-        self.analysis = frequency_bytes_to_analysis(&self.frequency_data, self.context.sample_rate());
-        self.analysis
+        frequency_bytes_to_analysis(&self.frequency_data, self.context.sample_rate())
     }
 
     pub fn set_volume(&mut self, volume: f32) {
@@ -205,9 +203,6 @@ fn log_js_error(message: &str, error: JsValue) {
 }
 
 fn frequency_bytes_to_analysis(data: &[u8], sample_rate: f32) -> AudioAnalysis {
-    const MIN_FREQUENCY: f32 = 40.0;
-    const MAX_FREQUENCY: f32 = 12_000.0;
-
     let mut spectrum = [0.0; AUDIO_SPECTRUM_BINS];
 
     if data.is_empty() {

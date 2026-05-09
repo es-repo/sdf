@@ -1,4 +1,6 @@
 pub const AUDIO_SPECTRUM_BINS: usize = 64;
+pub(super) const MIN_FREQUENCY: f32 = 40.0;
+pub(super) const MAX_FREQUENCY: f32 = 12_000.0;
 
 #[derive(Clone, Copy, Debug)]
 pub struct AudioAnalysis {
