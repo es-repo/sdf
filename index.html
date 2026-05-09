@@ -21,6 +21,24 @@
             align-items: center;
         }
 
+        :where(nav a, #audio-toggle, .code-tabs-button) {
+            transition:
+                color 0.12s ease,
+                background-color 0.12s ease,
+                border-color 0.12s ease;
+        }
+
+        nav a:not(.active):hover,
+        nav a:not(.active):focus-visible,
+        #audio-toggle:hover,
+        #audio-toggle:focus-visible,
+        .code-tabs-button:not(.active):hover,
+        .code-tabs-button:not(.active):focus-visible {
+            color: #111;
+            background: #eee;
+            border-color: #eee;
+        }
+
         nav {
             display: flex;
             gap: 16px;
@@ -103,13 +121,6 @@
             border-radius: 50%;
             cursor: pointer;
             backdrop-filter: blur(8px);
-        }
-
-        #audio-toggle:hover,
-        #audio-toggle:focus-visible {
-            color: #111;
-            background: #eee;
-            border-color: #eee;
         }
 
         #audio-toggle[hidden] {
