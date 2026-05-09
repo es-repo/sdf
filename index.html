@@ -380,7 +380,7 @@
     const audioToggle = document.getElementById("audio-toggle");
     let currentScene = resolveScene(new URLSearchParams(window.location.search).get("scene"));
     let docsRenderVersion = 0;
-    let hasUserInteracted = navigator.userActivation?.hasBeenActive ?? false;
+    let hasUserInteracted = false;
     let audioEnabled = false;
     let audioUserMuted = false;
 

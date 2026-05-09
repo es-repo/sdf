@@ -15,6 +15,7 @@ pub struct AudioTrack {
     volume: f32,
     audio: Option<HtmlAudioElement>,
     playing: Rc<Cell<bool>>,
+    play_generation: Rc<Cell<u32>>,
     current_track: Option<&'static str>,
 }
 
@@ -36,6 +37,7 @@ impl AudioTrack {
             volume: 1.0,
             audio: None,
             playing: Rc::new(Cell::new(false)),
+            play_generation: Rc::new(Cell::new(0)),
             current_track: None,
         })
     }
@@ -50,7 +52,6 @@ impl AudioTrack {
 
         self.stop_current();
         self.current_track = track;
-        self.playing = Rc::new(Cell::new(false));
         self.analysis_track = Rc::new(RefCell::new(None));
         self.smoother.reset();
 
@@ -102,11 +103,11 @@ impl AudioTrack {
     }
 
     fn stop_current(&mut self) {
+        self.play_generation.set(self.play_generation.get().wrapping_add(1));
         self.playing.set(false);
 
         if let Some(audio) = &self.audio {
-            let _ = audio.pause();
-            audio.set_current_time(0.0);
+            stop_audio(audio);
         }
 
         self.audio = None;
@@ -120,6 +121,8 @@ impl AudioTrack {
             return;
         };
         let playing = Rc::clone(&self.playing);
+        let play_generation = Rc::clone(&self.play_generation);
+        let expected_generation = play_generation.get();
 
         wasm_bindgen_futures::spawn_local(async move {
             match context.resume() {
@@ -135,19 +138,38 @@ impl AudioTrack {
                 }
             }
 
+            if play_generation.get() != expected_generation {
+                stop_audio(&audio);
+                return;
+            }
+
             match audio.play() {
                 Ok(promise) => {
                     if let Err(error) = JsFuture::from(promise).await {
-                        log_js_error("Failed to play audio", error);
-                        playing.set(false);
+                        if play_generation.get() == expected_generation {
+                            log_js_error("Failed to play audio", error);
+                            playing.set(false);
+                        } else {
+                            stop_audio(&audio);
+                        }
+
+                        return;
+                    }
+
+                    if play_generation.get() != expected_generation {
+                        stop_audio(&audio);
                         return;
                     }
 
                     playing.set(true);
                 }
                 Err(error) => {
-                    log_js_error("Failed to play audio", error);
-                    playing.set(false);
+                    if play_generation.get() == expected_generation {
+                        log_js_error("Failed to play audio", error);
+                        playing.set(false);
+                    } else {
+                        stop_audio(&audio);
+                    }
                 }
             }
         });
@@ -224,4 +246,9 @@ fn audio_buffer_to_track(buffer: &AudioBuffer) -> Result<DecodedTrack, String> {
 
 fn log_js_error(message: &str, error: JsValue) {
     web_sys::console::error_2(&JsValue::from_str(message), &error);
+}
+
+fn stop_audio(audio: &HtmlAudioElement) {
+    let _ = audio.pause();
+    audio.set_current_time(0.0);
 }
