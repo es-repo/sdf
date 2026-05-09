@@ -41,17 +41,39 @@
 
         nav {
             display: flex;
-            gap: 16px;
+            gap: 10px;
             padding: 16px;
             justify-content: center;
             align-items: center;
-            flex-wrap: wrap;
+            flex-direction: column;
         }
 
         #scene-links {
             display: flex;
-            gap: 12px;
+            flex-direction: column;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .scene-link-group {
+            display: flex;
+            align-items: center;
             justify-content: center;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .scene-link-group-title {
+            color: #999;
+            font-size: 12px;
+            text-transform: uppercase;
+        }
+
+        .scene-link-list {
+            display: flex;
+            gap: 8px;
+            justify-content: center;
+            align-items: center;
             flex-wrap: wrap;
         }
 
@@ -302,41 +324,28 @@
 <body>
 <nav>
     <div id="scene-links">
-        <a href="?scene=scene-1" data-scene-link="scene-1">scene-1</a>
-        <a href="?scene=scene-2" data-scene-link="scene-2">scene-2</a>
-        <a href="?scene=scene-3" data-scene-link="scene-3">scene-3</a>
-        <a href="?scene=scene-4" data-scene-link="scene-4">scene-4</a>
-        <a href="?scene=sdf" data-scene-link="sdf">sdf</a>
-        <a href="?scene=domain-warping" data-scene-link="domain-warping">domain-warping</a>
-        <a href="?scene=smooth-union" data-scene-link="smooth-union">smooth-union</a>
-        <a href="?scene=simplex-noise" data-scene-link="simplex-noise">simplex-noise</a>
-        <a href="?scene=simplex-noise-3d" data-scene-link="simplex-noise-3d">simplex-noise-3d</a>
+        <div class="scene-link-group">
+            <div class="scene-link-group-title">Techniques</div>
+            <div class="scene-link-list" data-scene-group="techniques"></div>
+            <a
+                class="github-link"
+                href="https://github.com/es-repo/sdf"
+                target="_blank"
+                rel="noreferrer"
+                aria-label="View source on GitHub"
+                title="View source on GitHub"
+            >
+                <svg viewBox="0 0 16 16" aria-hidden="true">
+                    <path d="M8 0C3.58 0 0 3.58 0 8a8 8 0 0 0 5.47 7.59c.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.5-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82a7.5 7.5 0 0 1 4 0c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8 8 0 0 0 16 8c0-4.42-3.58-8-8-8Z"/>
+                </svg>
+            </a>
+        </div>
+        <div class="scene-link-group">
+            <div class="scene-link-group-title">Demos</div>
+            <div class="scene-link-list" data-scene-group="demos"></div>
+        </div>
     </div>
-    <a
-        class="github-link"
-        href="https://github.com/es-repo/sdf"
-        target="_blank"
-        rel="noreferrer"
-        aria-label="View source on GitHub"
-        title="View source on GitHub"
-    >
-        <svg viewBox="0 0 16 16" aria-hidden="true">
-            <path d="M8 0C3.58 0 0 3.58 0 8a8 8 0 0 0 5.47 7.59c.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.5-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82a7.5 7.5 0 0 1 4 0c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8 8 0 0 0 16 8c0-4.42-3.58-8-8-8Z"/>
-        </svg>
-    </a>
 </nav>
-<script>
-    {
-        const links = [...document.querySelectorAll("[data-scene-link]")];
-        const sceneSlugs = links.map((link) => link.dataset.sceneLink);
-        const requestedScene = new URLSearchParams(window.location.search).get("scene");
-        const activeScene = sceneSlugs.includes(requestedScene) ? requestedScene : sceneSlugs[0];
-
-        for (const link of links) {
-            link.classList.toggle("active", link.dataset.sceneLink === activeScene);
-        }
-    }
-</script>
 <section id="scene-host" aria-live="polite">
     <div class="scene-loading">Loading...</div>
     <button id="audio-toggle" type="button" aria-label="Unmute scene audio" aria-pressed="false" title="Unmute scene audio" hidden>
@@ -364,7 +373,9 @@
         throw new Error("SharedArrayBuffer is unavailable. Serve dist/ with COOP/COEP headers.");
     }
 
-    const sceneSlugs = sdf.available_scene_slugs_csv().split(",").filter(Boolean);
+    const sceneSlugs = csvSlugs(sdf.available_scene_slugs_csv());
+    renderSceneLinks("demos", csvSlugs(sdf.demo_scene_slugs_csv()));
+    renderSceneLinks("techniques", csvSlugs(sdf.technique_scene_slugs_csv()));
     const sceneLinks = [...document.querySelectorAll("[data-scene-link]")];
     const audioToggle = document.getElementById("audio-toggle");
     let currentScene = resolveScene(new URLSearchParams(window.location.search).get("scene"));
@@ -441,6 +452,26 @@
 
     function resolveScene(sceneSlug) {
         return sceneSlugs.includes(sceneSlug) ? sceneSlug : sceneSlugs[0];
+    }
+
+    function csvSlugs(csv) {
+        return csv.split(",").filter(Boolean);
+    }
+
+    function renderSceneLinks(group, slugs) {
+        const list = document.querySelector(`[data-scene-group="${group}"]`);
+
+        if (!list) {
+            return;
+        }
+
+        list.replaceChildren(...slugs.map((slug) => {
+            const link = document.createElement("a");
+            link.href = `?scene=${encodeURIComponent(slug)}`;
+            link.dataset.sceneLink = slug;
+            link.textContent = slug;
+            return link;
+        }));
     }
 
     function updateSceneLinks(activeScene) {

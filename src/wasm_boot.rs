@@ -109,6 +109,26 @@ pub fn available_scene_slugs_csv() -> String {
 }
 
 #[wasm_bindgen::prelude::wasm_bindgen]
+pub fn demo_scene_slugs_csv() -> String {
+    AVAILABLE_SCENES
+        .iter()
+        .filter(|scene| scene.markdown.is_none())
+        .map(|scene| scene.slug)
+        .collect::<Vec<_>>()
+        .join(",")
+}
+
+#[wasm_bindgen::prelude::wasm_bindgen]
+pub fn technique_scene_slugs_csv() -> String {
+    AVAILABLE_SCENES
+        .iter()
+        .filter(|scene| scene.markdown.is_some())
+        .map(|scene| scene.slug)
+        .collect::<Vec<_>>()
+        .join(",")
+}
+
+#[wasm_bindgen::prelude::wasm_bindgen]
 pub fn scene_markdown(scene_slug: &str) -> String {
     AVAILABLE_SCENES
         .iter()
