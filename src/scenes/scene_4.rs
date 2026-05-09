@@ -1,7 +1,7 @@
 use crate::geometry::{Circle, Rectangle, Triangle};
 use crate::scenes::{Scene, SceneFrame};
 use crate::smooth_union::smooth_union_color;
-use crate::{AudioAnalysis, ColorExt, Sdf as _, Vec2};
+use crate::{AudioAnalysis, ColorExt, Sdf as _, Vec2, smoothstep};
 use pixels::wgpu::Color;
 
 const AUDIO_TRACK: &str = "assets/audio/shadertoy_track1.mp3";
@@ -12,7 +12,6 @@ struct Scene4Frame {
     circle: Circle,
     rectangle: Rectangle,
     triangle: Triangle,
-    beat: f32,
     round_radius: f32,
     smooth_blend_radius: f32,
 }
@@ -64,7 +63,6 @@ impl Scene for Scene4 {
         let time_scaled = time * 0.5;
         let bass = audio.bass.clamp(0.0, 1.0);
         let bass_pulse = smoothstep(0.03, 0.35, bass);
-        let beat = smoothstep(0.25, 0.9, bass_pulse);
         let triangle_center = Vec2::new(time_scaled.cos(), 0.3 * time_scaled.sin());
         let circle_scale = 1.0 + bass_pulse * 0.35;
         let rectangle_scale = 1.0 + bass_pulse * 0.3;
@@ -90,15 +88,9 @@ impl Scene for Scene4 {
                 p2: (triangle_center + Vec2::new(0.0, 0.4) * triangle_scale).rotate(time.sin()),
                 color: Color::rgb(1.0, 0.0, 0.7),
             },
-            beat,
+
             round_radius: (0.5 + 0.5 * time.sin()) * 0.1,
             smooth_blend_radius: 0.1 + (0.5 + 0.5 * time.sin()) * 0.3,
         })
     }
-}
-
-fn smoothstep(edge0: f32, edge1: f32, value: f32) -> f32 {
-    let t = ((value - edge0) / (edge1 - edge0)).clamp(0.0, 1.0);
-
-    t * t * (3.0 - 2.0 * t)
 }
