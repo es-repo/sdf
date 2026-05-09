@@ -81,26 +81,29 @@ impl Scene for Scene4 {
         let time_scaled = time * 0.5;
         let bass = audio.bass * 2.5 * self.params.volume;
         let bass = if bass < 0.0001 { 1.0 } else { bass };
-        let beat = smoothstep(0.1, 0.5, bass);
+        let beat = smoothstep(0.1, 1.5, bass);
         let triangle_center = Vec2::new(time_scaled.cos(), 0.3 * time_scaled.sin());
 
         Box::new(Scene4Frame {
             circle: Circle {
                 radius: 0.05 + 0.2 * bass,
-                center: Vec2::new(0.8 * (time_scaled + 0.2).cos(), 0.8 * time.sin()),
+                center: Vec2::new(
+                    0.8 * (time_scaled + 0.2 + beat.sin()).cos(),
+                    0.8 * (time + beat.cos()).sin(),
+                ),
                 color: Color::rgb(0.7, 1.0, 0.0),
             },
 
             rectangle: Rectangle {
-                center: Vec2::new(0.8 * time.sin(), 0.8 * time_scaled.cos()),
-                vertex: Vec2::new(0.3, 0.2) * bass + 0.05,
-                rotation: time_scaled.cos() * 0.5,
+                center: Vec2::new(0.8 * time.sin() * beat.sin(), 0.8 * (time_scaled + beat).cos()),
+                vertex: Vec2::new(0.3, 0.2) * beat + 0.05,
+                rotation: (time_scaled + beat).cos() * 0.5 * beat,
                 color: Color::rgb(1.0, 0.7, 0.0),
             },
 
             triangle: Triangle {
-                p0: (triangle_center + 0.05 + Vec2::new(-0.3, -0.15) * bass).rotate(time.sin()),
-                p1: (triangle_center + 0.05 + Vec2::new(0.3, -0.15) * bass).rotate(time.sin()),
+                p0: (triangle_center + 0.05 + Vec2::new(-0.3, -0.15) * bass).rotate((time + beat).sin()),
+                p1: (triangle_center + 0.05 + Vec2::new(0.3, -0.15) * bass).rotate((time_scaled + beat).cos()),
                 p2: (triangle_center + 0.05 + Vec2::new(0.0, 0.4) * bass).rotate(time.sin()),
                 color: Color::rgb(1.0, 0.0, 0.7),
             },
