@@ -1,7 +1,7 @@
 use crate::geometry::{Circle, Rectangle, Triangle};
 use crate::scenes::{ParameterizedScene, Scene, SceneFrame};
 use crate::smooth_union::smooth_union_color;
-use crate::{AudioAnalysis, ColorExt, Sdf as _, Vec2};
+use crate::{AudioAnalysis, ColorExt, Sdf as _, Vec2, smoothstep};
 use pixels::wgpu::Color;
 
 const AUDIO_TRACK: &str = "assets/audio/shadertoy_track1.mp3";
@@ -79,35 +79,34 @@ impl Scene for Scene4 {
 
     fn prepare_frame_with_audio(&self, time: f32, audio: &AudioAnalysis) -> Box<dyn SceneFrame> {
         let time_scaled = time * 0.5;
-        let bass = audio.bass.clamp(0.0, 1.0) * self.params.volume;
+        let bass = audio.bass * 2.5 * self.params.volume;
+        let bass = if bass < 0.0001 { 1.0 } else { bass };
+        let beat = smoothstep(0.1, 0.5, bass);
         let triangle_center = Vec2::new(time_scaled.cos(), 0.3 * time_scaled.sin());
-        let circle_scale = 0.7 + bass * 1.2;
-        let rectangle_scale = 0.7 + bass * 1.2;
-        let triangle_scale = 0.7 + bass * 1.2;
 
         Box::new(Scene4Frame {
             circle: Circle {
-                radius: 0.2 * circle_scale,
+                radius: 0.05 + 0.2 * bass,
                 center: Vec2::new(0.8 * (time_scaled + 0.2).cos(), 0.8 * time.sin()),
                 color: Color::rgb(0.7, 1.0, 0.0),
             },
 
             rectangle: Rectangle {
                 center: Vec2::new(0.8 * time.sin(), 0.8 * time_scaled.cos()),
-                vertex: Vec2::new(0.3, 0.2) * rectangle_scale,
+                vertex: Vec2::new(0.3, 0.2) * bass + 0.05,
                 rotation: time_scaled.cos() * 0.5,
                 color: Color::rgb(1.0, 0.7, 0.0),
             },
 
             triangle: Triangle {
-                p0: (triangle_center + Vec2::new(-0.3, -0.15) * triangle_scale).rotate(time.sin()),
-                p1: (triangle_center + Vec2::new(0.3, -0.15) * triangle_scale).rotate(time.sin()),
-                p2: (triangle_center + Vec2::new(0.0, 0.4) * triangle_scale).rotate(time.sin()),
+                p0: (triangle_center + 0.05 + Vec2::new(-0.3, -0.15) * bass).rotate(time.sin()),
+                p1: (triangle_center + 0.05 + Vec2::new(0.3, -0.15) * bass).rotate(time.sin()),
+                p2: (triangle_center + 0.05 + Vec2::new(0.0, 0.4) * bass).rotate(time.sin()),
                 color: Color::rgb(1.0, 0.0, 0.7),
             },
 
-            round_radius: (0.5 + 0.5 * time.sin()) * 0.1,
-            smooth_blend_radius: 0.1 + (0.5 + 0.5 * time.sin()) * 0.3,
+            round_radius: (0.5 + 0.5 * time.sin()) * 0.1 * beat,
+            smooth_blend_radius: 0.1 + (0.5 + 0.5 * time.sin()) * 0.1 * beat,
         })
     }
 }
