@@ -1,7 +1,10 @@
+use crate::audio::AudioAnalysis;
+use crate::color_ext::ColorExt;
 use crate::geometry::{Circle, Rectangle, Triangle};
+use crate::geometry::{Sdf as _, Vec2};
+use crate::math::smoothstep;
+use crate::procedural::smooth_union::smooth_union_color;
 use crate::scenes::{ParameterizedScene, Scene, SceneFrame};
-use crate::smooth_union::smooth_union_color;
-use crate::{ColorExt, Sdf as _, Vec2, audio::AudioAnalysis, smoothstep};
 use pixels::wgpu::Color;
 
 const AUDIO_TRACK: &str = "assets/audio/shadertoy_track1.mp3";

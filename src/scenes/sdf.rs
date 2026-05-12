@@ -1,6 +1,8 @@
+use crate::color_ext::ColorExt;
 use crate::geometry::{Circle, Rectangle, Triangle};
+use crate::geometry::{Sdf as _, Vec2};
+use crate::math::min_pair;
 use crate::scenes::{Scene, SceneFrame};
-use crate::{ColorExt, Sdf as _, Vec2, min_pair};
 use pixels::wgpu::Color;
 
 pub struct Sdf;

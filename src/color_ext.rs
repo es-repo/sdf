@@ -1,4 +1,4 @@
-use crate::lerp;
+use crate::math::lerp;
 use pixels::wgpu::Color;
 
 pub trait ColorExt {

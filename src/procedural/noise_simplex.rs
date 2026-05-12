@@ -1,4 +1,5 @@
-use crate::{Vec2, Vec3, floor_i32};
+use crate::geometry::{Vec2, Vec3};
+use crate::math::floor_i32;
 
 const GRAD2: [[f32; 2]; 8] = [
     [1.0, 0.0],

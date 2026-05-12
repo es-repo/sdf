@@ -1,4 +1,4 @@
-use crate::{Vec2, Vec3};
+use crate::geometry::{Vec2, Vec3};
 use std::ops::Mul;
 
 pub trait Fbm: Copy + Into<Self::VecN> {

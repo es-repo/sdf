@@ -1,4 +1,4 @@
-use crate::{Sdf, Vec2};
+use crate::geometry::{Sdf, Vec2};
 use pixels::wgpu::Color;
 
 pub struct Rectangle {
