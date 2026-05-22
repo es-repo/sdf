@@ -60,7 +60,7 @@ impl SceneFrame for Scene4Frame {
         } else if dist < 0.02 {
             Color::rgb(1.0, 1.0, 1.0)
         } else {
-            let c = Color::rgb(0.1, 0.1, (dist * 150.0).sin());
+            let c = Color::rgb(0.1, 0.1, (dist * 150.0).sin().exp());
             let t = dist;
             Color::BLACK.lerp(c, t)
         }
@@ -68,14 +68,6 @@ impl SceneFrame for Scene4Frame {
 }
 
 impl Scene for Scene4 {
-    fn audio_track(&self) -> Option<&'static str> {
-        Some(AUDIO_TRACK)
-    }
-
-    fn audio_volume(&self) -> f32 {
-        self.params.volume
-    }
-
     fn prepare_frame(&self, time: f32) -> Box<dyn SceneFrame> {
         self.prepare_frame_with_audio(time, &AudioAnalysis::default())
     }
@@ -114,6 +106,14 @@ impl Scene for Scene4 {
             round_radius: (0.5 + 0.5 * time.sin()) * 0.1 * beat,
             smooth_blend_radius: 0.1 + (0.5 + 0.5 * time.sin()) * 0.1 * beat,
         })
+    }
+
+    fn audio_track(&self) -> Option<&'static str> {
+        Some(AUDIO_TRACK)
+    }
+
+    fn audio_volume(&self) -> f32 {
+        self.params.volume
     }
 }
 

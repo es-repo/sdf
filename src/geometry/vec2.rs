@@ -88,6 +88,13 @@ impl Vec2<f32> {
         }
     }
 
+    pub fn exp(&self) -> Self {
+        Self {
+            x: self.x.exp(),
+            y: self.y.exp(),
+        }
+    }
+
     // Version of `fract` that corresponds to GLSL's `fract` function,
     // where, for example fract_glsl(-1.2) = 0.8
     pub fn fract_glsl(self) -> Self {
