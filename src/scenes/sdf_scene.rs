@@ -6,13 +6,13 @@ use pixels::wgpu::Color;
 
 pub struct SdfScene;
 
-struct SdfFrame {
+struct SdfSceneFrame {
     circle: Circle,
     rectangle: Rectangle,
     triangle: Triangle,
 }
 
-impl SceneFrame for SdfFrame {
+impl SceneFrame for SdfSceneFrame {
     fn get_pixel_color(&self, coord: Vec2, time: f32) -> Color {
         let r = (0.5 + 0.5 * time.sin()) * 0.1;
 
@@ -42,7 +42,7 @@ impl Scene for SdfScene {
     fn prepare_frame(&self, time: f32) -> Box<dyn SceneFrame> {
         let time_scaled = time * 0.5;
 
-        Box::new(SdfFrame {
+        Box::new(SdfSceneFrame {
             circle: Circle {
                 radius: 0.2,
                 center: Vec2::new(0.8 * (time_scaled + 0.2).cos(), 0.8 * time.sin()),
