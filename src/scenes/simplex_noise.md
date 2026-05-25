@@ -226,7 +226,7 @@ A single noise sample is smooth, but often too simple. Fractal Brownian motion, 
 
 :::code-tabs simplex-2d-fbm
 ```rust
-fn fbm(mut coord: Vec2<f32>, octaves: u32, mut amplitude: f32, gain: f32, lacunarity: f32) -> f32 {
+fn fbm(mut coord: Vec2, octaves: u32, mut amplitude: f32, gain: f32, lacunarity: f32) -> f32 {
     let mut value = 0.0;
 
     for _ in 0..octaves {

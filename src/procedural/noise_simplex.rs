@@ -45,7 +45,7 @@ pub trait NoiseSimplex {
     fn noise_simplex(&self) -> f32;
 }
 
-impl NoiseSimplex for Vec2<f32> {
+impl NoiseSimplex for Vec2 {
     fn noise_simplex(&self) -> f32 {
         const F2: f32 = 0.3660254; // (sqrt(3)-1)/2
         const G2: f32 = 0.21132487; // (3-sqrt(3))/6
@@ -80,7 +80,7 @@ impl NoiseSimplex for Vec2<f32> {
     }
 }
 
-impl NoiseSimplex for Vec3<f32> {
+impl NoiseSimplex for Vec3 {
     fn noise_simplex(&self) -> f32 {
         const F3: f32 = 1.0 / 3.0;
         const G3: f32 = 1.0 / 6.0;

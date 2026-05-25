@@ -34,7 +34,7 @@ struct Scene4Frame {
 }
 
 impl SceneFrame for Scene4Frame {
-    fn get_pixel_color(&self, coord: Vec2<f32>, time: f32) -> Color {
+    fn get_pixel_color(&self, coord: Vec2, time: f32) -> Color {
         let c_dist = self.circle.dist_round(&coord, self.round_radius);
         let r_dist = self.rectangle.dist_round(&coord, self.round_radius);
         let t_dist = self.triangle.dist_round(&coord, self.round_radius);

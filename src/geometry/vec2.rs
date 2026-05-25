@@ -1,18 +1,16 @@
 use std::ops::{Add, Div, Mul, Sub};
 
-#[derive(Clone, Copy, PartialOrd, Eq, PartialEq, Debug)]
-pub struct Vec2<T: PartialOrd + PartialEq + Clone + Copy> {
-    pub x: T,
-    pub y: T,
+#[derive(Clone, Copy, PartialOrd, PartialEq, Debug)]
+pub struct Vec2 {
+    pub x: f32,
+    pub y: f32,
 }
 
-impl<T: PartialOrd + PartialEq + Clone + Copy> Vec2<T> {
-    pub fn new(x: T, y: T) -> Self {
+impl Vec2 {
+    pub fn new(x: f32, y: f32) -> Self {
         Self { x, y }
     }
-}
 
-impl Vec2<f32> {
     pub fn zero() -> Self {
         Self { x: 0.0, y: 0.0 }
     }
@@ -29,11 +27,11 @@ impl Vec2<f32> {
         self / self.len()
     }
 
-    pub fn dist_squared(&self, other: &Vec2<f32>) -> f32 {
+    pub fn dist_squared(&self, other: &Vec2) -> f32 {
         (self.x - other.x) * (self.x - other.x) + (self.y - other.y) * (self.y - other.y)
     }
 
-    pub fn dist(&self, other: &Vec2<f32>) -> f32 {
+    pub fn dist(&self, other: &Vec2) -> f32 {
         self.dist_squared(other).sqrt()
     }
 
@@ -101,56 +99,56 @@ impl Vec2<f32> {
     }
 }
 
-impl Add for Vec2<f32> {
-    type Output = Vec2<f32>;
+impl Add for Vec2 {
+    type Output = Vec2;
 
-    fn add(self, rhs: Vec2<f32>) -> Self::Output {
+    fn add(self, rhs: Vec2) -> Self::Output {
         Vec2::new(self.x + rhs.x, self.y + rhs.y)
     }
 }
 
-impl Add<f32> for Vec2<f32> {
-    type Output = Vec2<f32>;
+impl Add<f32> for Vec2 {
+    type Output = Vec2;
 
     fn add(self, rhs: f32) -> Self::Output {
         Vec2::new(self.x + rhs, self.y + rhs)
     }
 }
 
-impl Sub<f32> for Vec2<f32> {
-    type Output = Vec2<f32>;
+impl Sub<f32> for Vec2 {
+    type Output = Vec2;
 
     fn sub(self, rhs: f32) -> Self::Output {
         Vec2::new(self.x - rhs, self.y - rhs)
     }
 }
 
-impl Sub for Vec2<f32> {
-    type Output = Vec2<f32>;
+impl Sub for Vec2 {
+    type Output = Vec2;
 
-    fn sub(self, rhs: Vec2<f32>) -> Self::Output {
+    fn sub(self, rhs: Vec2) -> Self::Output {
         Vec2::new(self.x - rhs.x, self.y - rhs.y)
     }
 }
 
-impl Mul<f32> for Vec2<f32> {
-    type Output = Vec2<f32>;
+impl Mul<f32> for Vec2 {
+    type Output = Vec2;
 
     fn mul(self, rhs: f32) -> Self::Output {
         Vec2::new(self.x * rhs, self.y * rhs)
     }
 }
 
-impl Mul<Vec2<f32>> for Vec2<f32> {
-    type Output = Vec2<f32>;
+impl Mul<Vec2> for Vec2 {
+    type Output = Vec2;
 
-    fn mul(self, rhs: Vec2<f32>) -> Self::Output {
+    fn mul(self, rhs: Vec2) -> Self::Output {
         Vec2::new(self.x * rhs.x, self.y * rhs.y)
     }
 }
 
-impl Div<f32> for Vec2<f32> {
-    type Output = Vec2<f32>;
+impl Div<f32> for Vec2 {
+    type Output = Vec2;
 
     fn div(self, rhs: f32) -> Self::Output {
         Vec2::new(self.x / rhs, self.y / rhs)

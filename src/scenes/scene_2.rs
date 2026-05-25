@@ -15,7 +15,7 @@ struct Scene2Frame {
 }
 
 impl SceneFrame for Scene2Frame {
-    fn get_pixel_color(&self, coord: Vec2<f32>, _time: f32) -> Color {
+    fn get_pixel_color(&self, coord: Vec2, _time: f32) -> Color {
         let d1 = self.circle_1.dist_squared_radius_squared(&coord);
         let d2 = self.circle_2.dist_squared_radius_squared(&coord);
 

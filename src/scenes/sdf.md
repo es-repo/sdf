@@ -100,7 +100,7 @@ Rounding is also a distance operation. Subtracting a radius from the SDF expands
 
 :::code-tabs sdf-rounding
 ```rust
-fn dist_round(&self, point: &Vec2<f32>, radius: f32) -> f32 {
+fn dist_round(&self, point: &Vec2, radius: f32) -> f32 {
     self.dist(point) - radius
 }
 ```

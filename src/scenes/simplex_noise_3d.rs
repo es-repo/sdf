@@ -15,7 +15,7 @@ impl Scene for SimplexNoise3d {
 }
 
 impl SceneFrame for SimplexNoise3dFrame {
-    fn get_pixel_color(&self, coord: Vec2<f32>, time: f32) -> Color {
+    fn get_pixel_color(&self, coord: Vec2, time: f32) -> Color {
         let mut f;
         let scale = 3.0;
         let time_scaled = time * 0.2;

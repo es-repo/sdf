@@ -3,9 +3,9 @@ use crate::geometry::Vec2;
 use pixels::wgpu::Color;
 
 pub trait SceneFrame: Send + Sync {
-    fn get_pixel_color(&self, coord: Vec2<f32>, time: f32) -> Color;
+    fn get_pixel_color(&self, coord: Vec2, time: f32) -> Color;
 
-    fn get_pixel_color_with_audio(&self, coord: Vec2<f32>, time: f32, _audio: &AudioAnalysis) -> Color {
+    fn get_pixel_color_with_audio(&self, coord: Vec2, time: f32, _audio: &AudioAnalysis) -> Color {
         self.get_pixel_color(coord, time)
     }
 }

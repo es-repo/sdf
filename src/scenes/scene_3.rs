@@ -59,7 +59,7 @@ impl ParameterizedScene for Scene3 {
 }
 
 impl SceneFrame for Scene3Frame {
-    fn get_pixel_color(&self, coord: Vec2<f32>, _time: f32) -> Color {
+    fn get_pixel_color(&self, coord: Vec2, _time: f32) -> Color {
         let mut coord3d = Vec3::from_2d(coord * self.params.scale + self.time_scaled, self.time_scaled);
 
         let mut f = 1.0;

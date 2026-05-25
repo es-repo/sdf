@@ -2,14 +2,14 @@ use super::{Sdf, Vec2};
 use pixels::wgpu::Color;
 
 pub struct Triangle {
-    pub p0: Vec2<f32>,
-    pub p1: Vec2<f32>,
-    pub p2: Vec2<f32>,
+    pub p0: Vec2,
+    pub p1: Vec2,
+    pub p2: Vec2,
     pub color: Color,
 }
 
 impl Sdf for Triangle {
-    fn dist(&self, v: &Vec2<f32>) -> f32 {
+    fn dist(&self, v: &Vec2) -> f32 {
         let e0 = self.p1 - self.p0;
         let e1 = self.p2 - self.p1;
         let e2 = self.p0 - self.p2;
@@ -34,7 +34,7 @@ impl Sdf for Triangle {
     }
 }
 
-fn closest_segment_delta(v: Vec2<f32>, edge: Vec2<f32>) -> Vec2<f32> {
+fn closest_segment_delta(v: Vec2, edge: Vec2) -> Vec2 {
     let t = (v.dot(edge) / edge.dot(edge)).clamp(0.0, 1.0);
     v - edge * t
 }

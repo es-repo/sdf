@@ -26,10 +26,10 @@ impl Default for Quat {
     }
 }
 
-impl Mul<Vec3<f32>> for Quat {
-    type Output = Vec3<f32>;
+impl Mul<Vec3> for Quat {
+    type Output = Vec3;
 
-    fn mul(self, v: Vec3<f32>) -> Vec3<f32> {
+    fn mul(self, v: Vec3) -> Vec3 {
         let qv = Vec3::new(self.x, self.y, self.z);
         let t = qv.cross(v) * 2.0;
         v + t * self.w + qv.cross(t)

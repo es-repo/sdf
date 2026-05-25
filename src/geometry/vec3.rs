@@ -1,25 +1,23 @@
 use super::Vec2;
 use std::ops::{Add, Div, Mul, Sub};
 
-#[derive(Clone, Copy, PartialOrd, Eq, PartialEq, Debug)]
-pub struct Vec3<T: PartialOrd + PartialEq + Clone + Copy> {
-    pub x: T,
-    pub y: T,
-    pub z: T,
+#[derive(Clone, Copy, PartialOrd, PartialEq, Debug)]
+pub struct Vec3 {
+    pub x: f32,
+    pub y: f32,
+    pub z: f32,
 }
 
-impl<T: PartialOrd + PartialEq + Clone + Copy> Vec3<T> {
-    pub fn new(x: T, y: T, z: T) -> Self {
+impl Vec3 {
+    pub fn new(x: f32, y: f32, z: f32) -> Self {
         Self { x, y, z }
     }
-}
 
-impl Vec3<f32> {
     pub fn zero() -> Self {
         Self { x: 0.0, y: 0.0, z: 0.0 }
     }
 
-    pub fn from_2d(v2d: Vec2<f32>, z: f32) -> Self {
+    pub fn from_2d(v2d: Vec2, z: f32) -> Self {
         Self { x: v2d.x, y: v2d.y, z }
     }
 
@@ -35,13 +33,13 @@ impl Vec3<f32> {
         self / self.len()
     }
 
-    pub fn dist_squared(&self, other: &Vec3<f32>) -> f32 {
+    pub fn dist_squared(&self, other: &Vec3) -> f32 {
         (self.x - other.x) * (self.x - other.x)
             + (self.y - other.y) * (self.y - other.y)
             + (self.z - other.z) * (self.z - other.z)
     }
 
-    pub fn dist(&self, other: &Vec3<f32>) -> f32 {
+    pub fn dist(&self, other: &Vec3) -> f32 {
         self.dist_squared(other).sqrt()
     }
 
@@ -134,56 +132,56 @@ impl Vec3<f32> {
     }
 }
 
-impl Add for Vec3<f32> {
-    type Output = Vec3<f32>;
+impl Add for Vec3 {
+    type Output = Vec3;
 
-    fn add(self, rhs: Vec3<f32>) -> Self::Output {
+    fn add(self, rhs: Vec3) -> Self::Output {
         Vec3::new(self.x + rhs.x, self.y + rhs.y, self.z + rhs.z)
     }
 }
 
-impl Add<f32> for Vec3<f32> {
-    type Output = Vec3<f32>;
+impl Add<f32> for Vec3 {
+    type Output = Vec3;
 
     fn add(self, rhs: f32) -> Self::Output {
         Vec3::new(self.x + rhs, self.y + rhs, self.z + rhs)
     }
 }
 
-impl Sub<f32> for Vec3<f32> {
-    type Output = Vec3<f32>;
+impl Sub<f32> for Vec3 {
+    type Output = Vec3;
 
     fn sub(self, rhs: f32) -> Self::Output {
         Vec3::new(self.x - rhs, self.y - rhs, self.z - rhs)
     }
 }
 
-impl Sub for Vec3<f32> {
-    type Output = Vec3<f32>;
+impl Sub for Vec3 {
+    type Output = Vec3;
 
-    fn sub(self, rhs: Vec3<f32>) -> Self::Output {
+    fn sub(self, rhs: Vec3) -> Self::Output {
         Vec3::new(self.x - rhs.x, self.y - rhs.y, self.z - rhs.z)
     }
 }
 
-impl Mul<f32> for Vec3<f32> {
-    type Output = Vec3<f32>;
+impl Mul<f32> for Vec3 {
+    type Output = Vec3;
 
     fn mul(self, rhs: f32) -> Self::Output {
         Vec3::new(self.x * rhs, self.y * rhs, self.z * rhs)
     }
 }
 
-impl Mul<Vec3<f32>> for Vec3<f32> {
-    type Output = Vec3<f32>;
+impl Mul<Vec3> for Vec3 {
+    type Output = Vec3;
 
-    fn mul(self, rhs: Vec3<f32>) -> Self::Output {
+    fn mul(self, rhs: Vec3) -> Self::Output {
         Vec3::new(self.x * rhs.x, self.y * rhs.y, self.z * rhs.z)
     }
 }
 
-impl Div<f32> for Vec3<f32> {
-    type Output = Vec3<f32>;
+impl Div<f32> for Vec3 {
+    type Output = Vec3;
 
     fn div(self, rhs: f32) -> Self::Output {
         Vec3::new(self.x / rhs, self.y / rhs, self.z / rhs)

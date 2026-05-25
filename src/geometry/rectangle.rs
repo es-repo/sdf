@@ -2,14 +2,14 @@ use crate::geometry::{Sdf, Vec2};
 use pixels::wgpu::Color;
 
 pub struct Rectangle {
-    pub center: Vec2<f32>,
-    pub vertex: Vec2<f32>,
+    pub center: Vec2,
+    pub vertex: Vec2,
     pub color: Color,
     pub rotation: f32,
 }
 
 impl Sdf for Rectangle {
-    fn dist(&self, v: &Vec2<f32>) -> f32 {
+    fn dist(&self, v: &Vec2) -> f32 {
         let p = (*v - self.center).rotate(-self.rotation);
         let d = p.abs() - self.vertex;
 

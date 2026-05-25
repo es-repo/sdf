@@ -34,8 +34,8 @@ pub trait Fbm: Copy + Into<Self::VecN> {
         N: Fn(Self::VecN) -> f32;
 }
 
-impl Fbm for Vec2<f32> {
-    type VecN = Vec2<f32>;
+impl Fbm for Vec2 {
+    type VecN = Vec2;
 
     fn fbm_rotated<N>(&self, octaves: u32, amplitude: f32, gain: f32, noise: N) -> f32
     where
@@ -47,8 +47,8 @@ impl Fbm for Vec2<f32> {
     }
 }
 
-impl Fbm for Vec3<f32> {
-    type VecN = Vec3<f32>;
+impl Fbm for Vec3 {
+    type VecN = Vec3;
 
     fn fbm_rotated<N>(&self, octaves: u32, amplitude: f32, gain: f32, noise: N) -> f32
     where

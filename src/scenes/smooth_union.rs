@@ -12,7 +12,7 @@ struct SmoothUnionFrame {
 }
 
 impl SceneFrame for SmoothUnionFrame {
-    fn get_pixel_color(&self, coord: Vec2<f32>, _time: f32) -> Color {
+    fn get_pixel_color(&self, coord: Vec2, _time: f32) -> Color {
         let circle_1_dist = self.circle_1.dist(&coord);
         let circle_2_dist = self.circle_2.dist(&coord);
 

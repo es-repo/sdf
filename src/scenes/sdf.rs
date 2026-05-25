@@ -13,7 +13,7 @@ struct SdfFrame {
 }
 
 impl SceneFrame for SdfFrame {
-    fn get_pixel_color(&self, coord: Vec2<f32>, time: f32) -> Color {
+    fn get_pixel_color(&self, coord: Vec2, time: f32) -> Color {
         let r = (0.5 + 0.5 * time.sin()) * 0.1;
 
         let c_dist = self.circle.dist_round(&coord, r);

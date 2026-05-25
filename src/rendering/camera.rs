@@ -1,12 +1,12 @@
 use super::CameraFrame;
 use crate::geometry::{Quat, Vec3};
-const DEFAULT_FORWARD: Vec3<f32> = Vec3 { x: 0.0, y: 0.0, z: 1.0 };
-const DEFAULT_RIGHT: Vec3<f32> = Vec3 { x: 1.0, y: 0.0, z: 0.0 };
-const DEFAULT_UP: Vec3<f32> = Vec3 { x: 0.0, y: 1.0, z: 0.0 };
+const DEFAULT_FORWARD: Vec3 = Vec3 { x: 0.0, y: 0.0, z: 1.0 };
+const DEFAULT_RIGHT: Vec3 = Vec3 { x: 1.0, y: 0.0, z: 0.0 };
+const DEFAULT_UP: Vec3 = Vec3 { x: 0.0, y: 1.0, z: 0.0 };
 
 pub struct Camera {
     /// World-space camera position
-    pub position: Vec3<f32>,
+    pub position: Vec3,
 
     /// Camera orientation
     rotation: Quat,
@@ -42,15 +42,15 @@ impl Camera {
         )
     }
 
-    fn forward(&self) -> Vec3<f32> {
+    fn forward(&self) -> Vec3 {
         self.rotation * DEFAULT_FORWARD
     }
 
-    fn right(&self) -> Vec3<f32> {
+    fn right(&self) -> Vec3 {
         self.rotation * DEFAULT_RIGHT
     }
 
-    fn up(&self) -> Vec3<f32> {
+    fn up(&self) -> Vec3 {
         self.rotation * DEFAULT_UP
     }
 }
