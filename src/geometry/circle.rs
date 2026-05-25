@@ -8,7 +8,6 @@ pub struct Circle {
 }
 
 impl Circle {
-    #[allow(dead_code)]
     pub fn dist_squared(&self, v: &Vec2<f32>) -> f32 {
         self.center.dist_squared(v) - self.radius
     }
