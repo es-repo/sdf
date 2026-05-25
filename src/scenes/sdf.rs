@@ -1,11 +1,10 @@
 use crate::color_ext::ColorExt;
-use crate::geometry::{Circle, Rectangle, Triangle};
-use crate::geometry::{Sdf as _, Vec2};
+use crate::geometry::{Circle, Rectangle, Sdf, Triangle, Vec2};
 use crate::math::min_pair;
 use crate::scenes::{Scene, SceneFrame};
 use pixels::wgpu::Color;
 
-pub struct Sdf;
+pub struct SdfScene;
 
 struct SdfFrame {
     circle: Circle,
@@ -39,7 +38,7 @@ impl SceneFrame for SdfFrame {
     }
 }
 
-impl Scene for Sdf {
+impl Scene for SdfScene {
     fn prepare_frame(&self, time: f32) -> Box<dyn SceneFrame> {
         let time_scaled = time * 0.5;
 
