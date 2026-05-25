@@ -261,35 +261,33 @@ impl Viewer {
         let width_f = width as f32;
         let dx = 2.0 / height_f;
 
-        {
-            let frame = self.pixels.as_mut().unwrap().frame_mut();
+        let frame = self.pixels.as_mut().unwrap().frame_mut();
 
-            frame.par_chunks_exact_mut(row_stride).enumerate().for_each(|(y, row)| {
-                let y = y as f32;
-                let ny = (height_f - 2.0 * (y + 0.5)) / height_f;
-                let mut nx = (1.0 - width_f) / height_f;
+        frame.par_chunks_exact_mut(row_stride).enumerate().for_each(|(y, row)| {
+            let y = y as f32;
+            let ny = (height_f - 2.0 * (y + 0.5)) / height_f;
+            let mut nx = (1.0 - width_f) / height_f;
 
-                for pixel in row.chunks_exact_mut(4) {
-                    let coord = Vec2::new(nx, ny);
-                    let color = prepared_scene.get_pixel_color_with_audio(coord, time, &audio_analysis);
-                    pixel.copy_from_slice(&color.to_u8_array());
-                    nx += dx;
-                }
-            });
-
-            if self.show_fps {
-                let fps_text = format!("{:.0}", self.fps_counter.count());
-                draw_text(
-                    frame,
-                    self.size_logical.width,
-                    self.size_logical.height,
-                    &fps_text,
-                    16,
-                    16,
-                    4,
-                    [255, 255, 255, 255],
-                );
+            for pixel in row.chunks_exact_mut(4) {
+                let coord = Vec2::new(nx, ny);
+                let color = prepared_scene.get_pixel_color_with_audio(coord, time, &audio_analysis);
+                pixel.copy_from_slice(&color.to_u8_array());
+                nx += dx;
             }
+        });
+
+        if self.show_fps {
+            let fps_text = format!("{:.0}", self.fps_counter.count());
+            draw_text(
+                frame,
+                self.size_logical.width,
+                self.size_logical.height,
+                &fps_text,
+                16,
+                16,
+                4,
+                [255, 255, 255, 255],
+            );
         }
 
         self.render_with_egui(egui_frame);
