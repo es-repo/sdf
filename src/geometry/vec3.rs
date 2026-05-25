@@ -31,6 +31,10 @@ impl Vec3<f32> {
         self.x * self.x + self.y * self.y + self.z * self.z
     }
 
+    pub fn normalize(self) -> Self {
+        self / self.len()
+    }
+
     pub fn dist_squared(&self, other: &Vec3<f32>) -> f32 {
         (self.x - other.x) * (self.x - other.x)
             + (self.y - other.y) * (self.y - other.y)

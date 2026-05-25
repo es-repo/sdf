@@ -41,6 +41,6 @@ impl CameraFrame {
     /// Returns only the normalized world-space direction for the ray through the coordinate.
     pub fn ray_direction(&self, coord: Vec2<f32>) -> Vec3<f32> {
         let direction = self.forward + self.right * coord.x * self.half_width + self.up * coord.y * self.half_height;
-        direction / direction.len()
+        direction.normalize()
     }
 }
