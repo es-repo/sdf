@@ -1,4 +1,4 @@
-use std::ops::{Add, Mul, Sub};
+use std::ops::{Add, Div, Mul, Sub};
 
 #[derive(Clone, Copy, PartialOrd, Eq, PartialEq, Debug)]
 pub struct Vec2<T: PartialOrd + PartialEq + Clone + Copy> {
@@ -12,19 +12,11 @@ impl<T: PartialOrd + PartialEq + Clone + Copy> Vec2<T> {
     }
 }
 
-impl Vec2<u32> {
-    pub fn to_aspect_ndc(&self, w: u32, h: u32) -> Vec2<f32> {
-        let xf = self.x as f32 + 0.5;
-        let yf = self.y as f32 + 0.5;
-
-        let nx = (2.0 * xf - w as f32) / h as f32;
-        let ny = (h as f32 - 2.0 * yf) / h as f32;
-
-        Vec2 { x: nx, y: ny }
-    }
-}
-
 impl Vec2<f32> {
+    pub fn zero() -> Self {
+        Self { x: 0.0, y: 0.0 }
+    }
+
     pub fn len(&self) -> f32 {
         self.len_squared().sqrt()
     }
@@ -150,5 +142,13 @@ impl Mul<Vec2<f32>> for Vec2<f32> {
 
     fn mul(self, rhs: Vec2<f32>) -> Self::Output {
         Vec2::new(self.x * rhs.x, self.y * rhs.y)
+    }
+}
+
+impl Div<f32> for Vec2<f32> {
+    type Output = Vec2<f32>;
+
+    fn div(self, rhs: f32) -> Self::Output {
+        Vec2::new(self.x / rhs, self.y / rhs)
     }
 }

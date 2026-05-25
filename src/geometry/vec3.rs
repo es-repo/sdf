@@ -1,5 +1,5 @@
 use super::Vec2;
-use std::ops::{Add, Mul, Sub};
+use std::ops::{Add, Div, Mul, Sub};
 
 #[derive(Clone, Copy, PartialOrd, Eq, PartialEq, Debug)]
 pub struct Vec3<T: PartialOrd + PartialEq + Clone + Copy> {
@@ -15,6 +15,10 @@ impl<T: PartialOrd + PartialEq + Clone + Copy> Vec3<T> {
 }
 
 impl Vec3<f32> {
+    pub fn zero() -> Self {
+        Self { x: 0.0, y: 0.0, z: 0.0 }
+    }
+
     pub fn from_2d(v2d: Vec2<f32>, z: f32) -> Self {
         Self { x: v2d.x, y: v2d.y, z }
     }
@@ -171,5 +175,13 @@ impl Mul<Vec3<f32>> for Vec3<f32> {
 
     fn mul(self, rhs: Vec3<f32>) -> Self::Output {
         Vec3::new(self.x * rhs.x, self.y * rhs.y, self.z * rhs.z)
+    }
+}
+
+impl Div<f32> for Vec3<f32> {
+    type Output = Vec3<f32>;
+
+    fn div(self, rhs: f32) -> Self::Output {
+        Vec3::new(self.x / rhs, self.y / rhs, self.z / rhs)
     }
 }
