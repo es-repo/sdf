@@ -1,6 +1,7 @@
 use crate::geometry::{Sdf3d, Vec3};
 use egui_wgpu::wgpu::Color;
 
+#[derive(Copy, Clone, Debug)]
 pub struct Sphere {
     pub center: Vec3,
     pub radius: f32,

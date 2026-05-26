@@ -1,6 +1,7 @@
 use crate::geometry::{Sdf, Vec2};
 use pixels::wgpu::Color;
 
+#[derive(Copy, Clone, Debug)]
 pub struct Rectangle {
     pub center: Vec2,
     pub vertex: Vec2,

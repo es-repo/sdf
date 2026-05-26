@@ -1,6 +1,7 @@
 use super::{Sdf, Vec2};
 use pixels::wgpu::Color;
 
+#[derive(Copy, Clone, Debug)]
 pub struct Circle {
     pub center: Vec2,
     pub radius: f32,

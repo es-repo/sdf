@@ -1,6 +1,7 @@
 use super::{Sdf, Vec2};
 use pixels::wgpu::Color;
 
+#[derive(Copy, Clone, Debug)]
 pub struct Triangle {
     pub p0: Vec2,
     pub p1: Vec2,
