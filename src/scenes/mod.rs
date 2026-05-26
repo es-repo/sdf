@@ -1,21 +1,23 @@
 mod domain_warping;
+mod ray_marching;
 mod scene;
 mod scene_1;
 mod scene_2;
 mod scene_3;
 mod scene_4;
-mod sdf;
+mod sdf_scene;
 mod simplex_noise;
 mod simplex_noise_3d;
 mod smooth_union;
 
 pub use domain_warping::DomainWarping;
+pub use ray_marching::RayMarching;
 pub use scene::{ParameterizedScene, Scene, SceneFrame, SceneInstance};
 pub use scene_1::Scene1;
 pub use scene_2::Scene2;
 pub use scene_3::Scene3;
 pub use scene_4::Scene4;
-pub use sdf::Sdf;
+pub use sdf_scene::SdfScene;
 pub use simplex_noise::SimplexNoise;
 pub use simplex_noise_3d::SimplexNoise3d;
 pub use smooth_union::SmoothUnion;

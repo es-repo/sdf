@@ -13,6 +13,7 @@ pub use quat::Quat;
 pub use rectangle::Rectangle;
 pub use sdf::Sdf;
 pub use sdf_3d::Sdf3d;
+pub use sphere::Sphere;
 pub use triangle::Triangle;
 pub use vec2::Vec2;
 pub use vec3::Vec3;

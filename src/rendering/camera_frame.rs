@@ -5,9 +5,9 @@ pub struct CameraFrame {
     /// World-space camera position
     pub position: Vec3,
 
-    forward: Vec3,
-    right: Vec3,
-    up: Vec3,
+    pub forward: Vec3,
+    pub right: Vec3,
+    pub up: Vec3,
     half_width: f32,
     half_height: f32,
 }
