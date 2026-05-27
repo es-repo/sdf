@@ -1,10 +1,12 @@
 use crate::geometry::{Sdf3d, Sphere, Vec2, Vec3};
-use crate::rendering::{Camera, CameraFrame};
+use crate::input::InputState;
+use crate::rendering::{Camera, CameraController, CameraFrame};
 use crate::scenes::{Scene, SceneFrame};
 use pixels::wgpu::Color;
 
 pub struct RayMarching {
     camera: Camera,
+    camera_controller: CameraController,
     max_distance: f32,
     hit_epsilon: f32,
     max_steps: usize,
@@ -15,6 +17,7 @@ impl Default for RayMarching {
         let fov_y = 60f32.to_radians();
         Self {
             camera: Camera::new(fov_y, 1.0),
+            camera_controller: CameraController::new(2.0),
             max_distance: 100.0,
             hit_epsilon: 0.0001,
             max_steps: 100,
@@ -65,6 +68,11 @@ impl SceneFrame for RayMarchingFrame {
 }
 
 impl Scene for RayMarching {
+    fn update(&mut self, delta_time: f32, input: &InputState) {
+        self.camera_controller
+            .update_camera(&mut self.camera, delta_time, input);
+    }
+
     fn prepare_frame(&self, time: f32) -> Box<dyn SceneFrame> {
         Box::new(RayMarchingFrame {
             camera_frame: self.camera.prepare_frame(),

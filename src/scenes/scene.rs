@@ -1,5 +1,6 @@
 use crate::audio::AudioAnalysis;
 use crate::geometry::Vec2;
+use crate::input::InputState;
 use pixels::wgpu::Color;
 
 pub trait SceneFrame: Send + Sync {
@@ -11,6 +12,8 @@ pub trait SceneFrame: Send + Sync {
 }
 
 pub trait Scene: Send + Sync {
+    fn update(&mut self, _delta_time: f32, _input: &InputState) {}
+
     fn prepare_frame(&self, time: f32) -> Box<dyn SceneFrame>;
 
     fn prepare_frame_with_audio(&self, time: f32, _audio: &AudioAnalysis) -> Box<dyn SceneFrame> {
@@ -54,6 +57,13 @@ impl SceneInstance {
         match self {
             Self::Plain(scene) => scene.prepare_frame(time),
             Self::Parameterized(scene) => scene.prepare_frame(time),
+        }
+    }
+
+    pub fn update(&mut self, delta_time: f32, input: &InputState) {
+        match self {
+            Self::Plain(scene) => scene.update(delta_time, input),
+            Self::Parameterized(scene) => scene.update(delta_time, input),
         }
     }
 

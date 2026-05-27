@@ -5,6 +5,7 @@ use rayon::prelude::*;
 use sdf::audio::{AudioAnalysis, AudioTrack};
 use sdf::color_ext::ColorExt;
 use sdf::geometry::Vec2;
+use sdf::input::InputState;
 use sdf::scenes::SceneInstance;
 use std::sync::Arc;
 use web_time::Instant;
@@ -44,6 +45,8 @@ pub struct Viewer {
     size_logical: LogicalSize<u32>,
     scale_factor: f64,
     start_time: Instant,
+    last_frame_time: Instant,
+    input: InputState,
     fps_counter: FpsCounter,
     show_fps: bool,
     audio_track: Option<AudioTrack>,
@@ -91,13 +94,17 @@ impl EguiState {
 impl Viewer {
     #[cfg(not(target_arch = "wasm32"))]
     pub fn new(size_logical: LogicalSize<u32>, scene: SceneInstance) -> Self {
+        let now = Instant::now();
+
         Self {
             window: None,
             pixels: None,
             scene,
             egui: None,
             size_logical,
-            start_time: Instant::now(),
+            start_time: now,
+            last_frame_time: now,
+            input: InputState::default(),
             fps_counter: FpsCounter::new(),
             show_fps: false,
             scale_factor: 1.0,
@@ -107,6 +114,8 @@ impl Viewer {
 
     #[cfg(target_arch = "wasm32")]
     pub fn new(size_logical: LogicalSize<u32>, scene: SceneInstance, event_proxy: EventLoopProxy<AppEvent>) -> Self {
+        let now = Instant::now();
+
         Self {
             window: None,
             pixels: None,
@@ -114,7 +123,9 @@ impl Viewer {
             egui: None,
             event_proxy,
             size_logical,
-            start_time: Instant::now(),
+            start_time: now,
+            last_frame_time: now,
+            input: InputState::default(),
             fps_counter: FpsCounter::new(),
             show_fps: false,
             scale_factor: 1.0,
@@ -247,12 +258,17 @@ impl Viewer {
             return;
         }
 
-        let elapsed = self.start_time.elapsed();
+        let now = Instant::now();
+        let elapsed = now.duration_since(self.start_time);
+        let delta_time = now.duration_since(self.last_frame_time).as_secs_f32();
+        self.last_frame_time = now;
         let time = elapsed.as_secs_f64() as f32;
         self.fps_counter.tick();
         let egui_frame = self.prepare_egui_frame();
         self.sync_audio_volume();
         let audio_analysis = self.audio_analysis();
+        self.scene.update(delta_time, &self.input);
+        self.input.reset_frame_delta();
         let prepared_scene = self.scene.prepare_frame_with_audio(time, &audio_analysis);
         let width = self.size_logical.width;
         let height = self.size_logical.height;
@@ -368,6 +384,14 @@ impl Viewer {
             WindowEvent::RedrawRequested => self.render(),
 
             WindowEvent::KeyboardInput { event, .. } => {
+                if let PhysicalKey::Code(key) = event.physical_key {
+                    match event.state {
+                        ElementState::Pressed if !gui_consumed => self.input.set_key_pressed(key, true),
+                        ElementState::Released => self.input.set_key_pressed(key, false),
+                        _ => {}
+                    }
+                }
+
                 if event.state == ElementState::Pressed && !event.repeat {
                     self.sync_scene_audio();
 
@@ -378,10 +402,26 @@ impl Viewer {
                 }
             }
 
-            WindowEvent::MouseInput {
-                state: ElementState::Pressed,
-                ..
-            } => self.sync_scene_audio(),
+            WindowEvent::MouseInput { state, button, .. } => {
+                match state {
+                    ElementState::Pressed if !gui_consumed => self.input.set_mouse_button_pressed(button, true),
+                    ElementState::Released => self.input.set_mouse_button_pressed(button, false),
+                    _ => {}
+                }
+
+                if state == ElementState::Pressed {
+                    self.sync_scene_audio();
+                }
+            }
+
+            WindowEvent::CursorMoved { position, .. } => {
+                self.input
+                    .set_mouse_position(Vec2::new(position.x as f32, position.y as f32));
+            }
+
+            WindowEvent::CursorLeft { .. } => self.input.clear_mouse_position(),
+
+            WindowEvent::Focused(false) => self.input.clear(),
 
             WindowEvent::Resized(size_physical) => {
                 if size_physical.width > 0 && size_physical.height > 0 {
@@ -483,6 +523,7 @@ impl Viewer {
         self.scale_factor = window.scale_factor();
         self.window = Some(Arc::clone(&window));
         self.start_time = Instant::now();
+        self.last_frame_time = self.start_time;
         self.fps_counter.reset();
 
         window
@@ -599,6 +640,7 @@ impl ApplicationHandler<AppEvent> for Viewer {
             AppEvent::SwitchScene(scene) => {
                 self.scene = scene;
                 self.start_time = Instant::now();
+                self.last_frame_time = self.start_time;
                 self.fps_counter.reset();
                 self.sync_scene_audio();
                 self.window.as_ref().unwrap().request_redraw();
