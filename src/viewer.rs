@@ -46,7 +46,8 @@ pub struct Viewer {
     event_proxy: EventLoopProxy<AppEvent>,
     size_logical: LogicalSize<u32>,
     scale_factor: f64,
-    start_time: Instant,
+    scene_time: f32,
+    time_paused: bool,
     last_frame_time: Instant,
     input: InputState,
     fps_counter: FpsCounter,
@@ -104,7 +105,8 @@ impl Viewer {
             scene,
             egui: None,
             size_logical,
-            start_time: now,
+            scene_time: 0.0,
+            time_paused: false,
             last_frame_time: now,
             input: InputState::default(),
             fps_counter: FpsCounter::new(),
@@ -125,7 +127,8 @@ impl Viewer {
             egui: None,
             event_proxy,
             size_logical,
-            start_time: now,
+            scene_time: 0.0,
+            time_paused: false,
             last_frame_time: now,
             input: InputState::default(),
             fps_counter: FpsCounter::new(),
@@ -261,10 +264,14 @@ impl Viewer {
         }
 
         let now = Instant::now();
-        let elapsed = now.duration_since(self.start_time);
         let delta_time = now.duration_since(self.last_frame_time).as_secs_f32();
         self.last_frame_time = now;
-        let time = elapsed.as_secs_f64() as f32;
+
+        if !self.time_paused {
+            self.scene_time += delta_time;
+        }
+
+        let time = self.scene_time;
         self.fps_counter.tick();
         let egui_frame = self.prepare_egui_frame();
         self.sync_audio_volume();
@@ -399,6 +406,11 @@ impl Viewer {
 
                     if !gui_consumed && matches!(event.physical_key, PhysicalKey::Code(KeyCode::KeyF)) {
                         self.show_fps = !self.show_fps;
+                        self.window.as_ref().unwrap().request_redraw();
+                    }
+
+                    if !gui_consumed && matches!(event.physical_key, PhysicalKey::Code(KeyCode::Space)) {
+                        self.time_paused = !self.time_paused;
                         self.window.as_ref().unwrap().request_redraw();
                     }
                 }
@@ -540,8 +552,9 @@ impl Viewer {
 
         self.scale_factor = window.scale_factor();
         self.window = Some(Arc::clone(&window));
-        self.start_time = Instant::now();
-        self.last_frame_time = self.start_time;
+        self.scene_time = 0.0;
+        self.time_paused = false;
+        self.last_frame_time = Instant::now();
         self.fps_counter.reset();
 
         window
@@ -657,8 +670,9 @@ impl ApplicationHandler<AppEvent> for Viewer {
             }
             AppEvent::SwitchScene(scene) => {
                 self.scene = scene;
-                self.start_time = Instant::now();
-                self.last_frame_time = self.start_time;
+                self.scene_time = 0.0;
+                self.time_paused = false;
+                self.last_frame_time = Instant::now();
                 self.fps_counter.reset();
                 self.sync_scene_audio();
                 self.window.as_ref().unwrap().request_redraw();
