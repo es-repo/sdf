@@ -11,6 +11,7 @@ import time
 from functools import partial
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
+from urllib.parse import urlsplit
 
 
 WATCHED_DIRS = ("src", "assets")
@@ -53,11 +54,13 @@ class LiveReloadHandler(SimpleHTTPRequestHandler):
         super().end_headers()
 
     def do_GET(self) -> None:
-        if self.path == "/__reload":
+        path = urlsplit(self.path).path
+
+        if path == "/__reload":
             self.handle_reload_events()
             return
 
-        if self.path in ("/", "/index.html"):
+        if path in ("/", "/index.html"):
             self.handle_index()
             return
 
@@ -80,6 +83,7 @@ class LiveReloadHandler(SimpleHTTPRequestHandler):
         self.send_response(200)
         self.send_header("Content-Type", "text/html; charset=utf-8")
         self.send_header("Content-Length", str(len(body)))
+        self.send_header("Cache-Control", "no-store")
         self.end_headers()
         self.wfile.write(body)
 
