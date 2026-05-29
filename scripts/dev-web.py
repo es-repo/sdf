@@ -26,8 +26,69 @@ WATCHED_FILES = (
 LIVE_RELOAD_SCRIPT = """
 <script>
 (() => {
+    const overlay = document.createElement("div");
+    overlay.setAttribute("aria-live", "polite");
+    overlay.style.cssText = [
+        "position:fixed",
+        "right:16px",
+        "bottom:16px",
+        "z-index:2147483647",
+        "display:none",
+        "align-items:center",
+        "gap:10px",
+        "padding:10px 12px",
+        "border:1px solid rgba(255,255,255,0.16)",
+        "border-radius:999px",
+        "background:rgba(18,18,18,0.88)",
+        "color:white",
+        "font:13px system-ui,-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif",
+        "box-shadow:0 8px 30px rgba(0,0,0,0.32)",
+        "backdrop-filter:blur(8px)"
+    ].join(";");
+
+    const spinner = document.createElement("span");
+    spinner.style.cssText = [
+        "width:12px",
+        "height:12px",
+        "border:2px solid rgba(255,255,255,0.28)",
+        "border-top-color:white",
+        "border-radius:50%",
+        "animation:sdf-dev-spin 0.75s linear infinite"
+    ].join(";");
+
+    const label = document.createElement("span");
+    overlay.append(spinner, label);
+
+    const style = document.createElement("style");
+    style.textContent = "@keyframes sdf-dev-spin{to{transform:rotate(360deg)}}";
+    document.head.append(style);
+    document.body.append(overlay);
+
+    let hideTimer = 0;
+    const show = (text, failed = false) => {
+        window.clearTimeout(hideTimer);
+        label.textContent = text;
+        spinner.style.display = failed ? "none" : "inline-block";
+        overlay.style.borderColor = failed ? "rgba(255,90,90,0.5)" : "rgba(255,255,255,0.16)";
+        overlay.style.display = "flex";
+    };
+    const hideSoon = () => {
+        window.clearTimeout(hideTimer);
+        hideTimer = window.setTimeout(() => {
+            overlay.style.display = "none";
+        }, 2400);
+    };
+
     const events = new EventSource("/__reload");
-    events.onmessage = () => window.location.reload();
+    events.addEventListener("building", () => show("Rebuilding..."));
+    events.addEventListener("reload", () => {
+        show("Reloading...");
+        window.location.reload();
+    });
+    events.addEventListener("failed", () => {
+        show("Build failed", true);
+        hideSoon();
+    });
 })();
 </script>
 """
@@ -35,12 +96,14 @@ LIVE_RELOAD_SCRIPT = """
 
 class ReloadState:
     def __init__(self) -> None:
-        self.generation = 0
+        self.event_id = 0
+        self.event_name = "idle"
         self.condition = threading.Condition()
 
-    def notify_reload(self) -> None:
+    def notify(self, event_name: str) -> None:
         with self.condition:
-            self.generation += 1
+            self.event_id += 1
+            self.event_name = event_name
             self.condition.notify_all()
 
 
@@ -100,15 +163,16 @@ class LiveReloadHandler(SimpleHTTPRequestHandler):
         self.end_headers()
 
         state = self.server.state
-        last_generation = state.generation
+        last_event_id = state.event_id
 
         try:
             while True:
                 with state.condition:
-                    state.condition.wait_for(lambda: state.generation != last_generation)
-                    last_generation = state.generation
+                    state.condition.wait_for(lambda: state.event_id != last_event_id)
+                    last_event_id = state.event_id
+                    event_name = state.event_name
 
-                self.wfile.write(f"data: {last_generation}\n\n".encode("utf-8"))
+                self.wfile.write(f"event: {event_name}\ndata: {last_event_id}\n\n".encode("utf-8"))
                 self.wfile.flush()
         except (BrokenPipeError, ConnectionResetError):
             return
@@ -195,8 +259,11 @@ def watch_and_build(
         time.sleep(debounce)
         current_snapshot = file_snapshot(root_dir)
 
+        state.notify("building")
         if run_build(root_dir, build_script):
-            state.notify_reload()
+            state.notify("reload")
+        else:
+            state.notify("failed")
 
         previous_snapshot = file_snapshot(root_dir)
 
