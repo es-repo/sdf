@@ -3,7 +3,7 @@ use crate::geometry::{Sdf3d, Sphere, Vec2, Vec3};
 use crate::input::InputState;
 use crate::procedural::smooth_union::smooth_union_color;
 use crate::rendering::{Camera, CameraController, CameraFrame};
-use crate::scene::{Scene, SceneFrame, SceneState};
+use crate::scene::{Scene, SceneFrame};
 use pixels::wgpu::Color;
 
 pub struct RayMarching {
@@ -19,17 +19,7 @@ pub struct RayMarchingState {
     max_steps: usize,
 }
 
-impl SceneState for RayMarching {
-    type State = RayMarchingState;
-
-    fn state(&self) -> &Self::State {
-        &self.state
-    }
-
-    fn state_mut(&mut self) -> &mut Self::State {
-        &mut self.state
-    }
-}
+crate::stateful_scene!(RayMarching, RayMarchingState);
 
 impl Default for RayMarching {
     fn default() -> Self {

@@ -1,4 +1,4 @@
-pub trait SceneState {
+pub trait StatefulScene {
     type State: serde::Serialize + serde::de::DeserializeOwned;
 
     fn state(&self) -> &Self::State;
