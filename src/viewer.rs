@@ -53,6 +53,7 @@ pub struct Viewer {
     fps_counter: FpsCounter,
     show_fps: bool,
     audio_track: Option<AudioTrack>,
+    cached_audio_analysis: AudioAnalysis,
     #[cfg(target_arch = "wasm32")]
     audio_enabled: bool,
 }
@@ -113,6 +114,7 @@ impl Viewer {
             show_fps: false,
             scale_factor: 1.0,
             audio_track: None,
+            cached_audio_analysis: AudioAnalysis::default(),
         }
     }
 
@@ -135,6 +137,7 @@ impl Viewer {
             show_fps: false,
             scale_factor: 1.0,
             audio_track: None,
+            cached_audio_analysis: AudioAnalysis::default(),
             audio_enabled: false,
         }
     }
@@ -170,7 +173,12 @@ impl Viewer {
     }
 
     fn audio_analysis(&mut self) -> AudioAnalysis {
-        self.audio_track.as_mut().map(AudioTrack::analysis).unwrap_or_default()
+        if self.time_paused {
+            return self.cached_audio_analysis;
+        }
+
+        self.cached_audio_analysis = self.audio_track.as_mut().map(AudioTrack::analysis).unwrap_or_default();
+        self.cached_audio_analysis
     }
 
     #[cfg(not(target_arch = "wasm32"))]
@@ -555,6 +563,7 @@ impl Viewer {
         self.scene_time = 0.0;
         self.time_paused = false;
         self.last_frame_time = Instant::now();
+        self.cached_audio_analysis = AudioAnalysis::default();
         self.fps_counter.reset();
 
         window
@@ -673,6 +682,7 @@ impl ApplicationHandler<AppEvent> for Viewer {
                 self.scene_time = 0.0;
                 self.time_paused = false;
                 self.last_frame_time = Instant::now();
+                self.cached_audio_analysis = AudioAnalysis::default();
                 self.fps_counter.reset();
                 self.sync_scene_audio();
                 self.window.as_ref().unwrap().request_redraw();
