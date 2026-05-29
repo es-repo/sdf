@@ -19,7 +19,7 @@ impl Default for RayMarching {
         let fov_y = 60f32.to_radians();
         Self {
             camera: Camera::new(fov_y, 1.0),
-            camera_controller: CameraController::new(2.0),
+            camera_controller: CameraController::flight(2.0),
             max_distance: 100.0,
             hit_epsilon: 0.0001,
             max_steps: 100,

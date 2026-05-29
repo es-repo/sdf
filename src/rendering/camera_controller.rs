@@ -1,12 +1,18 @@
 use super::Camera;
 use super::CameraBasis;
-use crate::geometry::{Quat, Vec3};
+use crate::geometry::{Quat, Vec2, Vec3};
 use crate::input::InputState;
 use std::f32::consts::FRAC_PI_2;
 use winit::event::MouseButton;
 use winit::keyboard::KeyCode;
 
 const MAX_PITCH: f32 = FRAC_PI_2 - 0.001;
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum CameraControlMode {
+    Fps,
+    Flight,
+}
 
 pub struct CameraControls {
     pub forward: KeyCode,
@@ -30,6 +36,7 @@ impl Default for CameraControls {
 
 pub struct CameraController {
     pub controls: CameraControls,
+    pub mode: CameraControlMode,
     pub speed: f32,
     pub look_sensitivity: f32,
     pub scroll_move_sensitivity: f32,
@@ -38,14 +45,22 @@ pub struct CameraController {
 }
 
 impl CameraController {
-    pub fn new(speed: f32) -> Self {
+    pub fn fps(speed: f32) -> Self {
         Self {
             controls: CameraControls::default(),
+            mode: CameraControlMode::Fps,
             speed,
             look_sensitivity: 0.003,
             scroll_move_sensitivity: 0.005,
             yaw: 0.0,
             pitch: 0.0,
+        }
+    }
+
+    pub fn flight(speed: f32) -> Self {
+        Self {
+            mode: CameraControlMode::Flight,
+            ..Self::fps(speed)
         }
     }
 
@@ -93,6 +108,13 @@ impl CameraController {
             return;
         }
 
+        match self.mode {
+            CameraControlMode::Fps => self.update_fps_rotation(camera, mouse_delta),
+            CameraControlMode::Flight => self.update_flight_rotation(camera, mouse_delta),
+        }
+    }
+
+    fn update_fps_rotation(&mut self, camera: &mut Camera, mouse_delta: Vec2) {
         self.yaw += mouse_delta.x * self.look_sensitivity;
         self.pitch = (self.pitch + mouse_delta.y * self.look_sensitivity).clamp(-MAX_PITCH, MAX_PITCH);
 
@@ -100,6 +122,14 @@ impl CameraController {
         let pitch = Quat::from_axis_angle(CameraBasis::DEFAULT.right, self.pitch);
 
         camera.set_rotation(yaw * pitch);
+    }
+
+    fn update_flight_rotation(&mut self, camera: &mut Camera, mouse_delta: Vec2) {
+        let camera_frame = camera.prepare_frame();
+        let yaw = Quat::from_axis_angle(camera_frame.basis.up, mouse_delta.x * self.look_sensitivity);
+        let pitch = Quat::from_axis_angle(camera_frame.basis.right, mouse_delta.y * self.look_sensitivity);
+
+        camera.rotate_by(yaw * pitch);
     }
 
     fn is_look_active(&self, input: &InputState) -> bool {

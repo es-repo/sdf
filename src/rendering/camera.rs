@@ -37,7 +37,19 @@ impl Camera {
         )
     }
 
+    /// Replaces the camera orientation with the given rotation.
+    ///
+    /// Use this when the full target orientation is known, for example an FPS
+    /// camera built from stored yaw and pitch angles.
     pub fn set_rotation(&mut self, rotation: Quat) {
         self.rotation = rotation.normalize();
+    }
+
+    /// Applies an additional rotation relative to the current orientation.
+    ///
+    /// Use this when input produces a rotation delta, for example flight-style
+    /// camera controls where each mouse movement rotates from the current pose.
+    pub fn rotate_by(&mut self, rotation: Quat) {
+        self.set_rotation(rotation * self.rotation);
     }
 }
