@@ -76,7 +76,7 @@ impl CameraController {
         }
 
         let scroll_delta = input.scroll_delta();
-        let scroll_direction = camera_frame.basis.right * -scroll_delta.x - camera_frame.basis.forward * scroll_delta.y;
+        let scroll_direction = camera_frame.basis.right * -scroll_delta.x + camera_frame.basis.forward * scroll_delta.y;
         if scroll_direction.len_squared() > 0.0 {
             camera.position = camera.position + scroll_direction * self.scroll_move_sensitivity * self.speed;
         }

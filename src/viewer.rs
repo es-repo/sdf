@@ -11,7 +11,7 @@ use std::sync::Arc;
 use web_time::Instant;
 use winit::application::ApplicationHandler;
 use winit::dpi::{LogicalSize, PhysicalSize};
-use winit::event::{ElementState, WindowEvent};
+use winit::event::{ElementState, MouseScrollDelta, WindowEvent};
 use winit::event_loop::ActiveEventLoop;
 use winit::keyboard::{KeyCode, PhysicalKey};
 use winit::window::{Window, WindowAttributes, WindowId};
@@ -34,6 +34,8 @@ use winit::event_loop::EventLoopProxy;
 use winit::platform::macos::MonitorHandleExtMacOS;
 #[cfg(target_arch = "wasm32")]
 use winit::platform::web::WindowAttributesExtWebSys;
+
+const LINE_SCROLL_LOGICAL_PIXELS: f32 = 32.0;
 
 pub struct Viewer {
     window: Option<Arc<Window>>,
@@ -419,6 +421,12 @@ impl Viewer {
                     .set_mouse_position(Vec2::new(position.x as f32, position.y as f32));
             }
 
+            WindowEvent::MouseWheel { delta, .. } => {
+                if !gui_consumed {
+                    self.input.add_scroll_delta(self.scroll_delta(delta));
+                }
+            }
+
             WindowEvent::CursorLeft { .. } => self.input.clear_mouse_position(),
 
             WindowEvent::Focused(false) => self.input.clear(),
@@ -473,6 +481,16 @@ impl Viewer {
         }
 
         response.consumed
+    }
+
+    fn scroll_delta(&self, delta: MouseScrollDelta) -> Vec2 {
+        match delta {
+            MouseScrollDelta::LineDelta(x, y) => Vec2::new(x, y) * LINE_SCROLL_LOGICAL_PIXELS,
+            MouseScrollDelta::PixelDelta(position) => {
+                let scale_factor = self.scale_factor as f32;
+                Vec2::new(position.x as f32 / scale_factor, position.y as f32 / scale_factor)
+            }
+        }
     }
 
     #[cfg(target_arch = "wasm32")]
