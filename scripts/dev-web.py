@@ -15,7 +15,13 @@ from urllib.parse import urlsplit
 
 
 WATCHED_DIRS = ("src", "assets")
-WATCHED_FILES = ("Cargo.lock", "Cargo.toml", "favicon.svg", "index.html", "scripts/build-web.sh")
+WATCHED_FILES = (
+    "Cargo.lock",
+    "Cargo.toml",
+    "favicon.svg",
+    "index.html",
+    "scripts/build-web-dev.sh",
+)
 
 LIVE_RELOAD_SCRIPT = """
 <script>
@@ -118,7 +124,7 @@ def main() -> int:
 
     root_dir = Path(__file__).resolve().parents[1]
     dist_dir = root_dir / "dist"
-    build_script = root_dir / "scripts" / "build-web.sh"
+    build_script = root_dir / "scripts" / "build-web-dev.sh"
     state = ReloadState()
     handler = partial(LiveReloadHandler, directory=str(dist_dir))
     server = create_server(args.host, args.port, handler, state)
