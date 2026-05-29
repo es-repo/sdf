@@ -27,6 +27,9 @@ pub trait ColorExt {
     /// Linearly interpolates RGB channels toward a gray value, preserving alpha.
     fn lerp_gray(&self, value: f32, t: f32) -> Color;
 
+    /// Multiplies RGB channels by a scalar value, preserving alpha.
+    fn scale_rgb(&self, factor: f32) -> Color;
+
     /// Returns this color with a replaced alpha channel.
     fn with_alpha(&self, alpha: f64) -> Color;
 }
@@ -79,6 +82,17 @@ impl ColorExt for Color {
 
     fn lerp_gray(&self, value: f32, t: f32) -> Color {
         self.lerp(Self::rgba(value, value, value, self.a as f32), t)
+    }
+
+    fn scale_rgb(&self, factor: f32) -> Color {
+        let factor = factor as f64;
+
+        Self::rgba(
+            (self.r * factor) as f32,
+            (self.g * factor) as f32,
+            (self.b * factor) as f32,
+            self.a as f32,
+        )
     }
 
     fn with_alpha(&self, alpha: f64) -> Color {
