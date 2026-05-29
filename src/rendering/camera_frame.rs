@@ -1,24 +1,20 @@
-use super::Ray;
+use super::{CameraBasis, Ray};
 use crate::geometry::{Vec2, Vec3};
 
 pub struct CameraFrame {
     /// World-space camera position
     pub position: Vec3,
 
-    pub forward: Vec3,
-    pub right: Vec3,
-    pub up: Vec3,
+    pub basis: CameraBasis,
     half_width: f32,
     half_height: f32,
 }
 
 impl CameraFrame {
-    pub(super) fn new(position: Vec3, forward: Vec3, right: Vec3, up: Vec3, half_width: f32, half_height: f32) -> Self {
+    pub(super) fn new(position: Vec3, basis: CameraBasis, half_width: f32, half_height: f32) -> Self {
         Self {
             position,
-            forward,
-            right,
-            up,
+            basis,
             half_width,
             half_height,
         }
@@ -33,7 +29,9 @@ impl CameraFrame {
 
     /// Returns only the normalized world-space direction for the ray through the coordinate.
     pub fn ray_direction(&self, coord: Vec2) -> Vec3 {
-        let direction = self.forward + self.right * coord.x * self.half_width + self.up * coord.y * self.half_height;
+        let direction = self.basis.forward
+            + self.basis.right * coord.x * self.half_width
+            + self.basis.up * coord.y * self.half_height;
         direction.normalize()
     }
 }

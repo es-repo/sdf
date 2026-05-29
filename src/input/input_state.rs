@@ -8,6 +8,7 @@ pub struct InputState {
     pressed_mouse_buttons: HashSet<MouseButton>,
     mouse_position: Option<Vec2>,
     mouse_delta: Vec2,
+    scroll_delta: Vec2,
 }
 
 impl Default for InputState {
@@ -17,6 +18,7 @@ impl Default for InputState {
             pressed_mouse_buttons: HashSet::new(),
             mouse_position: None,
             mouse_delta: Vec2::zero(),
+            scroll_delta: Vec2::zero(),
         }
     }
 }
@@ -54,12 +56,20 @@ impl InputState {
         self.mouse_delta
     }
 
+    pub fn scroll_delta(&self) -> Vec2 {
+        self.scroll_delta
+    }
+
     pub fn set_mouse_position(&mut self, position: Vec2) {
         if let Some(previous_position) = self.mouse_position {
             self.mouse_delta = self.mouse_delta + position - previous_position;
         }
 
         self.mouse_position = Some(position);
+    }
+
+    pub fn add_scroll_delta(&mut self, delta: Vec2) {
+        self.scroll_delta = self.scroll_delta + delta;
     }
 
     pub fn clear_mouse_position(&mut self) {
@@ -75,5 +85,6 @@ impl InputState {
 
     pub fn reset_frame_delta(&mut self) {
         self.mouse_delta = Vec2::zero();
+        self.scroll_delta = Vec2::zero();
     }
 }

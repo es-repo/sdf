@@ -1,8 +1,5 @@
-use super::CameraFrame;
+use super::{CameraBasis, CameraFrame};
 use crate::geometry::{Quat, Vec3};
-const DEFAULT_FORWARD: Vec3 = Vec3 { x: 0.0, y: 0.0, z: 1.0 };
-const DEFAULT_RIGHT: Vec3 = Vec3 { x: 1.0, y: 0.0, z: 0.0 };
-const DEFAULT_UP: Vec3 = Vec3 { x: 0.0, y: 1.0, z: 0.0 };
 
 pub struct Camera {
     /// World-space camera position
@@ -34,23 +31,13 @@ impl Camera {
     pub fn prepare_frame(&self) -> CameraFrame {
         CameraFrame::new(
             self.position,
-            self.forward(),
-            self.right(),
-            self.up(),
+            CameraBasis::DEFAULT.rotated(self.rotation),
             self.half_width,
             self.half_height,
         )
     }
 
-    fn forward(&self) -> Vec3 {
-        self.rotation * DEFAULT_FORWARD
-    }
-
-    fn right(&self) -> Vec3 {
-        self.rotation * DEFAULT_RIGHT
-    }
-
-    fn up(&self) -> Vec3 {
-        self.rotation * DEFAULT_UP
+    pub fn set_rotation(&mut self, rotation: Quat) {
+        self.rotation = rotation.normalize();
     }
 }
