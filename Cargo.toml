@@ -15,6 +15,8 @@ pixels = "0.16.0"
 web-time = "1.1.0"
 winit = "0.30.13"
 rayon = "1.11.0"
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
 
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
 egui-winit = "0.33.0"
@@ -32,6 +34,7 @@ web-sys = { version = "0.3.94", features = [
     "HtmlAudioElement",
     "HtmlMediaElement",
     "Response",
+    "Storage",
     "Window",
     "console",
 ] }

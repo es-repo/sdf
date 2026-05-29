@@ -6,7 +6,7 @@ use sdf::audio::{AudioAnalysis, AudioTrack};
 use sdf::color_ext::ColorExt;
 use sdf::geometry::Vec2;
 use sdf::input::InputState;
-use sdf::scenes::SceneInstance;
+use sdf::scene::SceneInstance;
 use std::sync::Arc;
 use web_time::Instant;
 use winit::application::ApplicationHandler;
@@ -36,6 +36,21 @@ use winit::platform::macos::MonitorHandleExtMacOS;
 use winit::platform::web::WindowAttributesExtWebSys;
 
 const LINE_SCROLL_LOGICAL_PIXELS: f32 = 32.0;
+#[cfg(target_arch = "wasm32")]
+const PERSISTED_APP_STATE_KEY: &str = "sdf.app_state";
+#[cfg(target_arch = "wasm32")]
+const PERSISTED_APP_STATE_VERSION: u32 = 1;
+#[cfg(target_arch = "wasm32")]
+const STATE_SAVE_INTERVAL_SECONDS: f32 = 0.5;
+
+#[cfg(target_arch = "wasm32")]
+#[derive(serde::Serialize, serde::Deserialize)]
+struct PersistedAppState {
+    version: u32,
+    scene_time: f32,
+    time_paused: bool,
+    scene_state: Option<serde_json::Value>,
+}
 
 pub struct Viewer {
     window: Option<Arc<Window>>,
@@ -56,6 +71,8 @@ pub struct Viewer {
     cached_audio_analysis: AudioAnalysis,
     #[cfg(target_arch = "wasm32")]
     audio_enabled: bool,
+    #[cfg(target_arch = "wasm32")]
+    last_persisted_state_save: Instant,
 }
 
 struct EguiState {
@@ -139,6 +156,7 @@ impl Viewer {
             audio_track: None,
             cached_audio_analysis: AudioAnalysis::default(),
             audio_enabled: false,
+            last_persisted_state_save: now,
         }
     }
 
@@ -324,6 +342,7 @@ impl Viewer {
         }
 
         self.render_with_egui(egui_frame);
+        self.maybe_save_persisted_state();
 
         self.window.as_ref().unwrap().request_redraw();
     }
@@ -419,6 +438,7 @@ impl Viewer {
 
                     if !gui_consumed && matches!(event.physical_key, PhysicalKey::Code(KeyCode::Space)) {
                         self.time_paused = !self.time_paused;
+                        self.save_persisted_state();
                         self.window.as_ref().unwrap().request_redraw();
                     }
                 }
@@ -583,6 +603,76 @@ impl Viewer {
     }
 }
 
+#[cfg(target_arch = "wasm32")]
+impl Viewer {
+    fn restore_persisted_state(&mut self) {
+        let Some(storage) = browser_storage() else {
+            return;
+        };
+        let Some(serialized) = storage.get_item(PERSISTED_APP_STATE_KEY).ok().flatten() else {
+            return;
+        };
+        let Ok(state) = serde_json::from_str::<PersistedAppState>(&serialized) else {
+            let _ = storage.remove_item(PERSISTED_APP_STATE_KEY);
+            return;
+        };
+
+        if state.version != PERSISTED_APP_STATE_VERSION {
+            let _ = storage.remove_item(PERSISTED_APP_STATE_KEY);
+            return;
+        }
+
+        self.scene_time = if state.scene_time.is_finite() {
+            state.scene_time.max(0.0)
+        } else {
+            0.0
+        };
+        self.time_paused = state.time_paused;
+
+        if let Some(scene_state) = state.scene_state.as_ref() {
+            self.scene.load_state(scene_state);
+        }
+
+        self.last_persisted_state_save = Instant::now();
+    }
+
+    fn maybe_save_persisted_state(&mut self) {
+        let now = Instant::now();
+
+        if now.duration_since(self.last_persisted_state_save).as_secs_f32() < STATE_SAVE_INTERVAL_SECONDS {
+            return;
+        }
+
+        self.save_persisted_state();
+        self.last_persisted_state_save = now;
+    }
+
+    fn save_persisted_state(&self) {
+        let state = PersistedAppState {
+            version: PERSISTED_APP_STATE_VERSION,
+            scene_time: self.scene_time,
+            time_paused: self.time_paused,
+            scene_state: self.scene.save_state(),
+        };
+
+        let Some(storage) = browser_storage() else {
+            return;
+        };
+        let Ok(serialized) = serde_json::to_string(&state) else {
+            return;
+        };
+
+        let _ = storage.set_item(PERSISTED_APP_STATE_KEY, &serialized);
+    }
+}
+
+#[cfg(not(target_arch = "wasm32"))]
+impl Viewer {
+    fn maybe_save_persisted_state(&mut self) {}
+
+    fn save_persisted_state(&self) {}
+}
+
 #[cfg(target_os = "macos")]
 fn monitor_under_cursor(event_loop: &ActiveEventLoop) -> Option<winit::monitor::MonitorHandle> {
     let event_source = CGEventSource::new(CGEventSourceStateID::CombinedSessionState).ok()?;
@@ -639,6 +729,7 @@ impl ApplicationHandler<AppEvent> for Viewer {
         let window_attributes = self.base_window_attributes().with_append(true).with_focusable(true);
 
         self.prepare_window(event_loop, window_attributes);
+        self.restore_persisted_state();
         let surface_texture = self.create_surface_texture();
         let proxy = self.event_proxy.clone();
         let width = self.size_logical.width;
@@ -684,6 +775,7 @@ impl ApplicationHandler<AppEvent> for Viewer {
                 self.last_frame_time = Instant::now();
                 self.cached_audio_analysis = AudioAnalysis::default();
                 self.fps_counter.reset();
+                self.save_persisted_state();
                 self.sync_scene_audio();
                 self.window.as_ref().unwrap().request_redraw();
             }
@@ -705,6 +797,11 @@ fn audio_base_path() -> &'static str {
 #[cfg(target_arch = "wasm32")]
 fn audio_base_path() -> &'static str {
     ""
+}
+
+#[cfg(target_arch = "wasm32")]
+fn browser_storage() -> Option<web_sys::Storage> {
+    web_sys::window()?.local_storage().ok().flatten()
 }
 
 fn draw_text(frame: &mut [u8], width: u32, height: u32, text: &str, x: i32, y: i32, scale: i32, color: [u8; 4]) {

@@ -1,7 +1,7 @@
 use crate::color_ext::ColorExt;
 use crate::geometry::{Circle, Sdf, Vec2};
 use crate::procedural::smooth_union::smooth_union;
-use crate::scenes::{Scene, SceneFrame};
+use crate::scene::{Scene, SceneFrame};
 use pixels::wgpu::Color;
 
 pub struct SmoothUnion;

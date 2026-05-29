@@ -1,5 +1,7 @@
 #[cfg(not(target_arch = "wasm32"))]
-use sdf::scenes::{RayMarching, SceneInstance};
+use sdf::scene::SceneInstance;
+#[cfg(not(target_arch = "wasm32"))]
+use sdf::scenes::RayMarching;
 #[cfg(not(target_arch = "wasm32"))]
 use viewer::Viewer;
 #[cfg(not(target_arch = "wasm32"))]

@@ -1,6 +1,7 @@
 use super::{CameraBasis, CameraFrame};
 use crate::geometry::{Quat, Vec3};
 
+#[derive(Clone, serde::Serialize, serde::Deserialize)]
 pub struct Camera {
     /// World-space camera position
     pub position: Vec3,

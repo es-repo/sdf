@@ -1,37 +1,6 @@
+use super::{ParameterizedScene, Scene, SceneFrame};
 use crate::audio::AudioAnalysis;
-use crate::geometry::Vec2;
 use crate::input::InputState;
-use pixels::wgpu::Color;
-
-pub trait SceneFrame: Send + Sync {
-    fn get_pixel_color(&self, coord: Vec2, time: f32) -> Color;
-
-    fn get_pixel_color_with_audio(&self, coord: Vec2, time: f32, _audio: &AudioAnalysis) -> Color {
-        self.get_pixel_color(coord, time)
-    }
-}
-
-pub trait Scene: Send + Sync {
-    fn update(&mut self, _delta_time: f32, _input: &InputState) {}
-
-    fn prepare_frame(&self, time: f32) -> Box<dyn SceneFrame>;
-
-    fn prepare_frame_with_audio(&self, time: f32, _audio: &AudioAnalysis) -> Box<dyn SceneFrame> {
-        self.prepare_frame(time)
-    }
-
-    fn audio_track(&self) -> Option<&'static str> {
-        None
-    }
-
-    fn audio_volume(&self) -> f32 {
-        1.0
-    }
-}
-
-pub trait ParameterizedScene: Scene {
-    fn parameters_ui(&mut self, ui: &mut egui::Ui);
-}
 
 pub enum SceneInstance {
     Plain(Box<dyn Scene>),
@@ -85,6 +54,20 @@ impl SceneInstance {
         match self {
             Self::Plain(scene) => scene.audio_volume(),
             Self::Parameterized(scene) => scene.audio_volume(),
+        }
+    }
+
+    pub fn save_state(&self) -> Option<serde_json::Value> {
+        match self {
+            Self::Plain(scene) => scene.save_state(),
+            Self::Parameterized(scene) => scene.save_state(),
+        }
+    }
+
+    pub fn load_state(&mut self, state: &serde_json::Value) {
+        match self {
+            Self::Plain(scene) => scene.load_state(state),
+            Self::Parameterized(scene) => scene.load_state(state),
         }
     }
 

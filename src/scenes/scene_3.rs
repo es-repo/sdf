@@ -1,7 +1,7 @@
 use crate::color_ext::ColorExt;
 use crate::geometry::{Vec2, Vec3};
 use crate::procedural::{Fbm, NoiseSimplex};
-use crate::scenes::{ParameterizedScene, Scene, SceneFrame};
+use crate::scene::{ParameterizedScene, Scene, SceneFrame};
 use pixels::wgpu::Color;
 
 #[derive(Clone, Copy)]

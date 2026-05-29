@@ -3,7 +3,7 @@ use pixels::wgpu::Color;
 use crate::color_ext::ColorExt;
 use crate::geometry::Vec2;
 use crate::procedural::{Fbm, NoiseSimplex};
-use crate::scenes::{Scene, SceneFrame};
+use crate::scene::{Scene, SceneFrame};
 
 pub struct SimplexNoise;
 

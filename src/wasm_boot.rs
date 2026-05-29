@@ -1,7 +1,7 @@
 use crate::viewer::Viewer;
+use sdf::scene::SceneInstance;
 use sdf::scenes::{
-    DomainWarping, RayMarching, Scene1, Scene2, Scene3, Scene4, SceneInstance, SdfScene, SimplexNoise, SimplexNoise3d,
-    SmoothUnion,
+    DomainWarping, RayMarching, Scene1, Scene2, Scene3, Scene4, SdfScene, SimplexNoise, SimplexNoise3d, SmoothUnion,
 };
 use std::cell::RefCell;
 use std::fmt;

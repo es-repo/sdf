@@ -1,7 +1,7 @@
 use crate::color_ext::ColorExt;
 use crate::geometry::{Circle, Rectangle, Sdf, Triangle, Vec2};
 use crate::math::min_pair;
-use crate::scenes::{Scene, SceneFrame};
+use crate::scene::{Scene, SceneFrame};
 use pixels::wgpu::Color;
 
 pub struct SdfScene;

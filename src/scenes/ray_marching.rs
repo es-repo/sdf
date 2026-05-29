@@ -3,26 +3,45 @@ use crate::geometry::{Sdf3d, Sphere, Vec2, Vec3};
 use crate::input::InputState;
 use crate::procedural::smooth_union::smooth_union_color;
 use crate::rendering::{Camera, CameraController, CameraFrame};
-use crate::scenes::{Scene, SceneFrame};
+use crate::scene::{Scene, SceneFrame, SceneState};
 use pixels::wgpu::Color;
 
 pub struct RayMarching {
-    camera: Camera,
+    state: RayMarchingState,
     camera_controller: CameraController,
+}
+
+#[derive(Clone, serde::Serialize, serde::Deserialize)]
+pub struct RayMarchingState {
+    camera: Camera,
     max_distance: f32,
     hit_epsilon: f32,
     max_steps: usize,
+}
+
+impl SceneState for RayMarching {
+    type State = RayMarchingState;
+
+    fn state(&self) -> &Self::State {
+        &self.state
+    }
+
+    fn state_mut(&mut self) -> &mut Self::State {
+        &mut self.state
+    }
 }
 
 impl Default for RayMarching {
     fn default() -> Self {
         let fov_y = 60f32.to_radians();
         Self {
-            camera: Camera::new(fov_y, 1.0),
+            state: RayMarchingState {
+                camera: Camera::new(fov_y, 1.0),
+                max_distance: 100.0,
+                hit_epsilon: 0.0001,
+                max_steps: 100,
+            },
             camera_controller: CameraController::flight(2.0),
-            max_distance: 100.0,
-            hit_epsilon: 0.0001,
-            max_steps: 100,
         }
     }
 }
@@ -50,10 +69,15 @@ impl SdfSample {
 
 impl RayMarchingFrame {
     fn sample_scene(&self, point: Vec3) -> SdfSample {
+        let r = 0.2;
+        let dx = r * point.x.sin();
+        let dy = r * point.y.cos();
+
+        let point = Vec3::new(point.x - dx, point.y, point.z);
+
         let sphere_1_dist = self.sphere_1.dist(&point);
         let sphere_2_dist = self.sphere_2.dist(&point);
 
-        let dist = sphere_1_dist.max(sphere_2_dist);
         let (dist, color) = smooth_union_color(
             sphere_1_dist,
             self.sphere_1.color,
@@ -63,17 +87,9 @@ impl RayMarchingFrame {
         );
 
         SdfSample::new(dist, color)
-
-        /*if sphere_1_dist < sphere_2_dist {
-            SdfSample::new(sphere_1_dist, self.sphere_1.color)
-        } else {
-            SdfSample::new(sphere_2_dist, self.sphere_2.color)
-        }*/
     }
 
-    fn estimate_normal_tetrahedral(&self, p: Vec3) -> Vec3 {
-        let e = 0.001;
-
+    pub fn estimate_normal_tetrahedral(&self, p: Vec3, e: f32) -> Vec3 {
         let k1 = Vec3::new(1.0, -1.0, -1.0);
         let k2 = Vec3::new(-1.0, -1.0, 1.0);
         let k3 = Vec3::new(-1.0, 1.0, -1.0);
@@ -86,9 +102,7 @@ impl RayMarchingFrame {
             .normalize()
     }
 
-    fn estimate_normal_central_differences(&self, p: Vec3) -> Vec3 {
-        let e = 0.001;
-
+    pub fn estimate_normal_central_differences(&self, p: Vec3, e: f32) -> Vec3 {
         Vec3::new(
             self.sample_scene(p + Vec3::new(e, 0.0, 0.0)).dist - self.sample_scene(p - Vec3::new(e, 0.0, 0.0)).dist,
             self.sample_scene(p + Vec3::new(0.0, e, 0.0)).dist - self.sample_scene(p - Vec3::new(0.0, e, 0.0)).dist,
@@ -111,16 +125,12 @@ impl SceneFrame for RayMarchingFrame {
 
             if scene_sample.dist < self.hit_epsilon {
                 let light_dir = (light - marching_point).normalize();
-                let surface_normal = self.estimate_normal_tetrahedral(marching_point);
+                let surface_normal = self.estimate_normal_tetrahedral(marching_point, self.hit_epsilon * 2.0);
 
-                let intensity = surface_normal.dot(light_dir); //.max(0.0);
-                let c = if intensity < 0.0 {
-                    Color::rgb(0.7, 1.0, 0.7)
-                } else {
-                    scene_sample.color
-                };
+                let diffuse = surface_normal.dot(light_dir).abs();
+                let intensity = 0.15 + 0.85 * diffuse;
 
-                return c.scale_rgb(intensity.abs());
+                return scene_sample.color.scale_rgb(intensity.abs());
             }
 
             marching_dist += scene_sample.dist;
@@ -135,15 +145,17 @@ impl SceneFrame for RayMarchingFrame {
 }
 
 impl Scene for RayMarching {
+    crate::scene_state!();
+
     fn update(&mut self, delta_time: f32, input: &InputState) {
         self.camera_controller
-            .update_camera(&mut self.camera, delta_time, input);
+            .update_camera(&mut self.state.camera, delta_time, input);
     }
 
     fn prepare_frame(&self, time: f32) -> Box<dyn SceneFrame> {
         let time = time * 2.0;
         Box::new(RayMarchingFrame {
-            camera_frame: self.camera.prepare_frame(),
+            camera_frame: self.state.camera.prepare_frame(),
             sphere_1: Sphere {
                 center: Vec3::new(0.5 + time.sin(), 0.0, 3.0 + time.cos()),
                 radius: 1.0,
@@ -156,9 +168,9 @@ impl Scene for RayMarching {
                 color: Color::BLUE,
             },
 
-            max_distance: self.max_distance,
-            hit_epsilon: self.hit_epsilon,
-            max_steps: self.max_steps,
+            max_distance: self.state.max_distance,
+            hit_epsilon: self.state.hit_epsilon,
+            max_steps: self.state.max_steps,
         })
     }
 }

@@ -1,7 +1,7 @@
 use crate::geometry::Vec3;
 use std::ops::Mul;
 
-#[derive(Clone, Copy, PartialOrd, PartialEq, Debug)]
+#[derive(Clone, Copy, PartialOrd, PartialEq, Debug, serde::Serialize, serde::Deserialize)]
 pub struct Quat {
     pub x: f32,
     pub y: f32,

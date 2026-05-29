@@ -5,4 +5,5 @@ pub mod input;
 pub mod math;
 pub mod procedural;
 pub mod rendering;
+pub mod scene;
 pub mod scenes;
