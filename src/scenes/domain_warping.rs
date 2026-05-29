@@ -1,7 +1,7 @@
 use crate::color_ext::ColorExt;
 use crate::geometry::{Circle, Sdf, Vec2};
 use crate::procedural::{Fbm, NoiseSimplex};
-use crate::scene::{ParameterizedScene, Scene, SceneFrame};
+use crate::scene::{Scene, SceneFrame};
 use pixels::wgpu::Color;
 
 #[derive(Clone, Copy)]
@@ -52,9 +52,11 @@ impl Scene for DomainWarping {
             time_scaled: time * 0.25,
         })
     }
-}
 
-impl ParameterizedScene for DomainWarping {
+    fn has_parameters_ui(&self) -> bool {
+        true
+    }
+
     fn parameters_ui(&mut self, ui: &mut egui::Ui) {
         ui.add(egui::Slider::new(&mut self.params.scale, 0.1..=16.0).text("Scale"));
         ui.add(egui::Slider::new(&mut self.params.warp_strength, 0.0..=1.0).text("Strength"));

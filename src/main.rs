@@ -1,6 +1,4 @@
 #[cfg(not(target_arch = "wasm32"))]
-use sdf::scene::SceneInstance;
-#[cfg(not(target_arch = "wasm32"))]
 use sdf::scenes::RayMarching;
 #[cfg(not(target_arch = "wasm32"))]
 use viewer::Viewer;
@@ -20,7 +18,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     event_loop.set_control_flow(ControlFlow::Poll);
 
     let size_logical = LogicalSize::<u32>::new(640, 400);
-    let mut viewer = Viewer::new(size_logical, SceneInstance::plain(RayMarching::default()));
+    let mut viewer = Viewer::new(size_logical, Box::new(RayMarching::default()));
 
     event_loop.run_app(&mut viewer)?;
 

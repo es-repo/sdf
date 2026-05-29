@@ -4,7 +4,7 @@ use crate::geometry::{Circle, Rectangle, Triangle};
 use crate::geometry::{Sdf as _, Vec2};
 use crate::math::smoothstep;
 use crate::procedural::smooth_union::smooth_union_color;
-use crate::scene::{ParameterizedScene, Scene, SceneFrame};
+use crate::scene::{Scene, SceneFrame};
 use pixels::wgpu::Color;
 
 const AUDIO_TRACK: &str = "assets/audio/shadertoy_track1.mp3";
@@ -115,9 +115,11 @@ impl Scene for Scene4 {
     fn audio_volume(&self) -> f32 {
         self.params.volume
     }
-}
 
-impl ParameterizedScene for Scene4 {
+    fn has_parameters_ui(&self) -> bool {
+        true
+    }
+
     fn parameters_ui(&mut self, ui: &mut egui::Ui) {
         ui.add(egui::Slider::new(&mut self.params.volume, 0.0..=1.0).text("Volume"));
 

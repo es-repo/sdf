@@ -1,5 +1,5 @@
 use crate::viewer::Viewer;
-use sdf::scene::SceneInstance;
+use sdf::scene::Scene;
 use sdf::scenes::{
     DomainWarping, RayMarching, Scene1, Scene2, Scene3, Scene4, SdfScene, SimplexNoise, SimplexNoise3d, SmoothUnion,
 };
@@ -14,7 +14,7 @@ pub use wasm_bindgen_rayon::init_thread_pool;
 
 pub enum AppEvent {
     PixelsReady(pixels::Pixels<'static>),
-    SwitchScene(SceneInstance),
+    SwitchScene(Box<dyn Scene>),
     ResizeScene { width: u32, height: u32 },
     SetAudioEnabled(bool),
 }
@@ -40,59 +40,59 @@ thread_local! {
 
 struct SceneEntry {
     slug: &'static str,
-    create: fn() -> SceneInstance,
+    create: fn() -> Box<dyn Scene>,
     markdown: Option<&'static str>,
 }
 
 const AVAILABLE_SCENES: &[SceneEntry] = &[
     SceneEntry {
         slug: "scene-1",
-        create: || SceneInstance::plain(Scene1),
+        create: || Box::new(Scene1),
         markdown: None,
     },
     SceneEntry {
         slug: "scene-2",
-        create: || SceneInstance::plain(Scene2),
+        create: || Box::new(Scene2),
         markdown: None,
     },
     SceneEntry {
         slug: "scene-3",
-        create: || SceneInstance::parameterized(Scene3::default()),
+        create: || Box::new(Scene3::default()),
         markdown: None,
     },
     SceneEntry {
         slug: "scene-4",
-        create: || SceneInstance::parameterized(Scene4::default()),
+        create: || Box::new(Scene4::default()),
         markdown: None,
     },
     SceneEntry {
         slug: "sdf",
-        create: || SceneInstance::plain(SdfScene),
+        create: || Box::new(SdfScene),
         markdown: Some(include_str!("scenes/sdf.md")),
     },
     SceneEntry {
         slug: "ray-marching",
-        create: || SceneInstance::plain(RayMarching::default()),
+        create: || Box::new(RayMarching::default()),
         markdown: Some(include_str!("scenes/ray_marching.md")),
     },
     SceneEntry {
         slug: "domain-warping",
-        create: || SceneInstance::parameterized(DomainWarping::default()),
+        create: || Box::new(DomainWarping::default()),
         markdown: Some(include_str!("scenes/domain_warping.md")),
     },
     SceneEntry {
         slug: "smooth-union",
-        create: || SceneInstance::plain(SmoothUnion),
+        create: || Box::new(SmoothUnion),
         markdown: Some(include_str!("scenes/smooth_union.md")),
     },
     SceneEntry {
         slug: "simplex-noise",
-        create: || SceneInstance::plain(SimplexNoise),
+        create: || Box::new(SimplexNoise),
         markdown: Some(include_str!("scenes/simplex_noise.md")),
     },
     SceneEntry {
         slug: "simplex-noise-3d",
-        create: || SceneInstance::plain(SimplexNoise3d),
+        create: || Box::new(SimplexNoise3d),
         markdown: Some(include_str!("scenes/simplex_noise_3d.md")),
     },
 ];
@@ -101,12 +101,12 @@ fn available_scene_slugs() -> impl Iterator<Item = &'static str> {
     AVAILABLE_SCENES.iter().map(|scene| scene.slug)
 }
 
-fn create_scene(slug: &str) -> SceneInstance {
+fn create_scene(slug: &str) -> Box<dyn Scene> {
     AVAILABLE_SCENES
         .iter()
         .find(|scene| scene.slug == slug)
         .map(|scene| (scene.create)())
-        .unwrap_or_else(|| SceneInstance::plain(Scene1))
+        .unwrap_or_else(|| Box::new(Scene1))
 }
 
 #[wasm_bindgen::prelude::wasm_bindgen]

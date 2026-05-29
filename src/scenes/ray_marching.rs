@@ -72,7 +72,7 @@ impl RayMarchingFrame {
             sphere_1_dist,
             self.sphere_1.color,
             sphere_2_dist,
-            self.sphere_2.color,
+            self.sphere_2.color.lerp(Color::GREEN, 0.9),
             0.5,
         );
 

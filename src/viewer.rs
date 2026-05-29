@@ -6,7 +6,7 @@ use sdf::audio::{AudioAnalysis, AudioTrack};
 use sdf::color_ext::ColorExt;
 use sdf::geometry::Vec2;
 use sdf::input::InputState;
-use sdf::scene::SceneInstance;
+use sdf::scene::Scene;
 use std::sync::Arc;
 use web_time::Instant;
 use winit::application::ApplicationHandler;
@@ -55,7 +55,7 @@ struct PersistedAppState {
 pub struct Viewer {
     window: Option<Arc<Window>>,
     pixels: Option<Pixels<'static>>,
-    scene: SceneInstance,
+    scene: Box<dyn Scene>,
     egui: Option<EguiState>,
     #[cfg(target_arch = "wasm32")]
     event_proxy: EventLoopProxy<AppEvent>,
@@ -114,7 +114,7 @@ impl EguiState {
 
 impl Viewer {
     #[cfg(not(target_arch = "wasm32"))]
-    pub fn new(size_logical: LogicalSize<u32>, scene: SceneInstance) -> Self {
+    pub fn new(size_logical: LogicalSize<u32>, scene: Box<dyn Scene>) -> Self {
         let now = Instant::now();
 
         Self {
@@ -136,7 +136,7 @@ impl Viewer {
     }
 
     #[cfg(target_arch = "wasm32")]
-    pub fn new(size_logical: LogicalSize<u32>, scene: SceneInstance, event_proxy: EventLoopProxy<AppEvent>) -> Self {
+    pub fn new(size_logical: LogicalSize<u32>, scene: Box<dyn Scene>, event_proxy: EventLoopProxy<AppEvent>) -> Self {
         let now = Instant::now();
 
         Self {
@@ -220,7 +220,11 @@ impl Viewer {
     }
 
     fn prepare_egui_frame(&mut self) -> Option<EguiFrame> {
-        let scene = self.scene.parameterized_scene_mut()?;
+        if !self.scene.has_parameters_ui() {
+            return None;
+        }
+
+        let scene = self.scene.as_mut();
         let window = self.window.as_ref()?;
         let egui = self.egui.as_mut()?;
         let mut raw_input = egui.state.take_egui_input(window);
@@ -504,7 +508,7 @@ impl Viewer {
     }
 
     fn handle_gui_window_event(&mut self, event: &WindowEvent) -> bool {
-        if self.scene.parameterized_scene().is_none() {
+        if !self.scene.has_parameters_ui() {
             return false;
         }
 
