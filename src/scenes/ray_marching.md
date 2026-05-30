@@ -7,17 +7,11 @@ That distance is safe to move along the ray:
 :::code-tabs ray-marching-step
 ```rust
 let ray = camera.ray(coord);
-let mut marching_dist = 0.0;
+let result = ray_march(ray, settings, |point| sample_scene(point));
 
-for _ in 0..max_steps {
-    let point = ray.at(marching_dist);
-    let sample = sample_scene(point);
-
-    if sample.dist < hit_epsilon {
-        return shade(point, sample);
-    }
-
-    marching_dist += sample.dist;
+match result {
+    RayMarchResult::Hit(hit) => shade(hit.point, hit.sample),
+    RayMarchResult::Miss(_) => background(),
 }
 ```
 :::

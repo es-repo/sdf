@@ -1,7 +1,8 @@
 use crate::viewer::Viewer;
 use sdf::scene::Scene;
 use sdf::scenes::{
-    DomainWarping, RayMarching, Scene1, Scene2, Scene3, Scene4, SdfScene, SimplexNoise, SimplexNoise3d, SmoothUnion,
+    DomainWarping, RayMarchingScene, Scene1, Scene2, Scene3, Scene4, SdfScene, SimplexNoise, SimplexNoise3d,
+    SmoothUnion,
 };
 use std::cell::RefCell;
 use std::fmt;
@@ -72,7 +73,7 @@ const AVAILABLE_SCENES: &[SceneEntry] = &[
     },
     SceneEntry {
         slug: "ray-marching",
-        create: || Box::new(RayMarching::default()),
+        create: || Box::new(RayMarchingScene::default()),
         markdown: Some(include_str!("scenes/ray_marching.md")),
     },
     SceneEntry {
