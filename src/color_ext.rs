@@ -30,6 +30,9 @@ pub trait ColorExt {
     /// Multiplies RGB channels by a scalar value, preserving alpha.
     fn scale_rgb(&self, factor: f32) -> Color;
 
+    /// Adds RGB channels from another color, preserving this color's alpha.
+    fn add_rgb(&self, other: Color) -> Color;
+
     /// Returns this color with a replaced alpha channel.
     fn with_alpha(&self, alpha: f64) -> Color;
 }
@@ -91,6 +94,15 @@ impl ColorExt for Color {
             (self.r * factor) as f32,
             (self.g * factor) as f32,
             (self.b * factor) as f32,
+            self.a as f32,
+        )
+    }
+
+    fn add_rgb(&self, other: Color) -> Color {
+        Self::rgba(
+            (self.r + other.r) as f32,
+            (self.g + other.g) as f32,
+            (self.b + other.b) as f32,
             self.a as f32,
         )
     }

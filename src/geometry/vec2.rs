@@ -59,6 +59,11 @@ impl Vec2 {
         self.x * other.x + self.y * other.y
     }
 
+    /// Reflects this vector around a normalized surface normal.
+    pub fn reflect(self, normal: Self) -> Self {
+        self - normal * (2.0 * self.dot(normal))
+    }
+
     pub fn cross(self, other: Self) -> f32 {
         self.x * other.y - self.y * other.x
     }

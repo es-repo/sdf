@@ -67,6 +67,11 @@ impl Vec3 {
         self.x * other.x + self.y * other.y + self.z * other.z
     }
 
+    /// Reflects this vector around a normalized surface normal.
+    pub fn reflect(self, normal: Self) -> Self {
+        self - normal * (2.0 * self.dot(normal))
+    }
+
     pub fn cross(self, other: Self) -> Self {
         Self::new(
             self.y * other.z - self.z * other.y,

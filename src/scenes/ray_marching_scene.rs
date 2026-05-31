@@ -34,7 +34,7 @@ impl Default for RayMarchingScene {
                     max_distance: 100.0,
                 },
             },
-            camera_controller: CameraController::flight(2.0),
+            camera_controller: CameraController::flight(10.0),
         }
     }
 }
@@ -49,7 +49,7 @@ struct RayMarchingSceneFrame {
 
 impl RayMarchingSceneFrame {
     fn sample_scene(&self, point: Vec3) -> SdfSample {
-        let r = 3.5;
+        let r = 2.5;
         let dx = (r * point.x).sin();
         let dy = (r * point.y).cos();
 
@@ -60,9 +60,11 @@ impl RayMarchingSceneFrame {
 
         let (dist, color) = smooth_union_color(
             sphere_1_dist,
-            self.sphere_1.color,
+            self.sphere_1.color.lerp(Color::RED, 0.5 + 0.5 * point.y.sin()),
             sphere_2_dist,
-            self.sphere_2.color,
+            self.sphere_2
+                .color
+                .lerp(Color::rgb(1.0, 1.0, 0.0), 0.5 + 0.5 * point.x.sin()),
             0.5,
         );
 
@@ -74,23 +76,32 @@ impl SceneFrame for RayMarchingSceneFrame {
     fn get_pixel_color(&self, coord: Vec2, _time: f32) -> Color {
         let ray = self.camera_frame.ray(coord);
 
-        let light = Vec3::new(50.0, 10.0, -50.0);
+        let light_source = Vec3::new(50.0, 10.0, -50.0);
 
         let hit = match ray_march(ray, self.ray_march_settings, |point| self.sample_scene(point)) {
             RayMarchResult::Hit(hit) => hit,
             RayMarchResult::Miss(_) => return Color::rgb(0.0, 0.0, 0.0),
         };
 
-        let light_dir = (light - hit.point).normalize();
+        let light_dir = (light_source - hit.point).normalize();
+
         let surface_normal =
             estimate_normal_tetrahedral(hit.point, self.ray_march_settings.hit_epsilon * 2.0, |point| {
                 self.sample_scene(point).dist
             });
 
-        let diffuse = surface_normal.dot(light_dir).abs();
-        let intensity = 0.15 + 0.85 * diffuse;
+        let reflected_light_dir = (light_dir * -1.0).reflect(surface_normal);
+        let view_dir = (ray.origin - hit.point).normalize();
 
-        hit.sample.color.scale_rgb(intensity.abs())
+        let ambient = 0.15;
+        let diffuse = surface_normal.dot(light_dir).max(0.0);
+        let specular = reflected_light_dir.dot(view_dir).max(0.0).powf(10.0);
+
+        let intensity = ambient + diffuse;
+        let shaded_color = hit.sample.color.scale_rgb(intensity);
+        let specular_color = Color::WHITE.scale_rgb(specular);
+
+        shaded_color.add_rgb(specular_color)
     }
 }
 
