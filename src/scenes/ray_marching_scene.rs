@@ -53,7 +53,7 @@ impl RayMarchingSceneFrame {
         let dx = (r * point.x).sin();
         let dy = (r * point.y).cos();
 
-        let point = Vec3::new(point.x + dy, point.y + dx, point.z);
+        // let point = Vec3::new(point.x + dy, point.y + dx, point.z);
 
         let sphere_1_dist = self.sphere_1.dist(&point);
         let sphere_2_dist = self.sphere_2.dist(&point);
@@ -68,6 +68,10 @@ impl RayMarchingSceneFrame {
             0.5,
         );
 
+        //let dist = sphere_1_dist.min(sphere_2_dist);
+        //let dist = sphere_2_dist;
+
+        //SdfSample::new(dist, self.sphere_1.color)
         SdfSample::new(dist, color)
     }
 }
@@ -76,33 +80,80 @@ impl SceneFrame for RayMarchingSceneFrame {
     fn get_pixel_color(&self, coord: Vec2, _time: f32) -> Color {
         let ray = self.camera_frame.ray(coord);
 
-        let light_source = Vec3::new(50.0, 10.0, -50.0);
+        let light_position = Vec3::new(50.0, 10.0, -50.0);
+        let light_color = Color::WHITE;
+
+        let back_color = Color::rgb(0.7, 0.7, 1.0);
 
         let hit = match ray_march(ray, self.ray_march_settings, |point| self.sample_scene(point)) {
             RayMarchResult::Hit(hit) => hit,
-            RayMarchResult::Miss(_) => return Color::rgb(0.0, 0.0, 0.0),
+            RayMarchResult::Miss(miss) => {
+                if miss.steps >= self.ray_march_settings.max_steps {
+                    return Color::rgb(1.0, 0.0, 1.0); // convergence failure debug
+                }
+
+                return back_color;
+            }
         };
 
-        let light_dir = (light_source - hit.point).normalize();
+        let surface_normal = estimate_normal_tetrahedral(hit.point, self.ray_march_settings.hit_epsilon, |point| {
+            self.sample_scene(point).dist
+        });
 
-        let surface_normal =
-            estimate_normal_tetrahedral(hit.point, self.ray_march_settings.hit_epsilon * 2.0, |point| {
-                self.sample_scene(point).dist
-            });
-
-        let reflected_light_dir = (light_dir * -1.0).reflect(surface_normal);
-        let view_dir = (ray.origin - hit.point).normalize();
-
-        let ambient = 0.15;
-        let diffuse = surface_normal.dot(light_dir).max(0.0);
-        let specular = reflected_light_dir.dot(view_dir).max(0.0).powf(10.0);
-
-        let intensity = ambient + diffuse;
-        let shaded_color = hit.sample.color.scale_rgb(intensity);
-        let specular_color = Color::WHITE.scale_rgb(specular);
-
-        shaded_color.add_rgb(specular_color)
+        phong_lighting(
+            ray.origin,
+            hit.point,
+            surface_normal,
+            light_position,
+            light_color,
+            hit.sample.color,
+            Color::WHITE,
+            10.0,
+            back_color,
+            0.45,
+        )
     }
+}
+
+fn phong_lighting(
+    camera_position: Vec3,
+    surface_point: Vec3,
+    surface_normal: Vec3,
+    light_position: Vec3,
+    light_color: Color,
+    material_color: Color,
+    material_specular_color: Color,
+    material_specular_shininess: f32,
+    ambient_light_color: Color,
+    ambient_light_strength: f32,
+) -> Color {
+    let light_dir = (light_position - surface_point).normalize();
+
+    let reflected_light_dir = (light_dir * -1.0).reflect(surface_normal);
+    let view_dir = (camera_position - surface_point).normalize();
+
+    let diffuse_strength = surface_normal.dot(light_dir).max(0.0);
+
+    let ambient_color = material_color
+        .multiply_rgb(ambient_light_color)
+        .scale_rgb(ambient_light_strength);
+
+    let diffuse_color = material_color.multiply_rgb(light_color).scale_rgb(diffuse_strength);
+
+    let specular_strength = if diffuse_strength > 0.0 {
+        reflected_light_dir
+            .dot(view_dir)
+            .max(0.0)
+            .powf(material_specular_shininess)
+    } else {
+        0.0
+    };
+
+    let specular_color = material_specular_color
+        .multiply_rgb(light_color)
+        .scale_rgb(specular_strength);
+
+    ambient_color.add_rgb(diffuse_color).add_rgb(specular_color)
 }
 
 impl Scene for RayMarchingScene {
@@ -125,7 +176,7 @@ impl Scene for RayMarchingScene {
 
             sphere_2: Sphere {
                 center: Vec3::new(-0.5 - time.sin(), 0.0, 4.0 - time.cos()),
-                radius: 1.0,
+                radius: 2.0,
                 color: Color::BLUE,
             },
 

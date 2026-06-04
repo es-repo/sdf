@@ -1,8 +1,9 @@
 use crate::math::lerp;
 use pixels::wgpu::Color;
 
+/// Convenience operations for `wgpu::Color`.
 pub trait ColorExt {
-    /// Creates an opaque color from normalized RGB channels.
+    /// Creates an opaque color from normalized RGB components.
     fn rgb(r: f32, g: f32, b: f32) -> Self
     where
         Self: Sized,
@@ -10,30 +11,33 @@ pub trait ColorExt {
         Self::rgba(r, g, b, 1.0)
     }
 
-    /// Creates a color from normalized RGBA channels.
+    /// Creates a color from normalized RGBA components.
     fn rgba(r: f32, g: f32, b: f32, a: f32) -> Self
     where
         Self: Sized;
 
-    /// Converts normalized RGBA channels to 8-bit channel values.
+    /// Converts normalized RGBA components to 8-bit RGBA components.
     fn to_u8_array(&self) -> [u8; 4];
 
-    /// Alpha-composites this color over the destination color.
+    /// Alpha-composites this source color over the destination color.
     fn blend(&self, dst: Color) -> Color;
 
-    /// Linearly interpolates each channel toward another color.
+    /// Linearly interpolates all RGBA components toward another color.
     fn lerp(&self, other: Color, t: f32) -> Color;
 
-    /// Linearly interpolates RGB channels toward a gray value, preserving alpha.
+    /// Linearly interpolates RGB components toward a gray value, preserving alpha.
     fn lerp_gray(&self, value: f32, t: f32) -> Color;
 
-    /// Multiplies RGB channels by a scalar value, preserving alpha.
+    /// Multiplies RGB components by a scalar value, preserving alpha.
     fn scale_rgb(&self, factor: f32) -> Color;
 
-    /// Adds RGB channels from another color, preserving this color's alpha.
+    /// Adds RGB components from another color, preserving this color's alpha.
     fn add_rgb(&self, other: Color) -> Color;
 
-    /// Returns this color with a replaced alpha channel.
+    /// Multiplies RGB components by another color's RGB components, preserving this color's alpha.
+    fn multiply_rgb(&self, other: Color) -> Color;
+
+    /// Returns this color with a replaced alpha component.
     fn with_alpha(&self, alpha: f64) -> Color;
 }
 
@@ -103,6 +107,15 @@ impl ColorExt for Color {
             (self.r + other.r) as f32,
             (self.g + other.g) as f32,
             (self.b + other.b) as f32,
+            self.a as f32,
+        )
+    }
+
+    fn multiply_rgb(&self, other: Color) -> Color {
+        Self::rgba(
+            (self.r * other.r) as f32,
+            (self.g * other.g) as f32,
+            (self.b * other.b) as f32,
             self.a as f32,
         )
     }
