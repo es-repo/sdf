@@ -32,6 +32,7 @@ impl Default for RayMarchingScene {
                     max_steps: 100,
                     hit_epsilon: 0.0001,
                     max_distance: 100.0,
+                    min_step: 0.005,
                 },
             },
             camera_controller: CameraController::flight(10.0),
@@ -68,7 +69,7 @@ impl RayMarchingSceneFrame {
             0.5,
         );
 
-        //let dist = sphere_1_dist.min(sphere_2_dist);
+        let dist = sphere_1_dist.min(sphere_2_dist);
         //let dist = sphere_2_dist;
 
         //SdfSample::new(dist, self.sphere_1.color)
@@ -132,12 +133,11 @@ fn phong_lighting(
     let reflected_light_dir = (light_dir * -1.0).reflect(surface_normal);
     let view_dir = (camera_position - surface_point).normalize();
 
-    let diffuse_strength = surface_normal.dot(light_dir).max(0.0);
-
     let ambient_color = material_color
         .multiply_rgb(ambient_light_color)
         .scale_rgb(ambient_light_strength);
 
+    let diffuse_strength = surface_normal.dot(light_dir).max(0.0);
     let diffuse_color = material_color.multiply_rgb(light_color).scale_rgb(diffuse_strength);
 
     let specular_strength = if diffuse_strength > 0.0 {

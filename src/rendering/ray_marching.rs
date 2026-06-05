@@ -21,6 +21,7 @@ pub struct RayMarchSettings {
     pub max_steps: usize,
     pub hit_epsilon: f32,
     pub max_distance: f32,
+    pub min_step: f32,
 }
 
 /// First surface hit found by marching along a ray.
@@ -68,7 +69,7 @@ where
             });
         }
 
-        march_dist += sample.dist.max(settings.hit_epsilon);
+        march_dist += sample.dist.max(settings.min_step);
 
         if march_dist > settings.max_distance {
             break;
