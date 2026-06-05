@@ -183,7 +183,12 @@ def main() -> int:
     parser.add_argument("--host", default="127.0.0.1")
     parser.add_argument("--port", type=int, default=8000)
     parser.add_argument("--interval", type=float, default=0.5, help="File polling interval in seconds.")
-    parser.add_argument("--debounce", type=float, default=0.3, help="Delay after a change before rebuilding.")
+    parser.add_argument(
+        "--debounce",
+        type=float,
+        default=0.75,
+        help="Quiet period after the last file change before rebuilding.",
+    )
     args = parser.parse_args()
 
     root_dir = Path(__file__).resolve().parents[1]
@@ -256,16 +261,47 @@ def watch_and_build(
         if current_snapshot == previous_snapshot:
             continue
 
-        time.sleep(debounce)
-        current_snapshot = file_snapshot(root_dir)
+        build_snapshot = wait_for_quiet_snapshot(root_dir, current_snapshot, interval, debounce)
 
         state.notify("building")
-        if run_build(root_dir, build_script):
+        build_succeeded = run_build(root_dir, build_script)
+        latest_snapshot = file_snapshot(root_dir)
+
+        if latest_snapshot != build_snapshot:
+            print("Changes detected during build; rebuilding.")
+            previous_snapshot = build_snapshot
+            continue
+
+        if build_succeeded:
             state.notify("reload")
         else:
             state.notify("failed")
 
-        previous_snapshot = file_snapshot(root_dir)
+        previous_snapshot = latest_snapshot
+
+
+def wait_for_quiet_snapshot(
+    root_dir: Path,
+    snapshot: dict[str, tuple[int, int]],
+    interval: float,
+    debounce: float,
+) -> dict[str, tuple[int, int]]:
+    if debounce <= 0.0:
+        return snapshot
+
+    quiet_since = time.monotonic()
+
+    while True:
+        remaining = debounce - (time.monotonic() - quiet_since)
+        if remaining <= 0.0:
+            return snapshot
+
+        time.sleep(min(interval, remaining))
+        next_snapshot = file_snapshot(root_dir)
+
+        if next_snapshot != snapshot:
+            snapshot = next_snapshot
+            quiet_since = time.monotonic()
 
 
 def run_build(root_dir: Path, build_script: Path) -> bool:
