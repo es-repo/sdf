@@ -3,8 +3,8 @@ use crate::geometry::{Sdf3d, Sphere, Vec2, Vec3};
 use crate::input::InputState;
 use crate::procedural::smooth_union::smooth_union_color;
 use crate::rendering::{
-    Camera, CameraController, CameraFrame, RayMarchResult, RayMarchSettings, SdfSample, estimate_normal_tetrahedral,
-    ray_march,
+    AmbientLight, Camera, CameraController, CameraFrame, PhongMaterial, PointLight, RayMarchResult, RayMarchSettings,
+    SdfSample, estimate_normal_tetrahedral, phong_lighting, ray_march,
 };
 use crate::scene::{Scene, SceneFrame};
 use pixels::wgpu::Color;
@@ -45,6 +45,8 @@ struct RayMarchingSceneFrame {
     sphere_1: Sphere,
     sphere_2: Sphere,
     //sphere_3: Sphere,
+    light: PointLight,
+    ambient_light: AmbientLight,
     ray_march_settings: RayMarchSettings,
 }
 
@@ -69,7 +71,7 @@ impl RayMarchingSceneFrame {
             0.5,
         );
 
-        let dist = sphere_1_dist.min(sphere_2_dist);
+        //let dist = sphere_1_dist.min(sphere_2_dist);
         //let dist = sphere_2_dist;
 
         //SdfSample::new(dist, self.sphere_1.color)
@@ -81,11 +83,6 @@ impl SceneFrame for RayMarchingSceneFrame {
     fn get_pixel_color(&self, coord: Vec2, _time: f32) -> Color {
         let ray = self.camera_frame.ray(coord);
 
-        let light_position = Vec3::new(50.0, 10.0, -50.0);
-        let light_color = Color::WHITE;
-
-        let back_color = Color::rgb(0.7, 0.7, 1.0);
-
         let hit = match ray_march(ray, self.ray_march_settings, |point| self.sample_scene(point)) {
             RayMarchResult::Hit(hit) => hit,
             RayMarchResult::Miss(miss) => {
@@ -93,7 +90,7 @@ impl SceneFrame for RayMarchingSceneFrame {
                     return Color::rgb(1.0, 0.0, 1.0); // convergence failure debug
                 }
 
-                return back_color;
+                return self.ambient_light.color;
             }
         };
 
@@ -105,55 +102,15 @@ impl SceneFrame for RayMarchingSceneFrame {
             ray.origin,
             hit.point,
             surface_normal,
-            light_position,
-            light_color,
-            hit.sample.color,
-            Color::WHITE,
-            10.0,
-            back_color,
-            0.45,
+            self.light,
+            PhongMaterial {
+                diffuse_color: hit.sample.color,
+                specular_color: Color::WHITE,
+                shininess: 10.0,
+            },
+            self.ambient_light,
         )
     }
-}
-
-fn phong_lighting(
-    camera_position: Vec3,
-    surface_point: Vec3,
-    surface_normal: Vec3,
-    light_position: Vec3,
-    light_color: Color,
-    material_color: Color,
-    material_specular_color: Color,
-    material_specular_shininess: f32,
-    ambient_light_color: Color,
-    ambient_light_strength: f32,
-) -> Color {
-    let light_dir = (light_position - surface_point).normalize();
-
-    let reflected_light_dir = (light_dir * -1.0).reflect(surface_normal);
-    let view_dir = (camera_position - surface_point).normalize();
-
-    let ambient_color = material_color
-        .multiply_rgb(ambient_light_color)
-        .scale_rgb(ambient_light_strength);
-
-    let diffuse_strength = surface_normal.dot(light_dir).max(0.0);
-    let diffuse_color = material_color.multiply_rgb(light_color).scale_rgb(diffuse_strength);
-
-    let specular_strength = if diffuse_strength > 0.0 {
-        reflected_light_dir
-            .dot(view_dir)
-            .max(0.0)
-            .powf(material_specular_shininess)
-    } else {
-        0.0
-    };
-
-    let specular_color = material_specular_color
-        .multiply_rgb(light_color)
-        .scale_rgb(specular_strength);
-
-    ambient_color.add_rgb(diffuse_color).add_rgb(specular_color)
 }
 
 impl Scene for RayMarchingScene {
@@ -178,6 +135,17 @@ impl Scene for RayMarchingScene {
                 center: Vec3::new(-0.5 - time.sin(), 0.0, 4.0 - time.cos()),
                 radius: 2.0,
                 color: Color::BLUE,
+            },
+
+            light: PointLight {
+                position: Vec3::new(50.0, 10.0, -50.0),
+                color: Color::WHITE,
+                intensity: 1.0,
+            },
+
+            ambient_light: AmbientLight {
+                color: Color::rgb(0.7, 0.7, 1.0),
+                intensity: 0.75,
             },
 
             ray_march_settings: self.state.ray_march_settings,
