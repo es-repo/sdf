@@ -1,3 +1,4 @@
+mod controls;
 mod object;
 mod phong_lighting_scene;
 

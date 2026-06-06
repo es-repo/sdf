@@ -1,3 +1,4 @@
+use super::controls::Scene4SceneControls;
 use crate::audio::AudioAnalysis;
 use crate::color_ext::ColorExt;
 use crate::geometry::{Circle, Rectangle, Triangle};
@@ -9,20 +10,9 @@ use pixels::wgpu::Color;
 
 const AUDIO_TRACK: &str = "assets/audio/shadertoy_track1.mp3";
 
-#[derive(Clone, Copy)]
-pub struct Scene4SceneParams {
-    pub volume: f32,
-}
-
-impl Default for Scene4SceneParams {
-    fn default() -> Self {
-        Self { volume: 1.0 }
-    }
-}
-
 #[derive(Default)]
 pub struct Scene4Scene {
-    params: Scene4SceneParams,
+    controls: Scene4SceneControls,
 }
 
 struct Scene4SceneFrame {
@@ -74,7 +64,7 @@ impl Scene for Scene4Scene {
 
     fn prepare_frame_with_audio(&self, time: f32, audio: &AudioAnalysis) -> Box<dyn SceneFrame> {
         let time_scaled = time * 0.5;
-        let bass = audio.bass * 2.5 * self.params.volume;
+        let bass = audio.bass * 2.5 * self.controls.volume;
         let bass = if bass < 0.0001 { 1.0 } else { bass };
         let beat = smoothstep(0.1, 1.5, bass);
         let triangle_center = Vec2::new(time_scaled.cos(), 0.3 * time_scaled.sin());
@@ -113,18 +103,14 @@ impl Scene for Scene4Scene {
     }
 
     fn audio_volume(&self) -> f32 {
-        self.params.volume
+        self.controls.volume
     }
 
-    fn has_parameters_ui(&self) -> bool {
+    fn has_controls_ui(&self) -> bool {
         true
     }
 
-    fn parameters_ui(&mut self, ui: &mut egui::Ui) {
-        ui.add(egui::Slider::new(&mut self.params.volume, 0.0..=1.0).text("Volume"));
-
-        if ui.button("Reset").clicked() {
-            self.params = Scene4SceneParams::default();
-        }
+    fn controls_ui(&mut self, ui: &mut egui::Ui) {
+        self.controls.ui(ui);
     }
 }

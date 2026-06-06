@@ -1,74 +1,49 @@
+use super::controls::Scene3SceneControls;
 use crate::color_ext::ColorExt;
 use crate::geometry::{Vec2, Vec3};
 use crate::procedural::{Fbm, NoiseSimplex};
 use crate::scene::{Scene, SceneFrame};
 use pixels::wgpu::Color;
 
-#[derive(Clone, Copy)]
-pub struct Scene3SceneParams {
-    pub scale: f32,
-    pub amplitude: f32,
-    pub gain: f32,
-    pub octaves: u32,
-    pub warp_iterations: u32,
-}
-
-impl Default for Scene3SceneParams {
-    fn default() -> Self {
-        Self {
-            scale: 2.0,
-            amplitude: 0.5,
-            gain: 0.5,
-            octaves: 4,
-            warp_iterations: 4,
-        }
-    }
-}
-
 #[derive(Default)]
 pub struct Scene3Scene {
-    params: Scene3SceneParams,
+    controls: Scene3SceneControls,
 }
 
 struct Scene3SceneFrame {
-    params: Scene3SceneParams,
+    controls: Scene3SceneControls,
     time_scaled: f32,
 }
 
 impl Scene for Scene3Scene {
     fn prepare_frame(&self, time: f32) -> Box<dyn SceneFrame> {
         Box::new(Scene3SceneFrame {
-            params: self.params,
+            controls: self.controls,
             time_scaled: time * 0.2,
         })
     }
 
-    fn has_parameters_ui(&self) -> bool {
+    fn has_controls_ui(&self) -> bool {
         true
     }
 
-    fn parameters_ui(&mut self, ui: &mut egui::Ui) {
-        ui.add(egui::Slider::new(&mut self.params.scale, 0.1..=8.0).text("Scale"));
-        ui.add(egui::Slider::new(&mut self.params.amplitude, 0.0..=2.0).text("Amplitude"));
-        ui.add(egui::Slider::new(&mut self.params.gain, 0.0..=1.0).text("Gain"));
-        ui.add(egui::Slider::new(&mut self.params.octaves, 1..=8).text("Octaves"));
-        ui.add(egui::Slider::new(&mut self.params.warp_iterations, 1..=8).text("Warp iterations"));
-
-        if ui.button("Reset").clicked() {
-            self.params = Scene3SceneParams::default();
-        }
+    fn controls_ui(&mut self, ui: &mut egui::Ui) {
+        self.controls.ui(ui);
     }
 }
 
 impl SceneFrame for Scene3SceneFrame {
     fn get_pixel_color(&self, coord: Vec2, _time: f32) -> Color {
-        let mut coord3d = Vec3::from_2d(coord * self.params.scale + self.time_scaled, self.time_scaled);
+        let mut coord3d = Vec3::from_2d(coord * self.controls.scale + self.time_scaled, self.time_scaled);
 
         let mut f = 1.0;
-        for _i in 0..self.params.warp_iterations {
-            f = coord3d.fbm_rotated(self.params.octaves, self.params.amplitude, self.params.gain, |coord| {
-                coord.noise_simplex()
-            });
+        for _i in 0..self.controls.warp_iterations {
+            f = coord3d.fbm_rotated(
+                self.controls.octaves,
+                self.controls.amplitude,
+                self.controls.gain,
+                |coord| coord.noise_simplex(),
+            );
             coord3d = coord3d + f;
             coord3d = coord3d.sin();
         }

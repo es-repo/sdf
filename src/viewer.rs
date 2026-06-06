@@ -220,7 +220,7 @@ impl Viewer {
     }
 
     fn prepare_egui_frame(&mut self) -> Option<EguiFrame> {
-        if !self.scene.has_parameters_ui() {
+        if !self.scene.has_controls_ui() {
             return None;
         }
 
@@ -259,7 +259,7 @@ impl Viewer {
             let compact_frame = egui::Frame::window(&compact_style);
             context.set_style(compact_style);
 
-            egui::Window::new("Parameters")
+            egui::Window::new("Controls")
                 .anchor(egui::Align2::RIGHT_TOP, egui::vec2(0.0, 0.0))
                 .default_width(220.0)
                 .frame(compact_frame)
@@ -267,7 +267,7 @@ impl Viewer {
                 .collapsible(true)
                 .default_open(false)
                 .show(context, |ui| {
-                    scene.parameters_ui(ui);
+                    scene.controls_ui(ui);
                 });
 
             context.set_style(original_style);
@@ -508,7 +508,7 @@ impl Viewer {
     }
 
     fn handle_gui_window_event(&mut self, event: &WindowEvent) -> bool {
-        if !self.scene.has_parameters_ui() {
+        if !self.scene.has_controls_ui() {
             return false;
         }
 

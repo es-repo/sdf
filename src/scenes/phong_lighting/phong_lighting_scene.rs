@@ -1,5 +1,5 @@
+use super::controls::PhongLightingSceneControls;
 use super::object::Object;
-use crate::color_ext::ColorExt;
 use crate::geometry::{Vec2, Vec3};
 use crate::input::InputState;
 use crate::rendering::{
@@ -9,34 +9,9 @@ use crate::rendering::{
 use crate::scene::{Scene, SceneFrame};
 use pixels::wgpu::Color;
 
-#[derive(Clone, Copy)]
-pub struct PhongLightingSceneParams {
-    light_color: Color,
-    light_intensity: f32,
-    ambient_color: Color,
-    ambient_intensity: f32,
-    object_color: Color,
-    specular_color: Color,
-    specular_shininess: f32,
-}
-
-impl Default for PhongLightingSceneParams {
-    fn default() -> Self {
-        Self {
-            light_color: Color::WHITE,
-            light_intensity: 1.0,
-            ambient_color: Color::rgb(0.7, 0.7, 1.0),
-            ambient_intensity: 0.75,
-            object_color: Color::rgb(1.0, 0.5, 0.0),
-            specular_color: Color::WHITE,
-            specular_shininess: 50.0,
-        }
-    }
-}
-
 pub struct PhongLightingScene {
     object: Object,
-    params: PhongLightingSceneParams,
+    controls: PhongLightingSceneControls,
     camera: Camera,
     camera_controller: CameraController,
     ray_march_settings: RayMarchSettings,
@@ -45,10 +20,10 @@ pub struct PhongLightingScene {
 impl Default for PhongLightingScene {
     fn default() -> Self {
         let fov_y = 60f32.to_radians();
-        let params = PhongLightingSceneParams::default();
+        let controls = PhongLightingSceneControls::default();
         Self {
-            object: Object::new(Vec3::new(0.0, 0.0, 5.0), 1.0, params.object_color),
-            params,
+            object: Object::new(Vec3::new(0.0, 0.0, 5.0), 1.0, controls.object_color),
+            controls,
             camera: Camera::new(fov_y, 1.0),
             ray_march_settings: RayMarchSettings {
                 max_steps: 256,
@@ -114,7 +89,7 @@ impl Scene for PhongLightingScene {
 
     fn prepare_frame(&self, time: f32) -> Box<dyn SceneFrame> {
         let mut object = self.object;
-        object.color = self.params.object_color;
+        object.color = self.controls.object_color;
         object.rotate_y(time * 2.0);
 
         Box::new(PhongLightingSceneFrame {
@@ -123,60 +98,30 @@ impl Scene for PhongLightingScene {
 
             light: PointLight {
                 position: Vec3::new(50.0, 10.0, -50.0),
-                color: self.params.light_color,
-                intensity: self.params.light_intensity,
+                color: self.controls.light_color,
+                intensity: self.controls.light_intensity,
             },
 
             ambient_light: AmbientLight {
-                color: self.params.ambient_color,
-                intensity: self.params.ambient_intensity,
+                color: self.controls.ambient_color,
+                intensity: self.controls.ambient_intensity,
             },
 
             material: PhongMaterial {
-                diffuse_color: self.params.object_color,
-                specular_color: self.params.specular_color,
-                shininess: self.params.specular_shininess,
+                diffuse_color: self.controls.object_color,
+                specular_color: self.controls.specular_color,
+                shininess: self.controls.specular_shininess,
             },
 
             ray_march_settings: self.ray_march_settings,
         })
     }
 
-    fn has_parameters_ui(&self) -> bool {
+    fn has_controls_ui(&self) -> bool {
         true
     }
 
-    fn parameters_ui(&mut self, ui: &mut egui::Ui) {
-        color_control(ui, "Object color", &mut self.params.object_color);
-        ui.separator();
-
-        color_control(ui, "Light color", &mut self.params.light_color);
-        ui.add(egui::Slider::new(&mut self.params.light_intensity, 0.0..=5.0).text("Intensity"));
-
-        ui.separator();
-
-        color_control(ui, "Ambient color", &mut self.params.ambient_color);
-        ui.add(egui::Slider::new(&mut self.params.ambient_intensity, 0.0..=2.0).text("Intensity"));
-
-        ui.separator();
-
-        color_control(ui, "Specular color", &mut self.params.specular_color);
-        ui.add(egui::Slider::new(&mut self.params.specular_shininess, 1.0..=128.0).text("Shininess"));
-
-        if ui.button("Reset").clicked() {
-            self.params = PhongLightingSceneParams::default();
-        }
+    fn controls_ui(&mut self, ui: &mut egui::Ui) {
+        self.controls.ui(ui);
     }
-}
-
-fn color_control(ui: &mut egui::Ui, label: &str, color: &mut Color) {
-    ui.horizontal(|ui| {
-        let mut rgb = [color.r as f32, color.g as f32, color.b as f32];
-
-        if ui.color_edit_button_rgb(&mut rgb).changed() {
-            *color = Color::rgb(rgb[0], rgb[1], rgb[2]);
-        }
-
-        ui.label(label);
-    });
 }

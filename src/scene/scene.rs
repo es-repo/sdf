@@ -23,15 +23,15 @@ pub trait Scene: Send + Sync {
         self.prepare_frame(time)
     }
 
-    /// Returns true when this scene exposes editable parameters through egui.
-    fn has_parameters_ui(&self) -> bool {
+    /// Returns true when this scene exposes editable controls through egui.
+    fn has_controls_ui(&self) -> bool {
         false
     }
 
-    /// Draws this scene's parameter controls.
+    /// Draws this scene's control widgets.
     ///
-    /// This is called only when `has_parameters_ui` returns true.
-    fn parameters_ui(&mut self, _ui: &mut egui::Ui) {}
+    /// This is called only when `has_controls_ui` returns true.
+    fn controls_ui(&mut self, _ui: &mut egui::Ui) {}
 
     /// Returns an optional audio track path used by this scene.
     fn audio_track(&self) -> Option<&'static str> {

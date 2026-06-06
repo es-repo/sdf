@@ -1,40 +1,18 @@
+use super::controls::DomainWarpingSceneControls;
 use crate::color_ext::ColorExt;
 use crate::geometry::{Circle, Sdf, Vec2};
 use crate::procedural::{Fbm, NoiseSimplex};
 use crate::scene::{Scene, SceneFrame};
 use pixels::wgpu::Color;
 
-#[derive(Clone, Copy)]
-pub struct DomainWarpingSceneParams {
-    pub scale: f32,
-    pub warp_strength: f32,
-    pub amplitude: f32,
-    pub gain: f32,
-    pub octaves: u32,
-    pub lacunarity: f32,
-}
-
-impl Default for DomainWarpingSceneParams {
-    fn default() -> Self {
-        Self {
-            scale: 3.0,
-            warp_strength: 0.05,
-            amplitude: 0.5,
-            gain: 0.5,
-            octaves: 4,
-            lacunarity: 2.0,
-        }
-    }
-}
-
 #[derive(Default)]
 pub struct DomainWarpingScene {
-    params: DomainWarpingSceneParams,
+    controls: DomainWarpingSceneControls,
 }
 
 struct DomainWarpingSceneFrame {
     circle: Circle,
-    params: DomainWarpingSceneParams,
+    controls: DomainWarpingSceneControls,
     time_scaled: f32,
 }
 
@@ -48,39 +26,30 @@ impl Scene for DomainWarpingScene {
 
         Box::new(DomainWarpingSceneFrame {
             circle,
-            params: self.params,
+            controls: self.controls,
             time_scaled: time * 0.25,
         })
     }
 
-    fn has_parameters_ui(&self) -> bool {
+    fn has_controls_ui(&self) -> bool {
         true
     }
 
-    fn parameters_ui(&mut self, ui: &mut egui::Ui) {
-        ui.add(egui::Slider::new(&mut self.params.scale, 0.1..=16.0).text("Scale"));
-        ui.add(egui::Slider::new(&mut self.params.warp_strength, 0.0..=1.0).text("Strength"));
-        ui.add(egui::Slider::new(&mut self.params.amplitude, 0.0..=2.0).text("Amplitude"));
-        ui.add(egui::Slider::new(&mut self.params.gain, 0.0..=1.0).text("Gain"));
-        ui.add(egui::Slider::new(&mut self.params.octaves, 1..=8).text("Octaves"));
-        ui.add(egui::Slider::new(&mut self.params.lacunarity, 1.0..=4.0).text("Lacunarity"));
-
-        if ui.button("Reset").clicked() {
-            self.params = DomainWarpingSceneParams::default();
-        }
+    fn controls_ui(&mut self, ui: &mut egui::Ui) {
+        self.controls.ui(ui);
     }
 }
 
 impl SceneFrame for DomainWarpingSceneFrame {
     fn get_pixel_color(&self, coord: Vec2, _time: f32) -> Color {
-        let noise_coord = coord * self.params.scale + self.time_scaled;
+        let noise_coord = coord * self.controls.scale + self.time_scaled;
         let offset = noise_coord.fbm(
-            self.params.octaves,
-            self.params.amplitude,
-            self.params.gain,
-            self.params.lacunarity,
+            self.controls.octaves,
+            self.controls.amplitude,
+            self.controls.gain,
+            self.controls.lacunarity,
             |coord| coord.noise_simplex(),
-        ) * self.params.warp_strength;
+        ) * self.controls.warp_strength;
 
         let warped_coord = coord + offset;
 
