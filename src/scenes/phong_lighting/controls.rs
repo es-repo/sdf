@@ -9,6 +9,7 @@ pub struct PhongLightingSceneControls {
     pub ambient_intensity: f32,
     pub object_color: Color,
     pub specular_color: Color,
+    pub specular_intensity: f32,
     pub specular_shininess: f32,
 }
 
@@ -21,6 +22,7 @@ impl Default for PhongLightingSceneControls {
             ambient_intensity: 0.75,
             object_color: Color::rgb(1.0, 0.5, 0.0),
             specular_color: Color::WHITE,
+            specular_intensity: 1.0,
             specular_shininess: 50.0,
         }
     }
@@ -42,6 +44,7 @@ impl PhongLightingSceneControls {
         ui.separator();
 
         color_control(ui, "Specular color", &mut self.specular_color);
+        ui.add(egui::Slider::new(&mut self.specular_intensity, 0.0..=5.0).text("Intensity"));
         ui.add(egui::Slider::new(&mut self.specular_shininess, 1.0..=128.0).text("Shininess"));
 
         if ui.button("Reset").clicked() {

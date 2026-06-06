@@ -106,6 +106,7 @@ impl SceneFrame for RayMarchingSceneFrame {
             PhongMaterial {
                 diffuse_color: hit.sample.color,
                 specular_color: Color::WHITE,
+                specular_intensity: 1.0,
                 shininess: 10.0,
             },
             self.ambient_light,

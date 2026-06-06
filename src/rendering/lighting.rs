@@ -19,6 +19,7 @@ pub struct AmbientLight {
 pub struct PhongMaterial {
     pub diffuse_color: Color,
     pub specular_color: Color,
+    pub specular_intensity: f32,
     pub shininess: f32,
 }
 
@@ -55,7 +56,7 @@ pub fn phong_lighting(
     let specular_color = material
         .specular_color
         .multiply_rgb(light.color)
-        .scale_rgb(specular_strength * light.intensity);
+        .scale_rgb(specular_strength * material.specular_intensity * light.intensity);
 
     ambient_color.add_rgb(diffuse_color).add_rgb(specular_color)
 }

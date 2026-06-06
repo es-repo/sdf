@@ -110,6 +110,7 @@ impl Scene for PhongLightingScene {
             material: PhongMaterial {
                 diffuse_color: self.controls.object_color,
                 specular_color: self.controls.specular_color,
+                specular_intensity: self.controls.specular_intensity,
                 shininess: self.controls.specular_shininess,
             },
 
