@@ -1,0 +1,57 @@
+use crate::geometry::{Sdf3d, Sphere, Vec3};
+use crate::procedural::smooth_union::smooth_union_many;
+use pixels::wgpu::Color;
+
+pub struct Object {
+    position: Vec3,
+    spheres: [Sphere; 5],
+    pub color: Color,
+}
+
+impl Object {
+    pub fn new(position: Vec3, core_radius: f32, color: Color) -> Self {
+        let side_radius = core_radius * 0.8;
+        let side_shift = core_radius * 1.2;
+
+        let spheres = [
+            Sphere {
+                center: Vec3::new(0.0, 0.0, 0.0),
+                radius: 1.0,
+                color,
+            },
+            Sphere {
+                center: Vec3::new(-side_shift, side_shift, 0.0),
+                radius: side_radius,
+                color,
+            },
+            Sphere {
+                center: Vec3::new(-side_shift, -side_shift, 0.0),
+                radius: side_radius,
+                color,
+            },
+            Sphere {
+                center: Vec3::new(side_shift, -side_shift, 0.0),
+                radius: side_radius,
+                color,
+            },
+            Sphere {
+                center: Vec3::new(side_shift, side_shift, 0.0),
+                radius: side_radius,
+                color,
+            },
+        ];
+
+        Self {
+            position,
+            spheres,
+            color,
+        }
+    }
+
+    pub fn dist(&self, point: &Vec3) -> f32 {
+        let distances = self.spheres.map(|s| s.dist(&(*point - self.position)));
+        smooth_union_many(distances, 0.5).unwrap()
+    }
+    
+    
+}

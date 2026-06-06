@@ -10,22 +10,22 @@ use pixels::wgpu::Color;
 const AUDIO_TRACK: &str = "assets/audio/shadertoy_track1.mp3";
 
 #[derive(Clone, Copy)]
-pub struct Scene4Params {
+pub struct Scene4SceneParams {
     pub volume: f32,
 }
 
-impl Default for Scene4Params {
+impl Default for Scene4SceneParams {
     fn default() -> Self {
         Self { volume: 1.0 }
     }
 }
 
 #[derive(Default)]
-pub struct Scene4 {
-    params: Scene4Params,
+pub struct Scene4Scene {
+    params: Scene4SceneParams,
 }
 
-struct Scene4Frame {
+struct Scene4SceneFrame {
     circle: Circle,
     rectangle: Rectangle,
     triangle: Triangle,
@@ -33,7 +33,7 @@ struct Scene4Frame {
     smooth_blend_radius: f32,
 }
 
-impl SceneFrame for Scene4Frame {
+impl SceneFrame for Scene4SceneFrame {
     fn get_pixel_color(&self, coord: Vec2, time: f32) -> Color {
         let c_dist = self.circle.dist_round(&coord, self.round_radius);
         let r_dist = self.rectangle.dist_round(&coord, self.round_radius);
@@ -67,7 +67,7 @@ impl SceneFrame for Scene4Frame {
     }
 }
 
-impl Scene for Scene4 {
+impl Scene for Scene4Scene {
     fn prepare_frame(&self, time: f32) -> Box<dyn SceneFrame> {
         self.prepare_frame_with_audio(time, &AudioAnalysis::default())
     }
@@ -79,7 +79,7 @@ impl Scene for Scene4 {
         let beat = smoothstep(0.1, 1.5, bass);
         let triangle_center = Vec2::new(time_scaled.cos(), 0.3 * time_scaled.sin());
 
-        Box::new(Scene4Frame {
+        Box::new(Scene4SceneFrame {
             circle: Circle {
                 radius: 0.05 + 0.2 * bass,
                 center: Vec2::new(
@@ -124,7 +124,7 @@ impl Scene for Scene4 {
         ui.add(egui::Slider::new(&mut self.params.volume, 0.0..=1.0).text("Volume"));
 
         if ui.button("Reset").clicked() {
-            self.params = Scene4Params::default();
+            self.params = Scene4SceneParams::default();
         }
     }
 }

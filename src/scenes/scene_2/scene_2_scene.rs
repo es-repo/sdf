@@ -6,15 +6,15 @@ use crate::procedural::smooth_union::smooth_union;
 use crate::procedural::{Fbm, NoiseSimplex};
 use crate::scene::{Scene, SceneFrame};
 
-pub struct Scene2;
+pub struct Scene2Scene;
 
-struct Scene2Frame {
+struct Scene2SceneFrame {
     circle_1: Circle,
     circle_2: Circle,
     time_sin: f32,
 }
 
-impl SceneFrame for Scene2Frame {
+impl SceneFrame for Scene2SceneFrame {
     fn get_pixel_color(&self, coord: Vec2, _time: f32) -> Color {
         let d1 = self.circle_1.dist_squared_radius_squared(&coord);
         let d2 = self.circle_2.dist_squared_radius_squared(&coord);
@@ -47,14 +47,14 @@ impl SceneFrame for Scene2Frame {
     }
 }
 
-impl Scene for Scene2 {
+impl Scene for Scene2Scene {
     fn prepare_frame(&self, time: f32) -> Box<dyn SceneFrame> {
         let time_sin = time.sin();
         let time_cos = time.cos();
         let time2_sin = (time * 2.0).sin();
         let time2_cos = (time * 2.0).cos();
 
-        Box::new(Scene2Frame {
+        Box::new(Scene2SceneFrame {
             circle_1: Circle {
                 radius: 0.0,
                 center: Vec2::new(0.5 * time2_sin, 0.35 * time_sin * time2_cos),

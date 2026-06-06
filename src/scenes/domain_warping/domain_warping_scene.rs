@@ -5,7 +5,7 @@ use crate::scene::{Scene, SceneFrame};
 use pixels::wgpu::Color;
 
 #[derive(Clone, Copy)]
-pub struct DomainWarpingParams {
+pub struct DomainWarpingSceneParams {
     pub scale: f32,
     pub warp_strength: f32,
     pub amplitude: f32,
@@ -14,7 +14,7 @@ pub struct DomainWarpingParams {
     pub lacunarity: f32,
 }
 
-impl Default for DomainWarpingParams {
+impl Default for DomainWarpingSceneParams {
     fn default() -> Self {
         Self {
             scale: 3.0,
@@ -28,17 +28,17 @@ impl Default for DomainWarpingParams {
 }
 
 #[derive(Default)]
-pub struct DomainWarping {
-    params: DomainWarpingParams,
+pub struct DomainWarpingScene {
+    params: DomainWarpingSceneParams,
 }
 
-struct DomainWarpingFrame {
+struct DomainWarpingSceneFrame {
     circle: Circle,
-    params: DomainWarpingParams,
+    params: DomainWarpingSceneParams,
     time_scaled: f32,
 }
 
-impl Scene for DomainWarping {
+impl Scene for DomainWarpingScene {
     fn prepare_frame(&self, time: f32) -> Box<dyn SceneFrame> {
         let circle = Circle {
             center: Vec2::new(0.0, 0.0),
@@ -46,7 +46,7 @@ impl Scene for DomainWarping {
             color: Color::rgb(0.3, 1.0, 0.4),
         };
 
-        Box::new(DomainWarpingFrame {
+        Box::new(DomainWarpingSceneFrame {
             circle,
             params: self.params,
             time_scaled: time * 0.25,
@@ -66,12 +66,12 @@ impl Scene for DomainWarping {
         ui.add(egui::Slider::new(&mut self.params.lacunarity, 1.0..=4.0).text("Lacunarity"));
 
         if ui.button("Reset").clicked() {
-            self.params = DomainWarpingParams::default();
+            self.params = DomainWarpingSceneParams::default();
         }
     }
 }
 
-impl SceneFrame for DomainWarpingFrame {
+impl SceneFrame for DomainWarpingSceneFrame {
     fn get_pixel_color(&self, coord: Vec2, _time: f32) -> Color {
         let noise_coord = coord * self.params.scale + self.time_scaled;
         let offset = noise_coord.fbm(

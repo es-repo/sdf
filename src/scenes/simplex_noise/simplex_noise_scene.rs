@@ -5,17 +5,17 @@ use crate::geometry::Vec2;
 use crate::procedural::{Fbm, NoiseSimplex};
 use crate::scene::{Scene, SceneFrame};
 
-pub struct SimplexNoise;
+pub struct SimplexNoiseScene;
 
-struct SimplexNoiseFrame {}
+struct SimplexNoiseSceneFrame {}
 
-impl Scene for SimplexNoise {
+impl Scene for SimplexNoiseScene {
     fn prepare_frame(&self, _time: f32) -> Box<dyn SceneFrame> {
-        Box::new(SimplexNoiseFrame {})
+        Box::new(SimplexNoiseSceneFrame {})
     }
 }
 
-impl SceneFrame for SimplexNoiseFrame {
+impl SceneFrame for SimplexNoiseSceneFrame {
     fn get_pixel_color(&self, coord: Vec2, time: f32) -> Color {
         let mut f;
         let scale = 3.0;

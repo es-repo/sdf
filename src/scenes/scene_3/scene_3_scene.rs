@@ -5,7 +5,7 @@ use crate::scene::{Scene, SceneFrame};
 use pixels::wgpu::Color;
 
 #[derive(Clone, Copy)]
-pub struct Scene3Params {
+pub struct Scene3SceneParams {
     pub scale: f32,
     pub amplitude: f32,
     pub gain: f32,
@@ -13,7 +13,7 @@ pub struct Scene3Params {
     pub warp_iterations: u32,
 }
 
-impl Default for Scene3Params {
+impl Default for Scene3SceneParams {
     fn default() -> Self {
         Self {
             scale: 2.0,
@@ -26,18 +26,18 @@ impl Default for Scene3Params {
 }
 
 #[derive(Default)]
-pub struct Scene3 {
-    params: Scene3Params,
+pub struct Scene3Scene {
+    params: Scene3SceneParams,
 }
 
-struct Scene3Frame {
-    params: Scene3Params,
+struct Scene3SceneFrame {
+    params: Scene3SceneParams,
     time_scaled: f32,
 }
 
-impl Scene for Scene3 {
+impl Scene for Scene3Scene {
     fn prepare_frame(&self, time: f32) -> Box<dyn SceneFrame> {
-        Box::new(Scene3Frame {
+        Box::new(Scene3SceneFrame {
             params: self.params,
             time_scaled: time * 0.2,
         })
@@ -55,12 +55,12 @@ impl Scene for Scene3 {
         ui.add(egui::Slider::new(&mut self.params.warp_iterations, 1..=8).text("Warp iterations"));
 
         if ui.button("Reset").clicked() {
-            self.params = Scene3Params::default();
+            self.params = Scene3SceneParams::default();
         }
     }
 }
 
-impl SceneFrame for Scene3Frame {
+impl SceneFrame for Scene3SceneFrame {
     fn get_pixel_color(&self, coord: Vec2, _time: f32) -> Color {
         let mut coord3d = Vec3::from_2d(coord * self.params.scale + self.time_scaled, self.time_scaled);
 

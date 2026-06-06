@@ -5,16 +5,16 @@ use crate::geometry::{Circle, Vec2};
 use crate::procedural::smooth_union::smooth_union;
 use crate::scene::{Scene, SceneFrame};
 
-pub struct Scene1;
+pub struct Scene1Scene;
 
-struct Scene1Frame {
+struct Scene1SceneFrame {
     circle_1: Circle,
     circle_2: Circle,
     time_sin: f32,
     time_cos: f32,
 }
 
-impl SceneFrame for Scene1Frame {
+impl SceneFrame for Scene1SceneFrame {
     fn get_pixel_color(&self, coord: Vec2, _time: f32) -> Color {
         let d1 = self.circle_1.dist_squared_radius_squared(&coord);
         let d2 = self.circle_2.dist_squared_radius_squared(&coord);
@@ -45,14 +45,14 @@ impl SceneFrame for Scene1Frame {
     }
 }
 
-impl Scene for Scene1 {
+impl Scene for Scene1Scene {
     fn prepare_frame(&self, time: f32) -> Box<dyn SceneFrame> {
         let time_sin = time.sin();
         let time_cos = time.cos();
         let time2_sin = (time * 2.0).sin();
         let time2_cos = (time * 2.0).cos();
 
-        Box::new(Scene1Frame {
+        Box::new(Scene1SceneFrame {
             circle_1: Circle {
                 radius: 0.1 + 0.2 * time_sin,
                 center: Vec2::new(0.5 * time2_sin, 0.35 * time_sin * time2_cos),

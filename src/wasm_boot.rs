@@ -1,8 +1,8 @@
 use crate::viewer::Viewer;
 use sdf::scene::Scene;
 use sdf::scenes::{
-    DomainWarping, PhongLightingScene, RayMarchingScene, Scene1, Scene2, Scene3, Scene4, SdfScene, SimplexNoise,
-    SimplexNoise3d, SmoothUnion,
+    DomainWarpingScene, PhongLightingScene, RayMarchingScene, Scene1Scene, Scene2Scene, Scene3Scene, Scene4Scene,
+    SdfScene, SimplexNoise3dScene, SimplexNoiseScene, SmoothUnionScene,
 };
 use std::cell::RefCell;
 use std::fmt;
@@ -48,58 +48,58 @@ struct SceneEntry {
 const AVAILABLE_SCENES: &[SceneEntry] = &[
     SceneEntry {
         slug: "scene-1",
-        create: || Box::new(Scene1),
+        create: || Box::new(Scene1Scene),
         markdown: None,
     },
     SceneEntry {
         slug: "scene-2",
-        create: || Box::new(Scene2),
+        create: || Box::new(Scene2Scene),
         markdown: None,
     },
     SceneEntry {
         slug: "scene-3",
-        create: || Box::new(Scene3::default()),
+        create: || Box::new(Scene3Scene::default()),
         markdown: None,
     },
     SceneEntry {
         slug: "scene-4",
-        create: || Box::new(Scene4::default()),
+        create: || Box::new(Scene4Scene::default()),
         markdown: None,
     },
     SceneEntry {
         slug: "sdf",
         create: || Box::new(SdfScene),
-        markdown: Some(include_str!("scenes/sdf.md")),
+        markdown: Some(include_str!("scenes/sdf/docs.md")),
     },
     SceneEntry {
         slug: "ray-marching",
         create: || Box::new(RayMarchingScene::default()),
-        markdown: Some(include_str!("scenes/ray_marching.md")),
+        markdown: Some(include_str!("scenes/ray_marching/docs.md")),
     },
     SceneEntry {
         slug: "phong-lighting",
         create: || Box::new(PhongLightingScene::default()),
-        markdown: Some(include_str!("scenes/phong_lighting.md")),
+        markdown: Some(include_str!("scenes/phong_lighting/docs.md")),
     },
     SceneEntry {
         slug: "domain-warping",
-        create: || Box::new(DomainWarping::default()),
-        markdown: Some(include_str!("scenes/domain_warping.md")),
+        create: || Box::new(DomainWarpingScene::default()),
+        markdown: Some(include_str!("scenes/domain_warping/docs.md")),
     },
     SceneEntry {
         slug: "smooth-union",
-        create: || Box::new(SmoothUnion),
-        markdown: Some(include_str!("scenes/smooth_union.md")),
+        create: || Box::new(SmoothUnionScene),
+        markdown: Some(include_str!("scenes/smooth_union/docs.md")),
     },
     SceneEntry {
         slug: "simplex-noise",
-        create: || Box::new(SimplexNoise),
-        markdown: Some(include_str!("scenes/simplex_noise.md")),
+        create: || Box::new(SimplexNoiseScene),
+        markdown: Some(include_str!("scenes/simplex_noise/docs.md")),
     },
     SceneEntry {
         slug: "simplex-noise-3d",
-        create: || Box::new(SimplexNoise3d),
-        markdown: Some(include_str!("scenes/simplex_noise_3d.md")),
+        create: || Box::new(SimplexNoise3dScene),
+        markdown: Some(include_str!("scenes/simplex_noise_3d/docs.md")),
     },
 ];
 
@@ -112,7 +112,7 @@ fn create_scene(slug: &str) -> Box<dyn Scene> {
         .iter()
         .find(|scene| scene.slug == slug)
         .map(|scene| (scene.create)())
-        .unwrap_or_else(|| Box::new(Scene1))
+        .unwrap_or_else(|| Box::new(Scene1Scene))
 }
 
 #[wasm_bindgen::prelude::wasm_bindgen]

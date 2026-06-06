@@ -4,17 +4,17 @@ use crate::procedural::{Fbm, NoiseSimplex};
 use crate::scene::{Scene, SceneFrame};
 use pixels::wgpu::Color;
 
-pub struct SimplexNoise3d;
+pub struct SimplexNoise3dScene;
 
-struct SimplexNoise3dFrame {}
+struct SimplexNoise3dSceneFrame {}
 
-impl Scene for SimplexNoise3d {
+impl Scene for SimplexNoise3dScene {
     fn prepare_frame(&self, _time: f32) -> Box<dyn SceneFrame> {
-        Box::new(SimplexNoise3dFrame {})
+        Box::new(SimplexNoise3dSceneFrame {})
     }
 }
 
-impl SceneFrame for SimplexNoise3dFrame {
+impl SceneFrame for SimplexNoise3dSceneFrame {
     fn get_pixel_color(&self, coord: Vec2, time: f32) -> Color {
         let mut f;
         let scale = 3.0;
