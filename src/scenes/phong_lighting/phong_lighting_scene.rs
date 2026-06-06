@@ -110,13 +110,12 @@ impl Scene for PhongLightingScene {
     fn update(&mut self, delta_time: f32, input: &InputState) {
         self.camera_controller
             .update_camera(&mut self.camera, delta_time, input);
-
-        self.object.rotate_y(delta_time * 2.0);
     }
 
-    fn prepare_frame(&self, _time: f32) -> Box<dyn SceneFrame> {
+    fn prepare_frame(&self, time: f32) -> Box<dyn SceneFrame> {
         let mut object = self.object;
         object.color = self.params.object_color;
+        object.rotate_y(time * 2.0);
 
         Box::new(PhongLightingSceneFrame {
             camera_frame: self.camera.prepare_frame(),
