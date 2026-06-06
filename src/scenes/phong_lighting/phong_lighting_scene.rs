@@ -51,8 +51,8 @@ impl Default for PhongLightingScene {
             params,
             camera: Camera::new(fov_y, 1.0),
             ray_march_settings: RayMarchSettings {
-                max_steps: 100,
-                hit_epsilon: 0.0001,
+                max_steps: 256,
+                hit_epsilon: 0.001,
                 max_distance: 100.0,
                 min_step: 0.005,
             },
