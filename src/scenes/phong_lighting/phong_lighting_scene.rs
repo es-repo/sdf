@@ -10,6 +10,7 @@ use crate::scene::{Scene, SceneFrame};
 use pixels::wgpu::Color;
 
 pub struct PhongLightingScene {
+    object: Object,
     camera: Camera,
     camera_controller: CameraController,
     ray_march_settings: RayMarchSettings,
@@ -19,6 +20,7 @@ impl Default for PhongLightingScene {
     fn default() -> Self {
         let fov_y = 60f32.to_radians();
         Self {
+            object: Object::new(Vec3::new(0.0, 0.0, 5.0), 1.0, Color::rgb(0.4, 0.3, 1.0)),
             camera: Camera::new(fov_y, 1.0),
             ray_march_settings: RayMarchSettings {
                 max_steps: 100,
@@ -80,12 +82,14 @@ impl Scene for PhongLightingScene {
     fn update(&mut self, delta_time: f32, input: &InputState) {
         self.camera_controller
             .update_camera(&mut self.camera, delta_time, input);
+
+        self.object.rotate_y(delta_time * 2.0);
     }
 
     fn prepare_frame(&self, _time: f32) -> Box<dyn SceneFrame> {
         Box::new(PhongLightingSceneFrame {
             camera_frame: self.camera.prepare_frame(),
-            object: Object::new(Vec3::new(0.0, 0.0, 4.0), 1.0, Color::rgb(0.4, 0.3, 1.0)),
+            object: self.object,
 
             light: PointLight {
                 position: Vec3::new(50.0, 10.0, -50.0),

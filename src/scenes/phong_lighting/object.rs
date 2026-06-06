@@ -2,9 +2,12 @@ use crate::geometry::{Sdf3d, Sphere, Vec3};
 use crate::procedural::smooth_union::smooth_union_many;
 use pixels::wgpu::Color;
 
+#[derive(Clone, Copy)]
 pub struct Object {
     position: Vec3,
+    base_spheres: [Sphere; 5],
     spheres: [Sphere; 5],
+    rotation_y: f32,
     pub color: Color,
 }
 
@@ -43,7 +46,9 @@ impl Object {
 
         Self {
             position,
+            base_spheres: spheres,
             spheres,
+            rotation_y: 0.0,
             color,
         }
     }
@@ -52,6 +57,13 @@ impl Object {
         let distances = self.spheres.map(|s| s.dist(&(*point - self.position)));
         smooth_union_many(distances, 0.5).unwrap()
     }
-    
-    
+
+    pub fn rotate_y(&mut self, radians: f32) {
+        self.rotation_y += radians;
+
+        self.spheres = self.base_spheres.map(|mut sphere| {
+            sphere.center = sphere.center.rotate(Vec3::y_axis(), self.rotation_y);
+            sphere
+        });
+    }
 }
