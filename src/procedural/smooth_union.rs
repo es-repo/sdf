@@ -15,6 +15,20 @@ pub fn smooth_union(d1: f32, d2: f32, k: f32) -> (f32, f32) {
     (d, h)
 }
 
+/// Smoothly unions multiple signed distances with the same blend radius.
+///
+/// Returns `None` when no distances are provided. For non-empty input, the
+/// distances are folded pair by pair using [`smooth_union`].
+pub fn smooth_union_many<I>(distances: I, k: f32) -> Option<f32>
+where
+    I: IntoIterator<Item = f32>,
+{
+    let mut distances = distances.into_iter();
+    let first = distances.next()?;
+
+    Some(distances.fold(first, |dist, next_dist| smooth_union(dist, next_dist, k).0))
+}
+
 /// Blends two signed distances and interpolates their colors.
 ///
 /// The color interpolation uses the same factor returned by `smooth_union`:

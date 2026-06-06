@@ -135,6 +135,18 @@ impl Vec3 {
             z: self.z - self.z.floor(),
         }
     }
+
+    pub fn x_axis() -> Self {
+        Vec3::new(1.0, 0.0, 0.0)
+    }
+
+    pub fn y_axis() -> Self {
+        Vec3::new(0.0, 1.0, 0.0)
+    }
+
+    pub fn z_axis() -> Self {
+        Vec3::new(0.0, 0.0, 1.0)
+    }
 }
 
 impl Add for Vec3 {
