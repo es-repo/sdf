@@ -3,14 +3,14 @@ use crate::procedural::smooth_union::smooth_union_many;
 use pixels::wgpu::Color;
 
 #[derive(Clone, Copy)]
-pub struct Object {
+pub struct SceneObject {
     position: Vec3,
     spheres: [Sphere; 5],
     rotation_y: f32,
     pub color: Color,
 }
 
-impl Object {
+impl SceneObject {
     pub fn new(position: Vec3, core_radius: f32, color: Color) -> Self {
         let side_radius = core_radius * 0.8;
         let side_shift = core_radius * 1.2;

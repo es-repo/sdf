@@ -1,5 +1,5 @@
 use super::controls::PhongLightingSceneControls;
-use super::object::Object;
+use super::scene_object::SceneObject;
 use crate::geometry::{Vec2, Vec3};
 use crate::input::InputState;
 use crate::rendering::{
@@ -10,7 +10,7 @@ use crate::scene::{Scene, SceneFrame};
 use pixels::wgpu::Color;
 
 pub struct PhongLightingScene {
-    object: Object,
+    object: SceneObject,
     controls: PhongLightingSceneControls,
     camera: Camera,
     camera_controller: CameraController,
@@ -22,7 +22,7 @@ impl Default for PhongLightingScene {
         let fov_y = 60f32.to_radians();
         let controls = PhongLightingSceneControls::default();
         Self {
-            object: Object::new(Vec3::new(0.0, 0.0, 5.0), 1.0, controls.object_color),
+            object: SceneObject::new(Vec3::new(0.0, 0.0, 5.0), 1.0, controls.object_color),
             controls,
             camera: Camera::new(fov_y, 1.0),
             ray_march_settings: RayMarchSettings {
@@ -38,7 +38,7 @@ impl Default for PhongLightingScene {
 
 struct PhongLightingSceneFrame {
     camera_frame: CameraFrame,
-    object: Object,
+    object: SceneObject,
     light: PointLight,
     ambient_light: AmbientLight,
     material: PhongMaterial,
