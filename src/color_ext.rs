@@ -39,6 +39,12 @@ pub trait ColorExt {
 
     /// Returns this color with a replaced alpha component.
     fn with_alpha(&self, alpha: f64) -> Color;
+
+    /// Raises RGB components to a power, preserving alpha.
+    fn pow_rgb(&self, n: f32) -> Color;
+
+    /// Returns this linear RGB color converted with an approximate display gamma curve.
+    fn gamma_corrected(&self) -> Color;
 }
 
 impl ColorExt for Color {
@@ -122,5 +128,25 @@ impl ColorExt for Color {
 
     fn with_alpha(&self, alpha: f64) -> Color {
         Self::rgba(self.r as f32, self.g as f32, self.b as f32, alpha as f32)
+    }
+
+    fn pow_rgb(&self, n: f32) -> Color {
+        Color {
+            r: self.r.powf(n as f64),
+            g: self.g.powf(n as f64),
+            b: self.b.powf(n as f64),
+            a: self.a,
+        }
+    }
+
+    fn gamma_corrected(&self) -> Color {
+        let gamma = 1.0 / 2.2;
+
+        Color {
+            r: self.r.max(0.0).powf(gamma),
+            g: self.g.max(0.0).powf(gamma),
+            b: self.b.max(0.0).powf(gamma),
+            a: self.a,
+        }
     }
 }

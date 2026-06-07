@@ -127,6 +127,14 @@ impl Vec3 {
         }
     }
 
+    pub fn pow(&self, n: f32) -> Self {
+        Self {
+            x: self.x.powf(n),
+            y: self.y.powf(n),
+            z: self.z.powf(n),
+        }
+    }
+
     // Version of `fract` that corresponds to GLSL's `fract` function.
     pub fn fract_glsl(self) -> Self {
         Self {
