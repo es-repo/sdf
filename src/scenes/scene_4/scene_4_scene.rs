@@ -4,7 +4,7 @@ use crate::color_ext::ColorExt;
 use crate::geometry::{Circle, Rectangle, Triangle};
 use crate::geometry::{Sdf as _, Vec2};
 use crate::math::smoothstep;
-use crate::procedural::smooth_union::smooth_union_color;
+use crate::procedural::smooth_combine::smooth_union_color;
 use crate::scene::{Scene, SceneFrame};
 use pixels::wgpu::Color;
 

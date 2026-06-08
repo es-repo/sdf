@@ -1,7 +1,7 @@
 use crate::color_ext::ColorExt;
 use crate::geometry::{Sdf3d, Sphere, Vec2, Vec3};
 use crate::input::InputState;
-use crate::procedural::smooth_union::smooth_union_color;
+use crate::procedural::smooth_combine::smooth_union_color;
 use crate::rendering::{
     AmbientLight, Camera, CameraController, CameraFrame, PhongMaterial, PointLight, RayMarchResult, RayMarchSettings,
     SdfSample, estimate_normal_tetrahedral, phong_lighting, ray_march,

@@ -1,6 +1,6 @@
 use crate::color_ext::ColorExt;
 use crate::geometry::{Circle, Sdf, Vec2};
-use crate::procedural::smooth_union::smooth_union;
+use crate::procedural::smooth_combine::smooth_union;
 use crate::scene::{Scene, SceneFrame};
 use pixels::wgpu::Color;
 

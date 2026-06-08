@@ -2,7 +2,7 @@ use pixels::wgpu::Color;
 
 use crate::color_ext::ColorExt;
 use crate::geometry::{Circle, Vec2};
-use crate::procedural::smooth_union::smooth_union;
+use crate::procedural::smooth_combine::smooth_union;
 use crate::procedural::{Fbm, NoiseSimplex};
 use crate::scene::{Scene, SceneFrame};
 
