@@ -1,3 +1,4 @@
+use super::controls::ray_march_settings_ui;
 use crate::color_ext::ColorExt;
 use crate::geometry::{Sdf3d, Sphere, Vec2, Vec3};
 use crate::input::InputState;
@@ -28,15 +29,19 @@ impl Default for RayMarchingScene {
         Self {
             state: RayMarchingSceneState {
                 camera: Camera::new(fov_y, 1.0),
-                ray_march_settings: RayMarchSettings {
-                    max_steps: 100,
-                    hit_epsilon: 0.0001,
-                    max_distance: 100.0,
-                    min_step: 0.005,
-                },
+                ray_march_settings: default_ray_march_settings(),
             },
             camera_controller: CameraController::flight(10.0),
         }
+    }
+}
+
+fn default_ray_march_settings() -> RayMarchSettings {
+    RayMarchSettings {
+        max_steps: 100,
+        hit_epsilon: 0.0001,
+        max_distance: 100.0,
+        min_step: 0.005,
     }
 }
 
@@ -120,6 +125,14 @@ impl Scene for RayMarchingScene {
     fn update(&mut self, delta_time: f32, input: &InputState) {
         self.camera_controller
             .update_camera(&mut self.state.camera, delta_time, input);
+    }
+
+    fn has_controls_ui(&self) -> bool {
+        true
+    }
+
+    fn controls_ui(&mut self, ui: &mut egui::Ui) {
+        ray_march_settings_ui(ui, &mut self.state.ray_march_settings, default_ray_march_settings());
     }
 
     fn prepare_frame(&self, time: f32) -> Box<dyn SceneFrame> {
