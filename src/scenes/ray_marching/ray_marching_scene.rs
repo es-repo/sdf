@@ -42,6 +42,7 @@ fn default_ray_march_settings() -> RayMarchSettings {
         hit_epsilon: 0.0001,
         max_distance: 100.0,
         min_step: 0.005,
+        near_clip: 0.05,
     }
 }
 

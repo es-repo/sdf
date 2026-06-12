@@ -27,6 +27,7 @@ impl Default for DomainRepetitionScene {
                 hit_epsilon: 0.001,
                 max_distance: 200.0,
                 min_step: 0.005,
+                near_clip: 0.5,
             },
             camera_controller: CameraController::flight(10.0),
             sphere: Sphere {

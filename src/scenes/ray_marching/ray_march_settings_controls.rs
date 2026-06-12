@@ -13,6 +13,7 @@ pub fn ray_march_settings_ui(ui: &mut egui::Ui, settings: &mut RayMarchSettings,
             .logarithmic(true)
             .text("Min step"),
     );
+    ui.add(egui::Slider::new(&mut settings.near_clip, 0.0..=1.0).text("Near clip"));
 
     if ui.button("Reset").clicked() {
         *settings = default_settings;

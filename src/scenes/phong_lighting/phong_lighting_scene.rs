@@ -30,6 +30,7 @@ impl Default for PhongLightingScene {
                 hit_epsilon: 0.001,
                 max_distance: 100.0,
                 min_step: 0.005,
+                near_clip: 0.05,
             },
             camera_controller: CameraController::flight(10.0),
         }

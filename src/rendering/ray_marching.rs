@@ -18,10 +18,28 @@ impl SdfSample {
 /// Controls when ray marching stops.
 #[derive(Clone, Copy, Debug, serde::Serialize, serde::Deserialize)]
 pub struct RayMarchSettings {
+    /// Maximum number of SDF samples before the ray is treated as a miss.
     pub max_steps: usize,
+
+    /// Distance from the surface at which the ray is considered to have hit.
     pub hit_epsilon: f32,
+
+    /// Maximum distance the ray can travel before it is treated as a miss.
     pub max_distance: f32,
+
+    /// Smallest distance the ray advances on one step.
     pub min_step: f32,
+
+    /// Initial distance from the ray origin before marching starts.
+    ///
+    /// This behaves like a camera near clipping plane and prevents immediate hits
+    /// at the camera origin when the camera is very close to geometry.
+    #[serde(default = "default_near_clip")]
+    pub near_clip: f32,
+}
+
+fn default_near_clip() -> f32 {
+    0.05
 }
 
 /// First surface hit found by marching along a ray.
@@ -52,8 +70,15 @@ pub fn ray_march<F>(ray: Ray, settings: RayMarchSettings, sample_sdf: F) -> RayM
 where
     F: Fn(Vec3) -> SdfSample,
 {
-    let mut march_dist = 0.0;
+    let mut march_dist = settings.near_clip.max(0.0);
     let mut steps = 0;
+
+    if march_dist > settings.max_distance {
+        return RayMarchResult::Miss(RayMarchMiss {
+            distance: march_dist,
+            steps,
+        });
+    }
 
     for _ in 0..settings.max_steps {
         steps += 1;
