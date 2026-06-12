@@ -1,4 +1,4 @@
-use super::controls::Scene4SceneControls;
+use super::scene_4_scene_controls::Scene4SceneControls;
 use crate::audio::AudioAnalysis;
 use crate::color_ext::ColorExt;
 use crate::geometry::{Circle, Rectangle, Triangle};

@@ -1,4 +1,4 @@
-use super::controls::Scene3SceneControls;
+use super::scene_3_scene_controls::Scene3SceneControls;
 use crate::color_ext::ColorExt;
 use crate::geometry::{Vec2, Vec3};
 use crate::procedural::{Fbm, NoiseSimplex};

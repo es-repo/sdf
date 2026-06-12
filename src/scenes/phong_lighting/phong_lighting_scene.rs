@@ -1,4 +1,4 @@
-use super::controls::PhongLightingSceneControls;
+use super::phong_lighting_scene_controls::PhongLightingSceneControls;
 use super::scene_object::SceneObject;
 use crate::geometry::{Vec2, Vec3};
 use crate::input::InputState;

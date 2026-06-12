@@ -1,4 +1,4 @@
-use super::controls::DomainWarpingSceneControls;
+use super::domain_warping_scene_controls::DomainWarpingSceneControls;
 use crate::color_ext::ColorExt;
 use crate::geometry::{Circle, Sdf, Vec2};
 use crate::procedural::{Fbm, NoiseSimplex};

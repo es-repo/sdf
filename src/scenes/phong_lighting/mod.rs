@@ -1,4 +1,4 @@
-mod controls;
+mod phong_lighting_scene_controls;
 mod phong_lighting_scene;
 mod scene_object;
 
