@@ -83,7 +83,7 @@ const AVAILABLE_SCENES: &[SceneEntry] = &[
     },
     SceneEntry {
         slug: "domain-repetition",
-        create: || Box::new(DomainRepetitionScene),
+        create: || Box::new(DomainRepetitionScene::default()),
         markdown: Some(include_str!("scenes/domain_repetition/docs.md")),
     },
     SceneEntry {

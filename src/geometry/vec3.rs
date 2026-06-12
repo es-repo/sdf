@@ -135,6 +135,18 @@ impl Vec3 {
         }
     }
 
+    pub fn round(&self) -> Self {
+        Self {
+            x: self.x.round(),
+            y: self.y.round(),
+            z: self.z.round(),
+        }
+    }
+
+    pub fn repeat(&self, spacing: f32) -> Self {
+        *self - (*self / spacing).round() * spacing
+    }
+
     // Version of `fract` that corresponds to GLSL's `fract` function.
     pub fn fract_glsl(self) -> Self {
         Self {
