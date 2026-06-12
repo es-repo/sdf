@@ -1,8 +1,8 @@
 use crate::viewer::Viewer;
 use sdf::scene::Scene;
 use sdf::scenes::{
-    DomainWarpingScene, PhongLightingScene, RayMarchingScene, Scene1Scene, Scene2Scene, Scene3Scene, Scene4Scene,
-    SdfScene, SimplexNoise3dScene, SimplexNoiseScene, SmoothUnionScene,
+    DomainRepetitionScene, DomainWarpingScene, PhongLightingScene, RayMarchingScene, Scene1Scene, Scene2Scene,
+    Scene3Scene, Scene4Scene, SdfScene, SimplexNoise3dScene, SimplexNoiseScene, SmoothUnionScene,
 };
 use std::cell::RefCell;
 use std::fmt;
@@ -80,6 +80,11 @@ const AVAILABLE_SCENES: &[SceneEntry] = &[
         slug: "phong-lighting",
         create: || Box::new(PhongLightingScene::default()),
         markdown: Some(include_str!("scenes/phong_lighting/docs.md")),
+    },
+    SceneEntry {
+        slug: "domain-repetition",
+        create: || Box::new(DomainRepetitionScene),
+        markdown: Some(include_str!("scenes/domain_repetition/docs.md")),
     },
     SceneEntry {
         slug: "domain-warping",

@@ -1,3 +1,4 @@
+mod domain_repetition;
 mod domain_warping;
 mod phong_lighting;
 mod ray_marching;
@@ -10,6 +11,7 @@ mod simplex_noise;
 mod simplex_noise_3d;
 mod smooth_union;
 
+pub use domain_repetition::DomainRepetitionScene;
 pub use domain_warping::DomainWarpingScene;
 pub use phong_lighting::PhongLightingScene;
 pub use ray_marching::RayMarchingScene;
