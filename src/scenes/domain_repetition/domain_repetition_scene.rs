@@ -96,6 +96,9 @@ impl Scene for DomainRepetitionScene {
     }
 
     fn prepare_frame(&self, _time: f32) -> Box<dyn SceneFrame> {
+        let mut ray_march_settings = self.ray_march_settings;
+        ray_march_settings.max_distance = self.controls.max_distance;
+
         Box::new(DomainRepetitionSceneFrame {
             camera_frame: self.camera.prepare_frame(),
 
@@ -117,7 +120,7 @@ impl Scene for DomainRepetitionScene {
                 shininess: 50.0,
             },
 
-            ray_march_settings: self.ray_march_settings,
+            ray_march_settings,
 
             sphere: self.sphere,
 
