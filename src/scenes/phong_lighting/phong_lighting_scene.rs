@@ -83,9 +83,9 @@ impl SceneFrame for PhongLightingSceneFrame {
 }
 
 impl Scene for PhongLightingScene {
-    fn update(&mut self, delta_time: f32, input: &InputState) {
+    fn update(&mut self, real_delta_time: f32, _scene_delta_time: f32, _scene_time: f32, input: &InputState) {
         self.camera_controller
-            .update_camera(&mut self.camera, delta_time, input);
+            .update_camera(&mut self.camera, real_delta_time, input);
     }
 
     fn prepare_frame(&self, time: f32) -> Box<dyn SceneFrame> {

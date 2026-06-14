@@ -5,9 +5,11 @@ use crate::input::InputState;
 pub trait Scene: Send + Sync {
     /// Updates mutable scene state before a frame is prepared.
     ///
-    /// `delta_time` is wall-clock frame time in seconds, even when scene time is
-    /// paused. `input` is the current viewer input snapshot.
-    fn update(&mut self, _delta_time: f32, _input: &InputState) {}
+    /// `real_delta_time` is wall-clock frame time in seconds and keeps advancing
+    /// when scene time is paused. `scene_delta_time` is the pausable scene-time
+    /// delta and is `0.0` while paused. `scene_time` is the accumulated pausable
+    /// scene time in seconds. `input` is the current viewer input snapshot.
+    fn update(&mut self, _real_delta_time: f32, _scene_delta_time: f32, _scene_time: f32, _input: &InputState) {}
 
     /// Builds the immutable frame object used by the pixel renderer.
     ///

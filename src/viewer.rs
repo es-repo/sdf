@@ -48,7 +48,7 @@ const STATE_SAVE_INTERVAL_SECONDS: f32 = 0.5;
 struct PersistedAppState {
     version: u32,
     scene_time: f32,
-    time_paused: bool,
+    scene_time_paused: bool,
     scene_state: Option<serde_json::Value>,
 }
 
@@ -62,7 +62,7 @@ pub struct Viewer {
     size_logical: LogicalSize<u32>,
     scale_factor: f64,
     scene_time: f32,
-    time_paused: bool,
+    scene_time_paused: bool,
     last_frame_time: Instant,
     input: InputState,
     fps_counter: FpsCounter,
@@ -124,7 +124,7 @@ impl Viewer {
             egui: None,
             size_logical,
             scene_time: 0.0,
-            time_paused: false,
+            scene_time_paused: false,
             last_frame_time: now,
             input: InputState::default(),
             fps_counter: FpsCounter::new(),
@@ -147,7 +147,7 @@ impl Viewer {
             event_proxy,
             size_logical,
             scene_time: 0.0,
-            time_paused: false,
+            scene_time_paused: false,
             last_frame_time: now,
             input: InputState::default(),
             fps_counter: FpsCounter::new(),
@@ -191,7 +191,7 @@ impl Viewer {
     }
 
     fn audio_analysis(&mut self) -> AudioAnalysis {
-        if self.time_paused {
+        if self.scene_time_paused {
             return self.cached_audio_analysis;
         }
 
@@ -294,21 +294,21 @@ impl Viewer {
         }
 
         let now = Instant::now();
-        let delta_time = now.duration_since(self.last_frame_time).as_secs_f32();
+        let real_delta_time = now.duration_since(self.last_frame_time).as_secs_f32();
         self.last_frame_time = now;
 
-        if !self.time_paused {
-            self.scene_time += delta_time;
-        }
+        let scene_delta_time = if self.scene_time_paused { 0.0 } else { real_delta_time };
+        self.scene_time += scene_delta_time;
 
-        let time = self.scene_time;
+        let scene_time = self.scene_time;
         self.fps_counter.tick();
         let egui_frame = self.prepare_egui_frame();
         self.sync_audio_volume();
         let audio_analysis = self.audio_analysis();
-        self.scene.update(delta_time, &self.input);
+        self.scene
+            .update(real_delta_time, scene_delta_time, scene_time, &self.input);
         self.input.reset_frame_delta();
-        let prepared_scene = self.scene.prepare_frame_with_audio(time, &audio_analysis);
+        let prepared_scene = self.scene.prepare_frame_with_audio(scene_time, &audio_analysis);
         let width = self.size_logical.width;
         let height = self.size_logical.height;
         let row_stride = width as usize * 4;
@@ -325,7 +325,7 @@ impl Viewer {
 
             for pixel in row.chunks_exact_mut(4) {
                 let coord = Vec2::new(nx, ny);
-                let color = prepared_scene.get_pixel_color_with_audio(coord, time, &audio_analysis);
+                let color = prepared_scene.get_pixel_color_with_audio(coord, scene_time, &audio_analysis);
                 pixel.copy_from_slice(&color.to_u8_array());
                 nx += dx;
             }
@@ -441,7 +441,7 @@ impl Viewer {
                     }
 
                     if !gui_consumed && matches!(event.physical_key, PhysicalKey::Code(KeyCode::Space)) {
-                        self.time_paused = !self.time_paused;
+                        self.scene_time_paused = !self.scene_time_paused;
                         self.save_persisted_state();
                         self.window.as_ref().unwrap().request_redraw();
                     }
@@ -585,7 +585,7 @@ impl Viewer {
         self.scale_factor = window.scale_factor();
         self.window = Some(Arc::clone(&window));
         self.scene_time = 0.0;
-        self.time_paused = false;
+        self.scene_time_paused = false;
         self.last_frame_time = Instant::now();
         self.cached_audio_analysis = AudioAnalysis::default();
         self.fps_counter.reset();
@@ -631,7 +631,7 @@ impl Viewer {
         } else {
             0.0
         };
-        self.time_paused = state.time_paused;
+        self.scene_time_paused = state.scene_time_paused;
 
         if let Some(scene_state) = state.scene_state.as_ref() {
             self.scene.load_state(scene_state);
@@ -655,7 +655,7 @@ impl Viewer {
         let state = PersistedAppState {
             version: PERSISTED_APP_STATE_VERSION,
             scene_time: self.scene_time,
-            time_paused: self.time_paused,
+            scene_time_paused: self.scene_time_paused,
             scene_state: self.scene.save_state(),
         };
 
@@ -775,7 +775,7 @@ impl ApplicationHandler<AppEvent> for Viewer {
             AppEvent::SwitchScene(scene) => {
                 self.scene = scene;
                 self.scene_time = 0.0;
-                self.time_paused = false;
+                self.scene_time_paused = false;
                 self.last_frame_time = Instant::now();
                 self.cached_audio_analysis = AudioAnalysis::default();
                 self.fps_counter.reset();

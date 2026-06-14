@@ -64,7 +64,7 @@ impl CameraController {
         }
     }
 
-    pub fn update_camera(&mut self, camera: &mut Camera, delta_time: f32, input: &InputState) {
+    pub fn update_camera(&mut self, camera: &mut Camera, real_delta_time: f32, input: &InputState) {
         self.update_camera_rotation(camera, input);
 
         let camera_frame = camera.prepare_frame();
@@ -87,7 +87,7 @@ impl CameraController {
         }
 
         if direction.len_squared() > 0.0 {
-            camera.position = camera.position + direction.normalize() * self.speed * delta_time;
+            camera.position = camera.position + direction.normalize() * self.speed * real_delta_time;
         }
 
         let scroll_delta = input.scroll_delta();

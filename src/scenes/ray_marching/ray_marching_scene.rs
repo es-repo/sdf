@@ -123,9 +123,9 @@ impl SceneFrame for RayMarchingSceneFrame {
 impl Scene for RayMarchingScene {
     crate::scene_state!();
 
-    fn update(&mut self, delta_time: f32, input: &InputState) {
+    fn update(&mut self, real_delta_time: f32, _scene_delta_time: f32, _scene_time: f32, input: &InputState) {
         self.camera_controller
-            .update_camera(&mut self.state.camera, delta_time, input);
+            .update_camera(&mut self.state.camera, real_delta_time, input);
     }
 
     fn has_controls_ui(&self) -> bool {
