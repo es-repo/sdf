@@ -86,7 +86,7 @@ impl RayMarchingSceneFrame {
 }
 
 impl SceneFrame for RayMarchingSceneFrame {
-    fn get_pixel_color(&self, coord: Vec2, _time: f32) -> Color {
+    fn get_pixel_color(&self, coord: Vec2, _scene_time: f32) -> Color {
         let ray = self.camera_frame.ray(coord);
 
         let hit = match ray_march(ray, self.ray_march_settings, |point| self.sample_scene(point)) {
@@ -136,18 +136,18 @@ impl Scene for RayMarchingScene {
         ray_march_settings_ui(ui, &mut self.state.ray_march_settings, default_ray_march_settings());
     }
 
-    fn prepare_frame(&self, time: f32) -> Box<dyn SceneFrame> {
-        let time = time * 2.0;
+    fn prepare_frame(&self, scene_time: f32) -> Box<dyn SceneFrame> {
+        let animation_time = scene_time * 2.0;
         Box::new(RayMarchingSceneFrame {
             camera_frame: self.state.camera.prepare_frame(),
             sphere_1: Sphere {
-                center: Vec3::new(0.5 + time.sin(), 0.0, 3.0 + time.cos()),
+                center: Vec3::new(0.5 + animation_time.sin(), 0.0, 3.0 + animation_time.cos()),
                 radius: 1.0,
                 color: Color::GREEN,
             },
 
             sphere_2: Sphere {
-                center: Vec3::new(-0.5 - time.sin(), 0.0, 4.0 - time.cos()),
+                center: Vec3::new(-0.5 - animation_time.sin(), 0.0, 4.0 - animation_time.cos()),
                 radius: 2.0,
                 color: Color::BLUE,
             },

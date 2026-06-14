@@ -9,16 +9,16 @@ pub struct SimplexNoise3dScene;
 struct SimplexNoise3dSceneFrame {}
 
 impl Scene for SimplexNoise3dScene {
-    fn prepare_frame(&self, _time: f32) -> Box<dyn SceneFrame> {
+    fn prepare_frame(&self, _scene_time: f32) -> Box<dyn SceneFrame> {
         Box::new(SimplexNoise3dSceneFrame {})
     }
 }
 
 impl SceneFrame for SimplexNoise3dSceneFrame {
-    fn get_pixel_color(&self, coord: Vec2, time: f32) -> Color {
+    fn get_pixel_color(&self, coord: Vec2, scene_time: f32) -> Color {
         let mut f;
         let scale = 3.0;
-        let time_scaled = time * 0.2;
+        let time_scaled = scene_time * 0.2;
 
         if coord.x < 0.0 && coord.y > 0.0 {
             let coord3d = Vec3::from_2d(coord * scale + time_scaled, time_scaled);

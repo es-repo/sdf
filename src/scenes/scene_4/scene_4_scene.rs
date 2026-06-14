@@ -24,7 +24,7 @@ struct Scene4SceneFrame {
 }
 
 impl SceneFrame for Scene4SceneFrame {
-    fn get_pixel_color(&self, coord: Vec2, time: f32) -> Color {
+    fn get_pixel_color(&self, coord: Vec2, scene_time: f32) -> Color {
         let c_dist = self.circle.dist_round(&coord, self.round_radius);
         let r_dist = self.rectangle.dist_round(&coord, self.round_radius);
         let t_dist = self.triangle.dist_round(&coord, self.round_radius);
@@ -41,7 +41,7 @@ impl SceneFrame for Scene4SceneFrame {
 
         if dist < 0.0 {
             let c = Color::rgb(
-                0.5 + (dist * 250.0 + time).sin(),
+                0.5 + (dist * 250.0 + scene_time).sin(),
                 0.5 + (dist * 250.0).sin(),
                 0.5 + (dist * 250.0).sin(),
             );
@@ -58,12 +58,12 @@ impl SceneFrame for Scene4SceneFrame {
 }
 
 impl Scene for Scene4Scene {
-    fn prepare_frame(&self, time: f32) -> Box<dyn SceneFrame> {
-        self.prepare_frame_with_audio(time, &AudioAnalysis::default())
+    fn prepare_frame(&self, scene_time: f32) -> Box<dyn SceneFrame> {
+        self.prepare_frame_with_audio(scene_time, &AudioAnalysis::default())
     }
 
-    fn prepare_frame_with_audio(&self, time: f32, audio: &AudioAnalysis) -> Box<dyn SceneFrame> {
-        let time_scaled = time * 0.5;
+    fn prepare_frame_with_audio(&self, scene_time: f32, audio: &AudioAnalysis) -> Box<dyn SceneFrame> {
+        let time_scaled = scene_time * 0.5;
         let bass = audio.bass * 2.5 * self.controls.volume;
         let bass = if bass < 0.0001 { 1.0 } else { bass };
         let beat = smoothstep(0.1, 1.5, bass);
@@ -74,27 +74,27 @@ impl Scene for Scene4Scene {
                 radius: 0.05 + 0.2 * bass,
                 center: Vec2::new(
                     0.8 * (time_scaled + 0.2 + beat.sin()).cos(),
-                    0.8 * (time + beat.cos()).sin(),
+                    0.8 * (scene_time + beat.cos()).sin(),
                 ),
                 color: Color::rgb(0.7, 1.0, 0.0),
             },
 
             rectangle: Rectangle {
-                center: Vec2::new(0.8 * time.sin() * beat.sin(), 0.8 * (time_scaled + beat).cos()),
+                center: Vec2::new(0.8 * scene_time.sin() * beat.sin(), 0.8 * (time_scaled + beat).cos()),
                 vertex: Vec2::new(0.3, 0.2) * beat + 0.05,
                 rotation: (time_scaled + beat).cos() * 0.5 * beat,
                 color: Color::rgb(1.0, 0.7, 0.0),
             },
 
             triangle: Triangle {
-                p0: (triangle_center + 0.05 + Vec2::new(-0.3, -0.15) * bass).rotate((time + beat).sin()),
+                p0: (triangle_center + 0.05 + Vec2::new(-0.3, -0.15) * bass).rotate((scene_time + beat).sin()),
                 p1: (triangle_center + 0.05 + Vec2::new(0.3, -0.15) * bass).rotate((time_scaled + beat).cos()),
-                p2: (triangle_center + 0.05 + Vec2::new(0.0, 0.4) * bass).rotate(time.sin()),
+                p2: (triangle_center + 0.05 + Vec2::new(0.0, 0.4) * bass).rotate(scene_time.sin()),
                 color: Color::rgb(1.0, 0.0, 0.7),
             },
 
-            round_radius: (0.5 + 0.5 * time.sin()) * 0.1 * beat,
-            smooth_blend_radius: 0.1 + (0.5 + 0.5 * time.sin()) * 0.1 * beat,
+            round_radius: (0.5 + 0.5 * scene_time.sin()) * 0.1 * beat,
+            smooth_blend_radius: 0.1 + (0.5 + 0.5 * scene_time.sin()) * 0.1 * beat,
         })
     }
 

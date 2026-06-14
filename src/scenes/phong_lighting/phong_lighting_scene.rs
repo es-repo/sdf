@@ -54,7 +54,7 @@ impl PhongLightingSceneFrame {
 }
 
 impl SceneFrame for PhongLightingSceneFrame {
-    fn get_pixel_color(&self, coord: Vec2, _time: f32) -> Color {
+    fn get_pixel_color(&self, coord: Vec2, _scene_time: f32) -> Color {
         let ray = self.camera_frame.ray(coord);
 
         let hit = match ray_march(ray, self.ray_march_settings, |point| self.sample_scene(point)) {
@@ -88,10 +88,10 @@ impl Scene for PhongLightingScene {
             .update_camera(&mut self.camera, real_delta_time, input);
     }
 
-    fn prepare_frame(&self, time: f32) -> Box<dyn SceneFrame> {
+    fn prepare_frame(&self, scene_time: f32) -> Box<dyn SceneFrame> {
         let mut object = self.object;
         object.color = self.controls.object_color;
-        object.rotate_y(time * 2.0);
+        object.rotate_y(scene_time * 2.0);
 
         Box::new(PhongLightingSceneFrame {
             camera_frame: self.camera.prepare_frame(),

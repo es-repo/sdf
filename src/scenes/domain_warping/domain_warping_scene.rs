@@ -17,7 +17,7 @@ struct DomainWarpingSceneFrame {
 }
 
 impl Scene for DomainWarpingScene {
-    fn prepare_frame(&self, time: f32) -> Box<dyn SceneFrame> {
+    fn prepare_frame(&self, scene_time: f32) -> Box<dyn SceneFrame> {
         let circle = Circle {
             center: Vec2::new(0.0, 0.0),
             radius: 0.5,
@@ -27,7 +27,7 @@ impl Scene for DomainWarpingScene {
         Box::new(DomainWarpingSceneFrame {
             circle,
             controls: self.controls,
-            time_scaled: time * 0.25,
+            time_scaled: scene_time * 0.25,
         })
     }
 
@@ -41,7 +41,7 @@ impl Scene for DomainWarpingScene {
 }
 
 impl SceneFrame for DomainWarpingSceneFrame {
-    fn get_pixel_color(&self, coord: Vec2, _time: f32) -> Color {
+    fn get_pixel_color(&self, coord: Vec2, _scene_time: f32) -> Color {
         let noise_coord = coord * self.controls.scale + self.time_scaled;
         let offset = noise_coord.fbm(
             self.controls.octaves,

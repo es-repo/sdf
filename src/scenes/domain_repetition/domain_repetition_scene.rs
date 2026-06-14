@@ -61,7 +61,7 @@ impl DomainRepetitionSceneFrame {
 }
 
 impl SceneFrame for DomainRepetitionSceneFrame {
-    fn get_pixel_color(&self, coord: Vec2, _time: f32) -> Color {
+    fn get_pixel_color(&self, coord: Vec2, _scene_time: f32) -> Color {
         let ray = self.camera_frame.ray(coord);
 
         let hit = match ray_march(ray, self.ray_march_settings, |point| self.sample_scene(point)) {
@@ -95,7 +95,7 @@ impl Scene for DomainRepetitionScene {
             .update_camera(&mut self.camera, real_delta_time, input);
     }
 
-    fn prepare_frame(&self, _time: f32) -> Box<dyn SceneFrame> {
+    fn prepare_frame(&self, _scene_time: f32) -> Box<dyn SceneFrame> {
         let mut ray_march_settings = self.ray_march_settings;
         ray_march_settings.max_distance = self.controls.max_distance;
 

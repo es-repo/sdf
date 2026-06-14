@@ -13,8 +13,8 @@ struct SdfSceneFrame {
 }
 
 impl SceneFrame for SdfSceneFrame {
-    fn get_pixel_color(&self, coord: Vec2, time: f32) -> Color {
-        let r = (0.5 + 0.5 * time.sin()) * 0.1;
+    fn get_pixel_color(&self, coord: Vec2, scene_time: f32) -> Color {
+        let r = (0.5 + 0.5 * scene_time.sin()) * 0.1;
 
         let c_dist = self.circle.dist_round(&coord, r);
         let r_dist = self.rectangle.dist_round(&coord, r);
@@ -39,27 +39,27 @@ impl SceneFrame for SdfSceneFrame {
 }
 
 impl Scene for SdfScene {
-    fn prepare_frame(&self, time: f32) -> Box<dyn SceneFrame> {
-        let time_scaled = time * 0.5;
+    fn prepare_frame(&self, scene_time: f32) -> Box<dyn SceneFrame> {
+        let time_scaled = scene_time * 0.5;
 
         Box::new(SdfSceneFrame {
             circle: Circle {
                 radius: 0.2,
-                center: Vec2::new(0.8 * (time_scaled + 0.2).cos(), 0.8 * time.sin()),
+                center: Vec2::new(0.8 * (time_scaled + 0.2).cos(), 0.8 * scene_time.sin()),
                 color: Color::rgb(0.7, 1.0, 0.0),
             },
 
             rectangle: Rectangle {
-                center: Vec2::new(0.8 * time.sin(), 0.8 * time_scaled.cos()),
+                center: Vec2::new(0.8 * scene_time.sin(), 0.8 * time_scaled.cos()),
                 vertex: Vec2::new(0.3, 0.2),
                 rotation: time_scaled.cos() * 0.5,
                 color: Color::rgb(1.0, 0.7, 0.0),
             },
 
             triangle: Triangle {
-                p0: Vec2::new(-0.3 + time_scaled.cos(), -0.15 + 0.3 * time_scaled.sin()).rotate(time.sin()),
-                p1: Vec2::new(0.3 + time_scaled.cos(), -0.15 + 0.3 * time_scaled.sin()).rotate(time.sin()),
-                p2: Vec2::new(0.0 + time_scaled.cos(), 0.4 + 0.3 * time_scaled.sin()).rotate(time.sin()),
+                p0: Vec2::new(-0.3 + time_scaled.cos(), -0.15 + 0.3 * time_scaled.sin()).rotate(scene_time.sin()),
+                p1: Vec2::new(0.3 + time_scaled.cos(), -0.15 + 0.3 * time_scaled.sin()).rotate(scene_time.sin()),
+                p2: Vec2::new(0.0 + time_scaled.cos(), 0.4 + 0.3 * time_scaled.sin()).rotate(scene_time.sin()),
                 color: Color::rgb(1.0, 0.0, 0.7),
             },
         })

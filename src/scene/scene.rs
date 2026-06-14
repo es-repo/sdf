@@ -13,16 +13,18 @@ pub trait Scene: Send + Sync {
 
     /// Builds the immutable frame object used by the pixel renderer.
     ///
+    /// `scene_time` is the accumulated pausable scene time in seconds.
+    ///
     /// The returned frame should contain all data needed to render pixels
     /// without mutating the scene.
-    fn prepare_frame(&self, time: f32) -> Box<dyn SceneFrame>;
+    fn prepare_frame(&self, scene_time: f32) -> Box<dyn SceneFrame>;
 
     /// Builds a frame using audio analysis data.
     ///
     /// Scenes that do not react to audio use the regular `prepare_frame`
     /// implementation.
-    fn prepare_frame_with_audio(&self, time: f32, _audio: &AudioAnalysis) -> Box<dyn SceneFrame> {
-        self.prepare_frame(time)
+    fn prepare_frame_with_audio(&self, scene_time: f32, _audio: &AudioAnalysis) -> Box<dyn SceneFrame> {
+        self.prepare_frame(scene_time)
     }
 
     /// Returns true when this scene exposes editable controls through egui.

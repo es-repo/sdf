@@ -15,7 +15,7 @@ struct Scene2SceneFrame {
 }
 
 impl SceneFrame for Scene2SceneFrame {
-    fn get_pixel_color(&self, coord: Vec2, _time: f32) -> Color {
+    fn get_pixel_color(&self, coord: Vec2, _scene_time: f32) -> Color {
         let d1 = self.circle_1.dist_squared_radius_squared(&coord);
         let d2 = self.circle_2.dist_squared_radius_squared(&coord);
 
@@ -48,11 +48,11 @@ impl SceneFrame for Scene2SceneFrame {
 }
 
 impl Scene for Scene2Scene {
-    fn prepare_frame(&self, time: f32) -> Box<dyn SceneFrame> {
-        let time_sin = time.sin();
-        let time_cos = time.cos();
-        let time2_sin = (time * 2.0).sin();
-        let time2_cos = (time * 2.0).cos();
+    fn prepare_frame(&self, scene_time: f32) -> Box<dyn SceneFrame> {
+        let time_sin = scene_time.sin();
+        let time_cos = scene_time.cos();
+        let time2_sin = (scene_time * 2.0).sin();
+        let time2_cos = (scene_time * 2.0).cos();
 
         Box::new(Scene2SceneFrame {
             circle_1: Circle {
