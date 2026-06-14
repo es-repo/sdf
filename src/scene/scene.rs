@@ -1,15 +1,13 @@
-use super::SceneFrame;
+use super::{FrameTime, SceneFrame};
 use crate::audio::AudioAnalysis;
 use crate::input::InputState;
 
 pub trait Scene: Send + Sync {
     /// Updates mutable scene state before a frame is prepared.
     ///
-    /// `real_time_delta` is wall-clock frame time in seconds and keeps advancing
-    /// when scene time is paused. `scene_time_delta` is the pausable scene-time
-    /// delta and is `0.0` while paused. `scene_time` is the accumulated pausable
-    /// scene time in seconds. `input` is the current viewer input snapshot.
-    fn update(&mut self, _real_time_delta: f32, _scene_time_delta: f32, _scene_time: f32, _input: &InputState) {}
+    /// `time` contains the real-time and scene-time values for the current
+    /// frame. `input` is the current viewer input snapshot.
+    fn update(&mut self, _time: FrameTime, _input: &InputState) {}
 
     /// Builds the immutable frame object used by the pixel renderer.
     ///

@@ -6,7 +6,7 @@ use sdf::audio::{AudioAnalysis, AudioTrack};
 use sdf::color_ext::ColorExt;
 use sdf::geometry::Vec2;
 use sdf::input::InputState;
-use sdf::scene::Scene;
+use sdf::scene::{FrameTime, Scene};
 use std::sync::Arc;
 use web_time::Instant;
 use winit::application::ApplicationHandler;
@@ -301,12 +301,16 @@ impl Viewer {
         self.scene_time += scene_time_delta;
 
         let scene_time = self.scene_time;
+        let frame_time = FrameTime {
+            real_time_delta,
+            scene_time_delta,
+            scene_time,
+        };
         self.fps_counter.tick();
         let egui_frame = self.prepare_egui_frame();
         self.sync_audio_volume();
         let audio_analysis = self.audio_analysis();
-        self.scene
-            .update(real_time_delta, scene_time_delta, scene_time, &self.input);
+        self.scene.update(frame_time, &self.input);
         self.input.reset_frame_delta();
         let prepared_scene = self.scene.prepare_frame_with_audio(scene_time, &audio_analysis);
         let width = self.size_logical.width;

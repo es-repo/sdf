@@ -6,7 +6,7 @@ use crate::rendering::{
     AmbientLight, Camera, CameraController, CameraFrame, PhongMaterial, PointLight, RayMarchResult, RayMarchSettings,
     SdfSample, estimate_normal_tetrahedral, phong_lighting, ray_march,
 };
-use crate::scene::{Scene, SceneFrame};
+use crate::scene::{FrameTime, Scene, SceneFrame};
 use pixels::wgpu::Color;
 
 pub struct DomainRepetitionScene {
@@ -90,9 +90,9 @@ impl SceneFrame for DomainRepetitionSceneFrame {
 }
 
 impl Scene for DomainRepetitionScene {
-    fn update(&mut self, real_time_delta: f32, _scene_time_delta: f32, _scene_time: f32, input: &InputState) {
+    fn update(&mut self, time: FrameTime, input: &InputState) {
         self.camera_controller
-            .update_camera(&mut self.camera, real_time_delta, input);
+            .update_camera(&mut self.camera, time.real_time_delta, input);
     }
 
     fn prepare_frame(&self, _scene_time: f32) -> Box<dyn SceneFrame> {
