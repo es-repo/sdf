@@ -90,9 +90,9 @@ impl SceneFrame for DomainRepetitionSceneFrame {
 }
 
 impl Scene for DomainRepetitionScene {
-    fn update(&mut self, real_delta_time: f32, _scene_delta_time: f32, _scene_time: f32, input: &InputState) {
+    fn update(&mut self, real_time_delta: f32, _scene_time_delta: f32, _scene_time: f32, input: &InputState) {
         self.camera_controller
-            .update_camera(&mut self.camera, real_delta_time, input);
+            .update_camera(&mut self.camera, real_time_delta, input);
     }
 
     fn prepare_frame(&self, _scene_time: f32) -> Box<dyn SceneFrame> {

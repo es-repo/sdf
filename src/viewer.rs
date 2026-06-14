@@ -294,11 +294,11 @@ impl Viewer {
         }
 
         let now = Instant::now();
-        let real_delta_time = now.duration_since(self.last_frame_time).as_secs_f32();
+        let real_time_delta = now.duration_since(self.last_frame_time).as_secs_f32();
         self.last_frame_time = now;
 
-        let scene_delta_time = if self.scene_time_paused { 0.0 } else { real_delta_time };
-        self.scene_time += scene_delta_time;
+        let scene_time_delta = if self.scene_time_paused { 0.0 } else { real_time_delta };
+        self.scene_time += scene_time_delta;
 
         let scene_time = self.scene_time;
         self.fps_counter.tick();
@@ -306,7 +306,7 @@ impl Viewer {
         self.sync_audio_volume();
         let audio_analysis = self.audio_analysis();
         self.scene
-            .update(real_delta_time, scene_delta_time, scene_time, &self.input);
+            .update(real_time_delta, scene_time_delta, scene_time, &self.input);
         self.input.reset_frame_delta();
         let prepared_scene = self.scene.prepare_frame_with_audio(scene_time, &audio_analysis);
         let width = self.size_logical.width;
