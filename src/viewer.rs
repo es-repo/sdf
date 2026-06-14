@@ -256,7 +256,7 @@ impl Viewer {
             compact_style.spacing.icon_width = 12.0;
             compact_style.spacing.interact_size.y = 16.0;
             compact_style.spacing.window_margin = egui::Margin::symmetric(6, 2);
-            let compact_frame = egui::Frame::window(&compact_style);
+            let compact_frame = egui::Frame::window(&compact_style).shadow(egui::Shadow::NONE);
             context.set_style(compact_style);
 
             egui::Window::new("Controls")
