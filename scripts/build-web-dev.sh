@@ -22,6 +22,11 @@ else
   fi
 fi
 
+if [ -z "${WASM_APP_CORES:-}" ]; then
+  WASM_APP_CORES="-4"
+fi
+
+WASM_APP_CORES="$WASM_APP_CORES" \
 RUSTFLAGS='-C target-feature=+atomics,+bulk-memory' \
   cargo +"$WASM_TOOLCHAIN" build \
   -Z build-std=panic_abort,std \

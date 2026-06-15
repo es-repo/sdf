@@ -165,6 +165,13 @@ pub fn scene_has_audio(scene_slug: &str) -> bool {
 }
 
 #[wasm_bindgen::prelude::wasm_bindgen]
+pub fn wasm_app_cores() -> i32 {
+    option_env!("WASM_APP_CORES")
+        .and_then(|value| value.parse().ok())
+        .unwrap_or(0)
+}
+
+#[wasm_bindgen::prelude::wasm_bindgen]
 pub fn switch_scene(scene_slug: &str) -> Result<(), wasm_bindgen::JsValue> {
     let selected_slug = if available_scene_slugs().any(|candidate| candidate == scene_slug) {
         scene_slug
