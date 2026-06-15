@@ -369,19 +369,19 @@
 </section>
 <section id="scene-docs" hidden></section>
 <script type="module">
-    import init, * as sdf from "./pkg/sdf.js";
+    import init, * as wasmSceneViewer from "./pkg/sdf.js";
 
     attachCanvasToSceneHost();
 
     await init({module_or_path: new URL("./pkg/sdf_bg.wasm", import.meta.url)});
 
-    if (sdf.initThreadPool && !crossOriginIsolated) {
+    if (wasmSceneViewer.initThreadPool && !crossOriginIsolated) {
         throw new Error("SharedArrayBuffer is unavailable. Serve dist/ with COOP/COEP headers.");
     }
 
-    const sceneSlugs = csvSlugs(sdf.available_scene_slugs_csv());
-    renderSceneLinks("demos", csvSlugs(sdf.demo_scene_slugs_csv()));
-    renderSceneLinks("techniques", csvSlugs(sdf.technique_scene_slugs_csv()));
+    const sceneSlugs = csvSlugs(wasmSceneViewer.available_scene_slugs_csv());
+    renderSceneLinks("demos", csvSlugs(wasmSceneViewer.demo_scene_slugs_csv()));
+    renderSceneLinks("techniques", csvSlugs(wasmSceneViewer.technique_scene_slugs_csv()));
     const sceneLinks = [...document.querySelectorAll("[data-scene-link]")];
     const audioToggle = document.getElementById("audio-toggle");
     let currentScene = resolveScene(new URLSearchParams(window.location.search).get("scene"));
@@ -395,12 +395,12 @@
 
     const docsReady = renderSceneDocs(currentScene);
 
-    if (sdf.initThreadPool) {
-        await sdf.initThreadPool(wasmThreadPoolSize());
+    if (wasmSceneViewer.initThreadPool) {
+        await wasmSceneViewer.initThreadPool(wasmThreadPoolSize());
     }
 
     const sceneSize = getSceneHostSize();
-    sdf.start(currentScene, sceneSize.width, sceneSize.height);
+    wasmSceneViewer.start(currentScene, sceneSize.width, sceneSize.height);
     maybeAutoEnableAudio();
     await docsReady;
     observeSceneHostSize();
@@ -451,7 +451,7 @@
             history.pushState({scene: currentScene}, "", `?scene=${encodeURIComponent(currentScene)}`);
         }
 
-        sdf.switch_scene(currentScene);
+        wasmSceneViewer.switch_scene(currentScene);
         maybeAutoEnableAudio();
         await renderSceneDocs(currentScene);
     }
@@ -487,7 +487,7 @@
     }
 
     function updateAudioToggle(activeScene) {
-        const sceneHasAudio = sdf.scene_has_audio(activeScene);
+        const sceneHasAudio = wasmSceneViewer.scene_has_audio(activeScene);
         const label = audioEnabled ? "Mute scene audio" : "Unmute scene audio";
 
         audioToggle.hidden = !sceneHasAudio;
@@ -512,7 +512,7 @@
     }
 
     function maybeAutoEnableAudio() {
-        if (!hasUserInteracted || audioEnabled || audioUserMuted || !sdf.scene_has_audio(currentScene)) {
+        if (!hasUserInteracted || audioEnabled || audioUserMuted || !wasmSceneViewer.scene_has_audio(currentScene)) {
             return;
         }
 
@@ -525,7 +525,7 @@
         audioEnabled = enabled;
 
         try {
-            sdf.set_audio_enabled(audioEnabled);
+            wasmSceneViewer.set_audio_enabled(audioEnabled);
         } catch (error) {
             audioEnabled = previousAudioEnabled;
             console.error(error);
@@ -538,7 +538,7 @@
     }
 
     async function renderSceneDocs(sceneSlug) {
-        const markdown = sdf.scene_markdown(sceneSlug);
+        const markdown = wasmSceneViewer.scene_markdown(sceneSlug);
         const docs = document.getElementById("scene-docs");
         const renderVersion = ++docsRenderVersion;
 
@@ -604,7 +604,7 @@
 
     function wasmThreadPoolSize() {
         const cores = Math.max(1, navigator.hardwareConcurrency || 1);
-        const configuredCores = Math.trunc(Number(sdf.wasm_app_cores?.() ?? 0));
+        const configuredCores = Math.trunc(Number(wasmSceneViewer.wasm_app_cores?.() ?? 0));
 
         if (configuredCores > 0) {
             return Math.max(1, Math.min(cores, configuredCores));
@@ -633,7 +633,7 @@
 
             lastWidth = width;
             lastHeight = height;
-            sdf.resize_scene(width, height);
+            wasmSceneViewer.resize_scene(width, height);
         }
 
         function scheduleSync() {
