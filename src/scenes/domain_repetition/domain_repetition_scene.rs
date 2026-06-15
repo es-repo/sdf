@@ -3,8 +3,8 @@ use crate::color_ext::ColorExt;
 use crate::geometry::{Sdf3d, Sphere, Vec2, Vec3};
 use crate::input::InputState;
 use crate::rendering::{
-    AmbientLight, Camera, CameraController, CameraFrame, PhongMaterial, PointLight, RayMarchResult, RayMarchSettings,
-    SdfSample, estimate_normal_tetrahedral, phong_lighting, ray_march,
+    AmbientLight, Camera, CameraController, CameraFrame, ExponentialFog, PhongMaterial, PointLight, RayMarchResult,
+    RayMarchSettings, SdfSample, estimate_normal_tetrahedral, phong_lighting, ray_march,
 };
 use crate::scene::{FrameTime, Scene, SceneFrame};
 use pixels::wgpu::Color;
@@ -13,15 +13,19 @@ pub struct DomainRepetitionScene {
     camera: Camera,
     camera_controller: CameraController,
     ray_march_settings: RayMarchSettings,
-    sphere: Sphere,
     controls: DomainRepetitionSceneControls,
+    sphere: Sphere,
+    ambient_light: AmbientLight,
 }
 
 impl Default for DomainRepetitionScene {
     fn default() -> Self {
         let fov_y = 60f32.to_radians();
+        let mut camera = Camera::new(fov_y, 1.0);
+        camera.position.z = -1.0;
+
         Self {
-            camera: Camera::new(fov_y, 1.0),
+            camera,
             ray_march_settings: RayMarchSettings {
                 max_steps: 256,
                 hit_epsilon: 0.001,
@@ -30,12 +34,18 @@ impl Default for DomainRepetitionScene {
                 near_clip: 0.5,
             },
             camera_controller: CameraController::flight(10.0),
+            controls: DomainRepetitionSceneControls::default(),
+
             sphere: Sphere {
                 center: Vec3::new(0.0, 0.0, 0.0),
                 radius: 0.5,
                 color: Color::RED,
             },
-            controls: DomainRepetitionSceneControls::default(),
+
+            ambient_light: AmbientLight {
+                color: Color::rgb(0.5, 0.5, 0.9),
+                intensity: 0.5,
+            },
         }
     }
 }
@@ -45,6 +55,7 @@ struct DomainRepetitionSceneFrame {
     light: PointLight,
     ambient_light: AmbientLight,
     material: PhongMaterial,
+    fog: ExponentialFog,
     ray_march_settings: RayMarchSettings,
     sphere: Sphere,
     controls: DomainRepetitionSceneControls,
@@ -75,7 +86,7 @@ impl SceneFrame for DomainRepetitionSceneFrame {
             self.sample_scene(point).dist
         });
 
-        phong_lighting(
+        let lit_color = phong_lighting(
             ray.origin,
             hit.point,
             surface_normal,
@@ -85,12 +96,18 @@ impl SceneFrame for DomainRepetitionSceneFrame {
                 ..self.material
             },
             self.ambient_light,
-        )
+        );
+
+        self.fog.apply(lit_color, hit.distance)
     }
 }
 
 impl Scene for DomainRepetitionScene {
     fn update(&mut self, time: FrameTime, input: &InputState) {
+        let camera_speed = 2.0;
+        let camera_direction = Vec3::new(1.0, 0.5, 1.0).normalize();
+        self.camera.position = self.camera.position + camera_direction * camera_speed * time.scene_time_delta;
+
         self.camera_controller
             .update_camera(&mut self.camera, time.real_time_delta, input);
     }
@@ -108,16 +125,18 @@ impl Scene for DomainRepetitionScene {
                 intensity: 1.0,
             },
 
-            ambient_light: AmbientLight {
-                color: Color::rgb(0.3, 0.3, 0.5),
-                intensity: 0.5,
-            },
+            ambient_light: self.ambient_light,
 
             material: PhongMaterial {
                 diffuse_color: self.sphere.color,
                 specular_color: Color::WHITE,
                 specular_intensity: 1.0,
                 shininess: 50.0,
+            },
+
+            fog: ExponentialFog {
+                color: self.ambient_light.color,
+                density: 0.05,
             },
 
             ray_march_settings,
