@@ -453,6 +453,7 @@
         }
 
         wasmSceneViewer.switch_scene(currentScene);
+        focusSceneCanvas();
         maybeAutoEnableAudio();
         await renderSceneDocs(currentScene);
     }
@@ -589,12 +590,14 @@
         const sceneHost = document.getElementById("scene-host");
 
         function attach(canvas) {
-            if (canvas.parentElement === sceneHost) {
-                return true;
+            canvas.tabIndex = 0;
+
+            if (canvas.parentElement !== sceneHost) {
+                sceneHost.appendChild(canvas);
             }
 
-            sceneHost.appendChild(canvas);
             sceneHost.classList.add("ready");
+            focusSceneCanvas();
             return true;
         }
 
@@ -616,6 +619,17 @@
         });
 
         observer.observe(document.body, {childList: true});
+    }
+
+    function focusSceneCanvas() {
+        const canvas = document.querySelector("#scene-host canvas");
+
+        if (!canvas) {
+            return;
+        }
+
+        canvas.tabIndex = 0;
+        canvas.focus({preventScroll: true});
     }
 
     function getSceneHostSize() {
