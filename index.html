@@ -420,6 +420,7 @@
 
     document.addEventListener("pointerdown", handleUserInteraction, {capture: true});
     document.addEventListener("keydown", handleUserInteraction, {capture: true});
+    document.addEventListener("keydown", preventSpaceScroll, {capture: true});
 
     audioToggle.addEventListener("click", () => {
         const nextAudioEnabled = !audioEnabled;
@@ -509,6 +510,30 @@
         }
 
         maybeAutoEnableAudio();
+    }
+
+    function preventSpaceScroll(event) {
+        if (event.code !== "Space") {
+            return;
+        }
+
+        if (event.altKey || event.ctrlKey || event.metaKey) {
+            return;
+        }
+
+        if (isEditableTarget(event.target)) {
+            return;
+        }
+
+        event.preventDefault();
+    }
+
+    function isEditableTarget(target) {
+        if (!(target instanceof Element)) {
+            return false;
+        }
+
+        return Boolean(target.closest("button, input, select, textarea, [contenteditable='true']"));
     }
 
     function maybeAutoEnableAudio() {
