@@ -1,3 +1,4 @@
+use crate::geometry::Vec3;
 use crate::math::lerp;
 use pixels::wgpu::Color;
 
@@ -15,6 +16,14 @@ pub trait ColorExt {
     fn rgba(r: f32, g: f32, b: f32, a: f32) -> Self
     where
         Self: Sized;
+
+    /// Creates an opaque color by interpreting vector components as normalized RGB.
+    fn from_vec3(v: Vec3) -> Self
+    where
+        Self: Sized,
+    {
+        Self::rgb(v.x, v.y, v.z)
+    }
 
     /// Converts normalized RGBA components to 8-bit RGBA components.
     fn to_u8_array(&self) -> [u8; 4];
