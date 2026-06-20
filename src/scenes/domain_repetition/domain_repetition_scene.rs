@@ -43,7 +43,7 @@ impl Default for DomainRepetitionScene {
             },
 
             ambient_light: AmbientLight {
-                color: Color::rgb(0.5, 0.5, 0.9),
+                color: Color::rgb(0.7, 0.7, 0.99),
                 intensity: 0.5,
             },
         }
@@ -63,11 +63,17 @@ struct DomainRepetitionSceneFrame {
 
 impl DomainRepetitionSceneFrame {
     fn sample_scene(&self, point: Vec3) -> SdfSample {
-        let point = point.repeat(self.controls.spacing);
+        let (point, cell) = point.repeat(self.controls.spacing);
+
+        let color = Color::rgb(
+            0.5 + 0.5 * (cell.x + 1.0).sin(),
+            0.5 + 0.5 * cell.y.sin(),
+            0.5 + 0.5 * cell.z.sin(),
+        );
 
         let dist = self.sphere.dist(&point);
 
-        SdfSample::new(dist, self.sphere.color)
+        SdfSample::new(dist, color)
     }
 }
 

@@ -143,8 +143,10 @@ impl Vec3 {
         }
     }
 
-    pub fn repeat(&self, spacing: f32) -> Self {
-        *self - (*self / spacing).round() * spacing
+    pub fn repeat(&self, spacing: f32) -> (Self, Self) {
+        let cell = (*self / spacing).round();
+        let v = *self - cell * spacing;
+        (v, cell)
     }
 
     // Version of `fract` that corresponds to GLSL's `fract` function.
