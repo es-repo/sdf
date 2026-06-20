@@ -62,26 +62,37 @@ struct DomainRepetitionSceneFrame {
 }
 
 impl DomainRepetitionSceneFrame {
-    fn sample_scene(&self, point: Vec3) -> SdfSample {
-        let (point, cell) = point.to_lattice_cell(self.controls.spacing);
+    fn sample_scene(&self, point: Vec3, scene_time: f32) -> SdfSample {
+        let (local_point, cell_index) = point.to_lattice_cell(self.controls.spacing);
+
+        let scene_time_scaled = scene_time * 20.0;
+        let vibration = Vec3::new(
+            (scene_time_scaled + cell_index.x + cell_index.y).sin(),
+            (scene_time_scaled + cell_index.y + cell_index.z).sin(),
+            (scene_time_scaled + cell_index.z + cell_index.x).sin(),
+        ) * 0.04;
+
+        let local_point = local_point - vibration;
 
         let color = Color::rgb(
-            0.5 + 0.5 * (cell.x + 1.0).sin(),
-            0.5 + 0.5 * cell.y.sin(),
-            0.5 + 0.5 * cell.z.sin(),
+            0.5 + 0.5 * (cell_index.x + 1.0).sin(),
+            0.5 + 0.5 * cell_index.y.sin(),
+            0.5 + 0.5 * cell_index.z.sin(),
         );
 
-        let dist = self.sphere.dist(&point);
+        let dist = self.sphere.dist(&local_point);
 
         SdfSample::new(dist, color)
     }
 }
 
 impl SceneFrame for DomainRepetitionSceneFrame {
-    fn get_pixel_color(&self, coord: Vec2, _scene_time: f32) -> Color {
+    fn get_pixel_color(&self, coord: Vec2, scene_time: f32) -> Color {
         let ray = self.camera_frame.ray(coord);
 
-        let hit = match ray_march(ray, self.ray_march_settings, |point| self.sample_scene(point)) {
+        let hit = match ray_march(ray, self.ray_march_settings, |point| {
+            self.sample_scene(point, scene_time)
+        }) {
             RayMarchResult::Hit(hit) => hit,
             RayMarchResult::Miss(_) => {
                 return self.ambient_light.color;
@@ -89,7 +100,7 @@ impl SceneFrame for DomainRepetitionSceneFrame {
         };
 
         let surface_normal = estimate_normal_tetrahedral(hit.point, self.ray_march_settings.hit_epsilon, |point| {
-            self.sample_scene(point).dist
+            self.sample_scene(point, scene_time).dist
         });
 
         let lit_color = phong_lighting(
