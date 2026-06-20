@@ -143,10 +143,10 @@ impl Vec3 {
         }
     }
 
-    pub fn repeat(&self, spacing: f32) -> (Self, Self) {
-        let cell = (*self / spacing).round();
-        let v = *self - cell * spacing;
-        (v, cell)
+    pub fn to_lattice_cell(&self, spacing: f32) -> (Self, Self) {
+        let cell_index = (*self / spacing).round();
+        let local_point = *self - cell_index * spacing;
+        (local_point, cell_index)
     }
 
     // Version of `fract` that corresponds to GLSL's `fract` function.

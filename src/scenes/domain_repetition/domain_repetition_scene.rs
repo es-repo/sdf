@@ -63,7 +63,7 @@ struct DomainRepetitionSceneFrame {
 
 impl DomainRepetitionSceneFrame {
     fn sample_scene(&self, point: Vec3) -> SdfSample {
-        let (point, cell) = point.repeat(self.controls.spacing);
+        let (point, cell) = point.to_lattice_cell(self.controls.spacing);
 
         let color = Color::rgb(
             0.5 + 0.5 * (cell.x + 1.0).sin(),
