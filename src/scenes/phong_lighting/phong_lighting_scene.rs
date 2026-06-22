@@ -21,8 +21,9 @@ impl Default for PhongLightingScene {
     fn default() -> Self {
         let fov_y = 60f32.to_radians();
         let controls = PhongLightingSceneControls::default();
+        let object_center = Vec3::new(0.0, 0.0, 5.0);
         Self {
-            object: SceneObject::new(Vec3::new(0.0, 0.0, 5.0), 1.0, controls.object_color),
+            object: SceneObject::new(object_center, 1.0, controls.object_color),
             controls,
             camera: Camera::new(fov_y, 1.0),
             ray_march_settings: RayMarchSettings {
@@ -32,7 +33,7 @@ impl Default for PhongLightingScene {
                 min_step: 0.005,
                 near_clip: 0.05,
             },
-            camera_controller: CameraController::flight(10.0),
+            camera_controller: CameraController::arcball(object_center, 5.0),
         }
     }
 }
@@ -91,7 +92,7 @@ impl Scene for PhongLightingScene {
     fn prepare_frame(&self, scene_time: f32) -> Box<dyn SceneFrame> {
         let mut object = self.object;
         object.color = self.controls.object_color;
-        object.rotate_y(scene_time * 2.0);
+        object.rotate_y(scene_time * 0.5);
 
         Box::new(PhongLightingSceneFrame {
             camera_frame: self.camera.prepare_frame(),
