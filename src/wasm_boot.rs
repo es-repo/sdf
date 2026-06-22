@@ -2,7 +2,7 @@ use crate::viewer::Viewer;
 use sdf::scene::Scene;
 use sdf::scenes::{
     DomainRepetitionScene, DomainWarpingScene, PhongLightingScene, RayMarchingScene, Scene1Scene, Scene2Scene,
-    Scene3Scene, Scene4Scene, SdfScene, SimplexNoise3dScene, SimplexNoiseScene, SmoothUnionScene,
+    Scene3Scene, Scene4Scene, SdfDisplacementScene, SdfScene, SimplexNoise3dScene, SimplexNoiseScene, SmoothUnionScene,
 };
 use std::cell::RefCell;
 use std::fmt;
@@ -90,6 +90,11 @@ const AVAILABLE_SCENES: &[SceneEntry] = &[
         slug: "domain-warping",
         create: || Box::new(DomainWarpingScene::default()),
         markdown: Some(include_str!("scenes/domain_warping/docs.md")),
+    },
+    SceneEntry {
+        slug: "sdf-displacement",
+        create: || Box::new(SdfDisplacementScene::default()),
+        markdown: Some(include_str!("scenes/sdf_displacement/docs.md")),
     },
     SceneEntry {
         slug: "smooth-union",
