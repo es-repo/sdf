@@ -3,8 +3,8 @@ use crate::color_ext::ColorExt;
 use crate::geometry::{Sdf3d, Sphere, Vec2, Vec3};
 use crate::input::InputState;
 use crate::rendering::{
-    AmbientLight, Camera, CameraController, CameraFrame, ExponentialFog, PhongMaterial, PointLight, RayMarchResult,
-    RayMarchSettings, SdfSample, estimate_normal_tetrahedral, phong_lighting, ray_march,
+    estimate_normal_tetrahedral, phong_lighting, ray_march, AmbientLight, Camera, CameraController, CameraFrame,
+    ExponentialFog, PhongMaterial, PointLight, RayMarchResult, RayMarchSettings, SdfSample,
 };
 use crate::scene::{FrameTime, Scene, SceneFrame};
 use pixels::wgpu::Color;
@@ -63,7 +63,7 @@ struct DomainRepetitionSceneFrame {
 
 impl DomainRepetitionSceneFrame {
     fn sample_scene(&self, point: Vec3, scene_time: f32) -> SdfSample {
-        let (local_point, cell_index) = point.to_lattice_cell(self.controls.spacing);
+        let (local_point, cell_index) = point.to_lattice_cell_axes(self.controls.spacing, self.controls.axes);
 
         let scene_time_scaled = scene_time * 20.0;
         let vibration = Vec3::new(
@@ -121,7 +121,7 @@ impl SceneFrame for DomainRepetitionSceneFrame {
 
 impl Scene for DomainRepetitionScene {
     fn update(&mut self, time: FrameTime, input: &InputState) {
-        let camera_speed = 2.0;
+        let camera_speed = 0.5;
         let camera_direction = Vec3::new(1.0, 0.5, 1.0).normalize();
         self.camera.position = self.camera.position + camera_direction * camera_speed * time.scene_time_delta;
 

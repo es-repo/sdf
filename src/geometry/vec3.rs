@@ -1,4 +1,4 @@
-use super::Vec2;
+use super::{AxisSet, Vec2};
 use std::ops::{Add, Div, Mul, Sub};
 
 #[derive(Clone, Copy, PartialOrd, PartialEq, Debug, serde::Serialize, serde::Deserialize)]
@@ -144,7 +144,15 @@ impl Vec3 {
     }
 
     pub fn to_lattice_cell(&self, spacing: f32) -> (Self, Self) {
-        let cell_index = (*self / spacing).round();
+        self.to_lattice_cell_axes(spacing, AxisSet::XYZ)
+    }
+
+    pub fn to_lattice_cell_axes(&self, spacing: f32, axes: AxisSet) -> (Self, Self) {
+        let cell_index = Self::new(
+            if axes.has_x() { (self.x / spacing).round() } else { 0.0 },
+            if axes.has_y() { (self.y / spacing).round() } else { 0.0 },
+            if axes.has_z() { (self.z / spacing).round() } else { 0.0 },
+        );
         let local_point = *self - cell_index * spacing;
         (local_point, cell_index)
     }

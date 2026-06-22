@@ -1,3 +1,4 @@
+mod axis_set;
 mod circle;
 mod quat;
 mod rectangle;
@@ -8,6 +9,7 @@ mod triangle;
 mod vec2;
 mod vec3;
 
+pub use axis_set::AxisSet;
 pub use circle::Circle;
 pub use quat::Quat;
 pub use rectangle::Rectangle;
