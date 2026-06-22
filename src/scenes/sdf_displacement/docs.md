@@ -22,7 +22,7 @@ float dist = base + displacement;
 ```
 :::
 
-If the displacement is positive, the surface moves inward. If it is negative, the surface moves outward. With noise, the sign changes across space, so the originally smooth shape gets procedural bumps and dents.
+With noise, the displacement changes across space, so the originally smooth shape gets procedural bumps and dents.
 
 FBM makes the displacement more detailed by adding several noise layers:
 

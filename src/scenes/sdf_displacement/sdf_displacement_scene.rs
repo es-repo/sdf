@@ -21,10 +21,11 @@ pub struct SdfDisplacementScene {
 impl Default for SdfDisplacementScene {
     fn default() -> Self {
         let fov_y = 60f32.to_radians();
+        let sphere_center = Vec3::new(0.0, 0.0, 5.0);
 
         Self {
             camera: Camera::new(fov_y, 1.0),
-            camera_controller: CameraController::flight(6.0),
+            camera_controller: CameraController::arcball(sphere_center, 5.0),
             ray_march_settings: RayMarchSettings {
                 max_steps: 256,
                 hit_epsilon: 0.001,
@@ -34,7 +35,7 @@ impl Default for SdfDisplacementScene {
             },
             sphere: Sphere {
                 center: Vec3::new(0.0, 0.0, 5.0),
-                radius: 1.5,
+                radius: 2.0,
                 color: Color::rgb(0.95, 0.35, 0.12),
             },
             controls: SdfDisplacementSceneControls::default(),
@@ -112,7 +113,7 @@ impl Scene for SdfDisplacementScene {
             camera_frame: self.camera.prepare_frame(),
             ray_march_settings: self.ray_march_settings,
             sphere: self.sphere,
-            rotation_y: scene_time * 0.25,
+            rotation_y: scene_time * 0.15,
             controls: self.controls,
             light: PointLight {
                 position: Vec3::new(20.0, 10.0, -20.0),
@@ -121,7 +122,7 @@ impl Scene for SdfDisplacementScene {
             },
             ambient_light: AmbientLight {
                 color: Color::rgb(0.65, 0.68, 0.95),
-                intensity: 0.45,
+                intensity: 0.25,
             },
             material: PhongMaterial {
                 diffuse_color: self.sphere.color,

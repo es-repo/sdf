@@ -12,6 +12,7 @@ const MAX_PITCH: f32 = FRAC_PI_2 - 0.001;
 pub enum CameraControlMode {
     Fps,
     Flight,
+    Arcball,
 }
 
 pub struct CameraControls {
@@ -42,6 +43,8 @@ pub struct CameraController {
     pub scroll_move_sensitivity: f32,
     yaw: f32,
     pitch: f32,
+    orbit_target: Vec3,
+    orbit_distance: f32,
 }
 
 impl CameraController {
@@ -54,6 +57,8 @@ impl CameraController {
             scroll_move_sensitivity: 0.005,
             yaw: 0.0,
             pitch: 0.0,
+            orbit_target: Vec3::zero(),
+            orbit_distance: 1.0,
         }
     }
 
@@ -64,7 +69,21 @@ impl CameraController {
         }
     }
 
+    pub fn arcball(target: Vec3, distance: f32) -> Self {
+        Self {
+            mode: CameraControlMode::Arcball,
+            orbit_target: target,
+            orbit_distance: distance.max(0.001),
+            ..Self::fps(distance)
+        }
+    }
+
     pub fn update_camera(&mut self, camera: &mut Camera, real_time_delta: f32, input: &InputState) {
+        if self.mode == CameraControlMode::Arcball {
+            self.update_arcball_camera(camera, real_time_delta, input);
+            return;
+        }
+
         self.update_camera_rotation(camera, input);
 
         let camera_frame = camera.prepare_frame();
@@ -111,6 +130,7 @@ impl CameraController {
         match self.mode {
             CameraControlMode::Fps => self.update_fps_rotation(camera, mouse_delta),
             CameraControlMode::Flight => self.update_flight_rotation(camera, mouse_delta),
+            CameraControlMode::Arcball => {}
         }
     }
 
@@ -130,6 +150,42 @@ impl CameraController {
         let pitch = Quat::from_axis_angle(camera_frame.basis.right, mouse_delta.y * self.look_sensitivity);
 
         camera.rotate_by(yaw * pitch);
+    }
+
+    fn update_arcball_camera(&mut self, camera: &mut Camera, real_time_delta: f32, input: &InputState) {
+        if self.is_look_active(input) {
+            let mouse_delta = input.mouse_delta();
+            self.yaw += mouse_delta.x * self.look_sensitivity;
+            self.pitch = (self.pitch + mouse_delta.y * self.look_sensitivity).clamp(-MAX_PITCH, MAX_PITCH);
+        }
+
+        if input.is_key_pressed(self.controls.left) {
+            self.yaw -= real_time_delta;
+        }
+
+        if input.is_key_pressed(self.controls.right) {
+            self.yaw += real_time_delta;
+        }
+
+        if input.is_key_pressed(self.controls.forward) {
+            self.orbit_distance -= self.speed * real_time_delta;
+        }
+
+        if input.is_key_pressed(self.controls.backward) {
+            self.orbit_distance += self.speed * real_time_delta;
+        }
+
+        let scroll_delta = input.scroll_delta();
+        self.orbit_distance -= scroll_delta.y * self.scroll_move_sensitivity * self.speed;
+        self.orbit_distance = self.orbit_distance.max(0.001);
+
+        let yaw = Quat::from_axis_angle(CameraBasis::DEFAULT.up, self.yaw);
+        let pitch = Quat::from_axis_angle(CameraBasis::DEFAULT.right, self.pitch);
+        let rotation = yaw * pitch;
+        let basis = CameraBasis::DEFAULT.rotated(rotation);
+
+        camera.set_rotation(rotation);
+        camera.position = self.orbit_target - basis.forward * self.orbit_distance;
     }
 
     fn is_look_active(&self, input: &InputState) -> bool {

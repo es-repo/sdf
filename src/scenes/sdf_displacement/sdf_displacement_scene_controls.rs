@@ -11,7 +11,7 @@ pub struct SdfDisplacementSceneControls {
 impl Default for SdfDisplacementSceneControls {
     fn default() -> Self {
         Self {
-            displacement_strength: 0.08,
+            displacement_strength: 0.04,
             noise_scale: 3.0,
             octaves: 4,
             amplitude: 0.5,
