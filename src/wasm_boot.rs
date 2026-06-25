@@ -1,9 +1,8 @@
 use crate::viewer::Viewer;
 use sdf::scene::Scene;
 use sdf::scenes::{
-    DomainRepetitionScene, DomainWarpingScene, PhongLightingScene, RayMarchingScene, Scene1, Scene2,
-    Scene3, Scene4, Scene5, SdfDisplacementScene, SdfScene, SimplexNoise3dScene, SimplexNoiseScene,
-    SmoothUnionScene,
+    DomainRepetitionScene, DomainWarpingScene, PhongLightingScene, RayMarchingScene, Scene1, Scene2, Scene3, Scene4,
+    Scene5, Scene6, SdfDisplacementScene, SdfScene, SimplexNoise3dScene, SimplexNoiseScene, SmoothUnionScene,
 };
 use std::cell::RefCell;
 use std::fmt;
@@ -70,6 +69,11 @@ const AVAILABLE_SCENES: &[SceneEntry] = &[
     SceneEntry {
         slug: "scene-5",
         create: || Box::new(Scene5::default()),
+        markdown: None,
+    },
+    SceneEntry {
+        slug: "scene-6",
+        create: || Box::new(Scene6::default()),
         markdown: None,
     },
     SceneEntry {
