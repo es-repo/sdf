@@ -9,7 +9,7 @@ pub struct Scene5SceneControls {
 impl Default for Scene5SceneControls {
     fn default() -> Self {
         Self {
-            sphere_color: Color::rgb(0.005125, 0.005125, 0.005125),
+            sphere_color: Color::rgb(0.009125, 0.009125, 0.009125),
         }
     }
 }
@@ -27,7 +27,7 @@ impl Scene5SceneControls {
                 self.sphere_color = Color::rgb(rgb[0], rgb[1], rgb[2]);
             }
 
-            ui.label("Sphere color");
+            ui.label("Color");
         });
 
         if ui.button("Reset").clicked() {

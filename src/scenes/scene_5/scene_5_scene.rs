@@ -1,12 +1,13 @@
 use super::scene_5_scene_controls::Scene5SceneControls;
 use crate::color_ext::ColorExt;
 use crate::geometry::{Sdf3d, Sphere, Vec2, Vec3};
+use crate::input::InputState;
 use crate::procedural::{Fbm, NoiseSimplex};
 use crate::rendering::{
-    AmbientLight, Camera, CameraFrame, PhongMaterial, PointLight, RayMarchResult, RayMarchSettings, SdfSample,
-    estimate_normal_tetrahedral, phong_lighting, ray_march,
+    estimate_normal_tetrahedral, phong_lighting, ray_march, AmbientLight, Camera, CameraController, CameraFrame,
+    PhongMaterial, PointLight, RayMarchResult, RayMarchSettings, SdfSample,
 };
-use crate::scene::{Scene, SceneFrame};
+use crate::scene::{FrameTime, Scene, SceneFrame};
 use pixels::wgpu::Color;
 
 const DISPLACEMENT_STRENGTH: f32 = 0.110;
@@ -18,6 +19,7 @@ const LACUNARITY: f32 = 4.0;
 
 pub struct Scene5Scene {
     camera: Camera,
+    camera_controller: CameraController,
     ray_march_settings: RayMarchSettings,
     sphere: Sphere,
     controls: Scene5SceneControls,
@@ -33,6 +35,7 @@ impl Default for Scene5Scene {
 
         Self {
             camera,
+            camera_controller: CameraController::arcball(sphere_center, 2.85),
             ray_march_settings: RayMarchSettings {
                 max_steps: 256,
                 hit_epsilon: 0.001,
@@ -108,6 +111,11 @@ impl SceneFrame for Scene5SceneFrame {
 }
 
 impl Scene for Scene5Scene {
+    fn update(&mut self, time: FrameTime, input: &InputState) {
+        self.camera_controller
+            .update_camera(&mut self.camera, time.real_time_delta, input);
+    }
+
     fn prepare_frame(&self, scene_time: f32) -> Box<dyn SceneFrame> {
         let mut sphere = self.sphere;
         sphere.color = self.controls.sphere_color;
