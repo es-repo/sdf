@@ -12,7 +12,7 @@ pub struct Scene6Controls {
 impl Default for Scene6Controls {
     fn default() -> Self {
         Self {
-            object_color: Color::rgb(0.4, 0.4, 0.5),
+            object_color: Color::rgb(0.2, 0.13, 0.3),
             ambient_color: Color::rgb(0.7, 0.7, 1.0),
             step_blend_color: Color::WHITE,
             step_blend_threshold: 0.15,
