@@ -57,6 +57,8 @@ struct Scene6Frame {
     light: PointLight,
     ambient_light: AmbientLight,
     ray_march_settings: RayMarchSettings,
+    step_blend_color: Color,
+    step_blend_threshold: f32,
 }
 
 impl Scene6Frame {
@@ -94,7 +96,10 @@ impl SceneFrame for Scene6Frame {
             },
             self.ambient_light,
         )
-        .lerp(Color::WHITE, hit.steps as f32 / 100.0)
+        .lerp(
+            self.step_blend_color,
+            (hit.steps as f32 / (self.ray_march_settings.max_steps as f32 * self.step_blend_threshold)).clamp(0.0, 1.0),
+        )
     }
 }
 
@@ -131,11 +136,13 @@ impl Scene for Scene6 {
             },
 
             ambient_light: AmbientLight {
-                color: Color::rgb(0.7, 0.7, 1.0),
+                color: self.controls.ambient_color,
                 intensity: 0.75,
             },
 
             ray_march_settings: self.state.ray_march_settings,
+            step_blend_color: self.controls.step_blend_color,
+            step_blend_threshold: self.controls.step_blend_threshold,
         })
     }
 }
