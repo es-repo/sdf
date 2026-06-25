@@ -274,6 +274,7 @@ impl Viewer {
             if controls_window_response
                 .as_ref()
                 .is_some_and(|response| response.response.clicked_elsewhere())
+                && !context.is_pointer_over_area()
             {
                 collapse_controls_window(context);
             }
