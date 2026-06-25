@@ -36,6 +36,7 @@ use winit::platform::macos::MonitorHandleExtMacOS;
 use winit::platform::web::WindowAttributesExtWebSys;
 
 const LINE_SCROLL_LOGICAL_PIXELS: f32 = 32.0;
+const CONTROLS_WINDOW_TITLE: &str = "Controls";
 #[cfg(target_arch = "wasm32")]
 const PERSISTED_APP_STATE_KEY: &str = "sdf.app_state";
 #[cfg(target_arch = "wasm32")]
@@ -259,7 +260,7 @@ impl Viewer {
             let compact_frame = egui::Frame::window(&compact_style).shadow(egui::Shadow::NONE);
             context.set_style(compact_style);
 
-            egui::Window::new("Controls")
+            let controls_window_response = egui::Window::new(CONTROLS_WINDOW_TITLE)
                 .anchor(egui::Align2::RIGHT_TOP, egui::vec2(0.0, 0.0))
                 .default_width(220.0)
                 .frame(compact_frame)
@@ -269,6 +270,13 @@ impl Viewer {
                 .show(context, |ui| {
                     scene.controls_ui(ui);
                 });
+
+            if controls_window_response
+                .as_ref()
+                .is_some_and(|response| response.response.clicked_elsewhere())
+            {
+                collapse_controls_window(context);
+            }
 
             context.set_style(original_style);
         });
@@ -805,6 +813,17 @@ fn audio_base_path() -> &'static str {
 #[cfg(target_arch = "wasm32")]
 fn audio_base_path() -> &'static str {
     ""
+}
+
+fn collapse_controls_window(context: &egui::Context) {
+    let id = egui::Id::new(CONTROLS_WINDOW_TITLE).with("collapsing");
+    let mut state = egui::collapsing_header::CollapsingState::load_with_default_open(context, id, false);
+
+    if state.is_open() {
+        state.set_open(false);
+        state.store(context);
+        context.request_repaint();
+    }
 }
 
 #[cfg(target_arch = "wasm32")]
