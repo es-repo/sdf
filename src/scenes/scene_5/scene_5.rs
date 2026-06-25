@@ -1,4 +1,4 @@
-use super::scene_5_scene_controls::Scene5SceneControls;
+use super::scene_5_controls::Scene5Controls;
 use crate::color_ext::ColorExt;
 use crate::geometry::{Sdf3d, Sphere, Vec2, Vec3};
 use crate::input::InputState;
@@ -17,21 +17,21 @@ const AMPLITUDE: f32 = 0.78;
 const GAIN: f32 = 0.09;
 const LACUNARITY: f32 = 4.0;
 
-pub struct Scene5Scene {
+pub struct Scene5 {
     camera: Camera,
     camera_controller: CameraController,
     ray_march_settings: RayMarchSettings,
     sphere: Sphere,
-    controls: Scene5SceneControls,
+    controls: Scene5Controls,
 }
 
-impl Default for Scene5Scene {
+impl Default for Scene5 {
     fn default() -> Self {
         let sphere_center = Vec3::new(0.0, 0.0, 5.0);
         let mut camera = Camera::new(60f32.to_radians(), 1.0);
         camera.position = Vec3::new(0.0, 0.0, 2.15);
 
-        let controls = Scene5SceneControls::default();
+        let controls = Scene5Controls::default();
 
         Self {
             camera,
@@ -53,7 +53,7 @@ impl Default for Scene5Scene {
     }
 }
 
-struct Scene5SceneFrame {
+struct Scene5Frame {
     camera_frame: CameraFrame,
     ray_march_settings: RayMarchSettings,
     sphere: Sphere,
@@ -63,7 +63,7 @@ struct Scene5SceneFrame {
     material: PhongMaterial,
 }
 
-impl Scene5SceneFrame {
+impl Scene5Frame {
     fn displacement(&self, world_point: Vec3, scene_time: f32) -> f32 {
         let mut local_point = (world_point - self.sphere.center).rotate(Vec3::y_axis(), -self.rotation_y);
         local_point.z += scene_time * 0.1;
@@ -78,7 +78,7 @@ impl Scene5SceneFrame {
     }
 }
 
-impl SceneFrame for Scene5SceneFrame {
+impl SceneFrame for Scene5Frame {
     fn get_pixel_color(&self, coord: Vec2, scene_time: f32) -> Color {
         let ray = self.camera_frame.ray(coord);
 
@@ -110,7 +110,7 @@ impl SceneFrame for Scene5SceneFrame {
     }
 }
 
-impl Scene for Scene5Scene {
+impl Scene for Scene5 {
     fn update(&mut self, time: FrameTime, input: &InputState) {
         self.camera_controller
             .update_camera(&mut self.camera, time.real_time_delta, input);
@@ -120,7 +120,7 @@ impl Scene for Scene5Scene {
         let mut sphere = self.sphere;
         sphere.color = self.controls.sphere_color;
 
-        Box::new(Scene5SceneFrame {
+        Box::new(Scene5Frame {
             camera_frame: self.camera.prepare_frame(),
             ray_march_settings: self.ray_march_settings,
             sphere,

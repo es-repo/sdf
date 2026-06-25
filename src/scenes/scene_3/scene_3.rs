@@ -1,4 +1,4 @@
-use super::scene_3_scene_controls::Scene3SceneControls;
+use super::scene_3_controls::Scene3Controls;
 use crate::color_ext::ColorExt;
 use crate::geometry::{Vec2, Vec3};
 use crate::procedural::{Fbm, NoiseSimplex};
@@ -6,18 +6,18 @@ use crate::scene::{Scene, SceneFrame};
 use pixels::wgpu::Color;
 
 #[derive(Default)]
-pub struct Scene3Scene {
-    controls: Scene3SceneControls,
+pub struct Scene3 {
+    controls: Scene3Controls,
 }
 
-struct Scene3SceneFrame {
-    controls: Scene3SceneControls,
+struct Scene3Frame {
+    controls: Scene3Controls,
     time_scaled: f32,
 }
 
-impl Scene for Scene3Scene {
+impl Scene for Scene3 {
     fn prepare_frame(&self, scene_time: f32) -> Box<dyn SceneFrame> {
-        Box::new(Scene3SceneFrame {
+        Box::new(Scene3Frame {
             controls: self.controls,
             time_scaled: scene_time * 0.2,
         })
@@ -32,7 +32,7 @@ impl Scene for Scene3Scene {
     }
 }
 
-impl SceneFrame for Scene3SceneFrame {
+impl SceneFrame for Scene3Frame {
     fn get_pixel_color(&self, coord: Vec2, _scene_time: f32) -> Color {
         let mut coord3d = Vec3::from_2d(coord * self.controls.scale + self.time_scaled, self.time_scaled);
 

@@ -1,5 +1,5 @@
 #[derive(Clone, Copy)]
-pub struct Scene3SceneControls {
+pub struct Scene3Controls {
     pub scale: f32,
     pub amplitude: f32,
     pub gain: f32,
@@ -7,7 +7,7 @@ pub struct Scene3SceneControls {
     pub warp_iterations: u32,
 }
 
-impl Default for Scene3SceneControls {
+impl Default for Scene3Controls {
     fn default() -> Self {
         Self {
             scale: 2.0,
@@ -19,7 +19,7 @@ impl Default for Scene3SceneControls {
     }
 }
 
-impl Scene3SceneControls {
+impl Scene3Controls {
     pub fn ui(&mut self, ui: &mut egui::Ui) {
         ui.add(egui::Slider::new(&mut self.scale, 0.1..=8.0).text("Scale"));
         ui.add(egui::Slider::new(&mut self.amplitude, 0.0..=2.0).text("Amplitude"));

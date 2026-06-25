@@ -3,24 +3,24 @@ use pixels::wgpu::Color;
 use crate::color_ext::ColorExt;
 use crate::geometry::{Circle, Vec2};
 use crate::procedural::smooth_combine::smooth_union;
+use crate::procedural::{Fbm, NoiseSimplex};
 use crate::scene::{Scene, SceneFrame};
 
-pub struct Scene1Scene;
+pub struct Scene2;
 
-struct Scene1SceneFrame {
+struct Scene2Frame {
     circle_1: Circle,
     circle_2: Circle,
     time_sin: f32,
-    time_cos: f32,
 }
 
-impl SceneFrame for Scene1SceneFrame {
+impl SceneFrame for Scene2Frame {
     fn get_pixel_color(&self, coord: Vec2, _scene_time: f32) -> Color {
         let d1 = self.circle_1.dist_squared_radius_squared(&coord);
         let d2 = self.circle_2.dist_squared_radius_squared(&coord);
 
-        let mut circle_1_dist = d1.sin() * d1.cos();
-        let circle_2_dist = d2.sin() * d1.cos();
+        let mut circle_1_dist = d1.sin() * d1;
+        let circle_2_dist = d2.sin() * d1;
 
         circle_1_dist = circle_1_dist.min(circle_2_dist);
 
@@ -30,7 +30,10 @@ impl SceneFrame for Scene1SceneFrame {
         if circle_1_dist < 0.0 {
             self.circle_1.color
         } else {
-            let mut color = Color::rgba(1.0, 1.0, 1.0, 0.0);
+            let f = coord.fbm_rotated(4, 0.5, 0.5, |coord| coord.noise_simplex());
+
+            let value = 0.5 + 0.5 * f;
+            let mut color = Color::rgba(value, value, value, 0.0);
 
             if circle_1_dist < 0.1 {
                 let value = (-circle_1_dist * 50.0).exp();
@@ -38,33 +41,31 @@ impl SceneFrame for Scene1SceneFrame {
             }
 
             let wave = 0.5 + (circle_1_dist * 10.0 - self.time_sin * 5.0).sin();
-            let wave_2 = 0.5 + (circle_1_dist * 20.0 - self.time_cos * 10.0).cos();
 
-            color.blend(Color::rgb(wave, 0.5 * wave, wave_2))
+            color.blend(Color::rgb(0.5 + 0.6 * wave * f, 0.5 + 0.6 * wave * f, 0.5 + 0.6 * f))
         }
     }
 }
 
-impl Scene for Scene1Scene {
+impl Scene for Scene2 {
     fn prepare_frame(&self, scene_time: f32) -> Box<dyn SceneFrame> {
         let time_sin = scene_time.sin();
         let time_cos = scene_time.cos();
         let time2_sin = (scene_time * 2.0).sin();
         let time2_cos = (scene_time * 2.0).cos();
 
-        Box::new(Scene1SceneFrame {
+        Box::new(Scene2Frame {
             circle_1: Circle {
-                radius: 0.1 + 0.2 * time_sin,
+                radius: 0.0,
                 center: Vec2::new(0.5 * time2_sin, 0.35 * time_sin * time2_cos),
                 color: Color::rgb(1.0, 0.9, 0.9),
             },
             circle_2: Circle {
-                radius: 0.1 + 0.2 * time_cos,
+                radius: 0.0,
                 center: Vec2::new(-0.5 * time2_sin, 0.35 * time_cos * time2_sin),
                 color: Color::rgb(1.0, 0.3, 0.4),
             },
             time_sin,
-            time_cos,
         })
     }
 }

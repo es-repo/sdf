@@ -2,11 +2,11 @@ use crate::color_ext::ColorExt;
 use pixels::wgpu::Color;
 
 #[derive(Clone, Copy)]
-pub struct Scene5SceneControls {
+pub struct Scene5Controls {
     pub sphere_color: Color,
 }
 
-impl Default for Scene5SceneControls {
+impl Default for Scene5Controls {
     fn default() -> Self {
         Self {
             sphere_color: Color::rgb(0.009125, 0.009125, 0.009125),
@@ -14,7 +14,7 @@ impl Default for Scene5SceneControls {
     }
 }
 
-impl Scene5SceneControls {
+impl Scene5Controls {
     pub fn ui(&mut self, ui: &mut egui::Ui) {
         ui.horizontal(|ui| {
             let mut rgb = [

@@ -1,8 +1,8 @@
 use crate::viewer::Viewer;
 use sdf::scene::Scene;
 use sdf::scenes::{
-    DomainRepetitionScene, DomainWarpingScene, PhongLightingScene, RayMarchingScene, Scene1Scene, Scene2Scene,
-    Scene3Scene, Scene4Scene, Scene5Scene, SdfDisplacementScene, SdfScene, SimplexNoise3dScene, SimplexNoiseScene,
+    DomainRepetitionScene, DomainWarpingScene, PhongLightingScene, RayMarchingScene, Scene1, Scene2,
+    Scene3, Scene4, Scene5, SdfDisplacementScene, SdfScene, SimplexNoise3dScene, SimplexNoiseScene,
     SmoothUnionScene,
 };
 use std::cell::RefCell;
@@ -49,27 +49,27 @@ struct SceneEntry {
 const AVAILABLE_SCENES: &[SceneEntry] = &[
     SceneEntry {
         slug: "scene-1",
-        create: || Box::new(Scene1Scene),
+        create: || Box::new(Scene1),
         markdown: None,
     },
     SceneEntry {
         slug: "scene-2",
-        create: || Box::new(Scene2Scene),
+        create: || Box::new(Scene2),
         markdown: None,
     },
     SceneEntry {
         slug: "scene-3",
-        create: || Box::new(Scene3Scene::default()),
+        create: || Box::new(Scene3::default()),
         markdown: None,
     },
     SceneEntry {
         slug: "scene-4",
-        create: || Box::new(Scene4Scene::default()),
+        create: || Box::new(Scene4::default()),
         markdown: None,
     },
     SceneEntry {
         slug: "scene-5",
-        create: || Box::new(Scene5Scene::default()),
+        create: || Box::new(Scene5::default()),
         markdown: None,
     },
     SceneEntry {
@@ -128,7 +128,7 @@ fn create_scene(slug: &str) -> Box<dyn Scene> {
         .iter()
         .find(|scene| scene.slug == slug)
         .map(|scene| (scene.create)())
-        .unwrap_or_else(|| Box::new(Scene1Scene))
+        .unwrap_or_else(|| Box::new(Scene1))
 }
 
 #[wasm_bindgen::prelude::wasm_bindgen]

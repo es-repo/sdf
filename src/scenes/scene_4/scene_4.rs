@@ -1,4 +1,4 @@
-use super::scene_4_scene_controls::Scene4SceneControls;
+use super::scene_4_controls::Scene4Controls;
 use crate::audio::AudioAnalysis;
 use crate::color_ext::ColorExt;
 use crate::geometry::{Circle, Rectangle, Triangle};
@@ -11,11 +11,11 @@ use pixels::wgpu::Color;
 const AUDIO_TRACK: &str = "assets/audio/shadertoy_track1.mp3";
 
 #[derive(Default)]
-pub struct Scene4Scene {
-    controls: Scene4SceneControls,
+pub struct Scene4 {
+    controls: Scene4Controls,
 }
 
-struct Scene4SceneFrame {
+struct Scene4Frame {
     circle: Circle,
     rectangle: Rectangle,
     triangle: Triangle,
@@ -23,7 +23,7 @@ struct Scene4SceneFrame {
     smooth_blend_radius: f32,
 }
 
-impl SceneFrame for Scene4SceneFrame {
+impl SceneFrame for Scene4Frame {
     fn get_pixel_color(&self, coord: Vec2, scene_time: f32) -> Color {
         let c_dist = self.circle.dist_round(&coord, self.round_radius);
         let r_dist = self.rectangle.dist_round(&coord, self.round_radius);
@@ -57,7 +57,7 @@ impl SceneFrame for Scene4SceneFrame {
     }
 }
 
-impl Scene for Scene4Scene {
+impl Scene for Scene4 {
     fn prepare_frame(&self, scene_time: f32) -> Box<dyn SceneFrame> {
         self.prepare_frame_with_audio(scene_time, &AudioAnalysis::default())
     }
@@ -69,7 +69,7 @@ impl Scene for Scene4Scene {
         let beat = smoothstep(0.1, 1.5, bass);
         let triangle_center = Vec2::new(time_scaled.cos(), 0.3 * time_scaled.sin());
 
-        Box::new(Scene4SceneFrame {
+        Box::new(Scene4Frame {
             circle: Circle {
                 radius: 0.05 + 0.2 * bass,
                 center: Vec2::new(

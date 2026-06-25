@@ -1,3 +1,3 @@
-mod scene_2_scene;
+mod scene_2;
 
-pub use scene_2_scene::Scene2Scene;
+pub use scene_2::Scene2;

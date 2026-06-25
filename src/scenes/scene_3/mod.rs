@@ -1,4 +1,4 @@
-mod scene_3_scene_controls;
-mod scene_3_scene;
+mod scene_3_controls;
+mod scene_3;
 
-pub use scene_3_scene::Scene3Scene;
+pub use scene_3::Scene3;
