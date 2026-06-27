@@ -34,7 +34,12 @@ impl Default for Scene7 {
             },
             camera_controller: CameraController::arcball(Vec3::new(0.0, 0.0, 0.0), 5.0),
             controls,
-            scene_object: SceneObject::new(Vec3::new(0.0, 0.0, 0.), 2.0, controls.object_color),
+            scene_object: SceneObject::new(
+                Vec3::new(0.0, 0.0, 0.0),
+                2.0,
+                controls.object_color,
+                controls.spheres_per_ring,
+            ),
         }
     }
 }
@@ -55,6 +60,8 @@ struct Scene7Frame {
     light: PointLight,
     ambient_light: AmbientLight,
     ray_march_settings: RayMarchSettings,
+    union_color: Color,
+    subtraction_color: Color,
 }
 
 impl Scene7Frame {
@@ -64,9 +71,9 @@ impl Scene7Frame {
         let k = 0.8;
         let dist_diff = core_sphere_dist * k - dist * k;
         let color = if dist_diff > 0.0 {
-            Color::rgb(0.1, 1.0, 0.0)
+            self.union_color
         } else {
-            Color::rgb(1.0, 0.0, 0.0)
+            self.subtraction_color
         };
         let dist_diff = dist_diff.abs();
 
@@ -120,6 +127,7 @@ impl Scene for Scene7 {
 
     fn controls_ui(&mut self, ui: &mut egui::Ui) {
         self.controls.ui(ui);
+        self.scene_object.set_spheres_per_ring(self.controls.spheres_per_ring);
     }
 
     fn prepare_frame(&self, scene_time: f32) -> Box<dyn SceneFrame> {
@@ -144,6 +152,8 @@ impl Scene for Scene7 {
             },
 
             ray_march_settings: self.state.ray_march_settings,
+            union_color: self.controls.out_color,
+            subtraction_color: self.controls.in_color,
         })
     }
 }
