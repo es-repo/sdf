@@ -13,8 +13,8 @@ impl Default for Scene7Controls {
     fn default() -> Self {
         Self {
             object_color: Color::rgb(0.5, 0.3, 1.0),
-            out_color: Color::rgb(0.1, 1.0, 0.0),
-            in_color: Color::rgb(1.0, 0.0, 0.0),
+            out_color: Color::rgb(0.6, 1.0, 0.5),
+            in_color: Color::rgb(1.0, 0.2, 0.4),
             spheres_per_ring: 8,
         }
     }
