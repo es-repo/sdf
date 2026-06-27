@@ -59,11 +59,15 @@ struct Scene6Frame {
     ray_march_settings: RayMarchSettings,
     step_blend_color: Color,
     step_blend_threshold: f32,
+    displacement_strength: f32,
+    noise_scale: f32,
 }
 
 impl Scene6Frame {
     fn sample_scene(&self, point: Vec3) -> SdfSample {
-        let dist = self.scene_object.dist(&point);
+        let dist = self
+            .scene_object
+            .dist(&point, self.displacement_strength, self.noise_scale);
         SdfSample::new(dist, self.scene_object.color)
     }
 }
@@ -143,6 +147,8 @@ impl Scene for Scene6 {
             ray_march_settings: self.state.ray_march_settings,
             step_blend_color: self.controls.step_blend_color,
             step_blend_threshold: self.controls.step_blend_threshold,
+            displacement_strength: self.controls.displacement_strength,
+            noise_scale: self.controls.noise_scale,
         })
     }
 }

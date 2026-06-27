@@ -7,6 +7,8 @@ pub struct Scene6Controls {
     pub ambient_color: Color,
     pub step_blend_color: Color,
     pub step_blend_threshold: f32,
+    pub displacement_strength: f32,
+    pub noise_scale: f32,
 }
 
 impl Default for Scene6Controls {
@@ -16,6 +18,8 @@ impl Default for Scene6Controls {
             ambient_color: Color::rgb(0.7, 0.7, 1.0),
             step_blend_color: Color::WHITE,
             step_blend_threshold: 0.15,
+            displacement_strength: 0.01,
+            noise_scale: 10.5,
         }
     }
 }
@@ -65,6 +69,8 @@ impl Scene6Controls {
         });
 
         ui.add(egui::Slider::new(&mut self.step_blend_threshold, 0.01..=1.0).text("Step blend threshold"));
+        ui.add(egui::Slider::new(&mut self.displacement_strength, 0.0..=0.1).text("Displacement strength"));
+        ui.add(egui::Slider::new(&mut self.noise_scale, 0.2..=22.0).text("Noise scale"));
 
         if ui.button("Reset").clicked() {
             *self = Self::default();
