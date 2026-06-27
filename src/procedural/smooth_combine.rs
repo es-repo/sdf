@@ -70,6 +70,21 @@ pub fn smooth_subtraction(d1: f32, d2: f32, k: f32) -> (f32, f32) {
     smooth_intersection(d1, -d2, k)
 }
 
+/// Smoothly subtracts multiple signed distances from the first one.
+///
+/// Returns `None` when no distances are provided. For non-empty input, the
+/// first distance is retained and each remaining distance is subtracted from
+/// the accumulated result using [`smooth_subtraction`].
+pub fn smooth_subtraction_many<I>(distances: I, k: f32) -> Option<f32>
+where
+    I: IntoIterator<Item = f32>,
+{
+    let mut distances = distances.into_iter();
+    let first = distances.next()?;
+
+    Some(distances.fold(first, |dist, next_dist| smooth_subtraction(dist, next_dist, k).0))
+}
+
 /// Smoothly subtracts the second signed distance field from the first and interpolates colors.
 ///
 /// `color1` is the color of the kept shape. `color2` can be used to tint the
