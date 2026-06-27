@@ -23,8 +23,6 @@ pub struct Scene6State {
     ray_march_settings: RayMarchSettings,
 }
 
-crate::stateful_scene!(Scene6, Scene6State);
-
 impl Default for Scene6 {
     fn default() -> Self {
         let fov_y = 60f32.to_radians();
@@ -108,8 +106,6 @@ impl SceneFrame for Scene6Frame {
 }
 
 impl Scene for Scene6 {
-    crate::scene_state!();
-
     fn update(&mut self, time: FrameTime, input: &InputState) {
         self.camera_controller
             .update_camera(&mut self.state.camera, time.real_time_delta, input);
