@@ -68,7 +68,7 @@ impl SdfDisplacementSceneFrame {
     }
 
     fn sample_scene(&self, point: Vec3) -> SdfSample {
-        let dist = self.sphere.dist(&point) + self.displacement(point);
+        let dist = self.sphere.dist(point) + self.displacement(point);
         SdfSample::new(dist, self.sphere.color)
     }
 }

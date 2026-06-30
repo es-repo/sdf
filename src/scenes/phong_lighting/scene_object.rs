@@ -51,9 +51,9 @@ impl SceneObject {
         }
     }
 
-    pub fn dist(&self, point: &Vec3) -> f32 {
-        let local_point = (*point - self.position).rotate(Vec3::y_axis(), -self.rotation_y);
-        let distances = self.spheres.map(|s| s.dist(&local_point));
+    pub fn dist(&self, point: Vec3) -> f32 {
+        let local_point = (point - self.position).rotate(Vec3::y_axis(), -self.rotation_y);
+        let distances = self.spheres.map(|s| s.dist(local_point));
         smooth_union_many(distances, 0.5).unwrap()
     }
 

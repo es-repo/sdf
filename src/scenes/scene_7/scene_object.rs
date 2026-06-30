@@ -86,11 +86,11 @@ impl SceneObject {
         }
     }
 
-    pub fn dist(&self, point: &Vec3) -> f32 {
-        let local_point = (*point - self.position).rotate(Vec3::y_axis(), -self.rotation_y);
+    pub fn dist(&self, point: Vec3) -> f32 {
+        let local_point = (point - self.position).rotate(Vec3::y_axis(), -self.rotation_y);
         let spheres = std::iter::once(&self.core_sphere).chain(&self.outer_spheres);
 
-        let distances = spheres.map(|s| s.dist(&local_point));
+        let distances = spheres.map(|s| s.dist(local_point));
         let dist = if self.is_out_phase {
             smooth_union_many(distances, 0.5).unwrap()
         } else {
@@ -99,7 +99,7 @@ impl SceneObject {
 
         let noise_strength = 10.5;
 
-        let core_sphere_dist = self.core_sphere.dist(&local_point);
+        let core_sphere_dist = self.core_sphere.dist(local_point);
         let k = 1.0;
         let h = 1.0 - ((core_sphere_dist - dist) * k).max(0.0).clamp(0.0, 1.0);
 

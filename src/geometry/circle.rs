@@ -9,17 +9,17 @@ pub struct Circle {
 }
 
 impl Circle {
-    pub fn dist_squared(&self, v: &Vec2) -> f32 {
-        self.center.dist_squared(v) - self.radius
+    pub fn dist_squared(&self, point: Vec2) -> f32 {
+        self.center.dist_squared(point) - self.radius
     }
 
-    pub fn dist_squared_radius_squared(&self, v: &Vec2) -> f32 {
-        self.center.dist_squared(v) - self.radius * self.radius
+    pub fn dist_squared_radius_squared(&self, point: Vec2) -> f32 {
+        self.center.dist_squared(point) - self.radius * self.radius
     }
 }
 
 impl Sdf for Circle {
-    fn dist(&self, v: &Vec2) -> f32 {
-        self.center.dist(v) - self.radius
+    fn dist(&self, point: Vec2) -> f32 {
+        self.center.dist(point) - self.radius
     }
 }

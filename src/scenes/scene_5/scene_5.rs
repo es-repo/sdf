@@ -73,7 +73,7 @@ impl Scene5Frame {
     }
 
     fn sample_scene(&self, point: Vec3, scene_time: f32) -> SdfSample {
-        let dist = self.sphere.dist(&point) + self.displacement(point, scene_time);
+        let dist = self.sphere.dist(point) + self.displacement(point, scene_time);
         SdfSample::new(dist, self.sphere.color)
     }
 }

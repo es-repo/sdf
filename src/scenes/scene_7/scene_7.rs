@@ -66,8 +66,8 @@ struct Scene7Frame {
 
 impl Scene7Frame {
     fn sample_scene(&self, point: Vec3) -> SdfSample {
-        let dist = self.scene_object.dist(&point);
-        let core_sphere_dist = self.scene_object.core_sphere.dist(&point);
+        let dist = self.scene_object.dist(point);
+        let core_sphere_dist = self.scene_object.core_sphere.dist(point);
         let k = 0.8;
         let dist_diff = core_sphere_dist * k - dist * k;
         let color = if dist_diff > 0.0 {

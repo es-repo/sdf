@@ -10,8 +10,8 @@ pub struct Rectangle {
 }
 
 impl Sdf for Rectangle {
-    fn dist(&self, v: &Vec2) -> f32 {
-        let p = (*v - self.center).rotate(-self.rotation);
+    fn dist(&self, point: Vec2) -> f32 {
+        let p = (point - self.center).rotate(-self.rotation);
         let d = p.abs() - self.vertex;
 
         let outside = Vec2::new(d.x.max(0.0), d.y.max(0.0)).len();

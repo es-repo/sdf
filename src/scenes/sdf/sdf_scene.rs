@@ -16,9 +16,9 @@ impl SceneFrame for SdfSceneFrame {
     fn get_pixel_color(&self, coord: Vec2, scene_time: f32) -> Color {
         let r = (0.5 + 0.5 * scene_time.sin()) * 0.1;
 
-        let c_dist = self.circle.dist_round(&coord, r);
-        let r_dist = self.rectangle.dist_round(&coord, r);
-        let t_dist = self.triangle.dist_round(&coord, r);
+        let c_dist = self.circle.dist_round(coord, r);
+        let r_dist = self.rectangle.dist_round(coord, r);
+        let t_dist = self.triangle.dist_round(coord, r);
 
         let (dist, color) = min_pair((c_dist, self.circle.color), (r_dist, self.rectangle.color));
         let (dist, color) = min_pair((dist, color), (t_dist, self.triangle.color));

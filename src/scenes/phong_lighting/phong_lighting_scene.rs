@@ -49,7 +49,7 @@ struct PhongLightingSceneFrame {
 
 impl PhongLightingSceneFrame {
     fn sample_scene(&self, point: Vec3) -> SdfSample {
-        let dist = self.object.dist(&point);
+        let dist = self.object.dist(point);
         SdfSample::new(dist, self.object.color)
     }
 }

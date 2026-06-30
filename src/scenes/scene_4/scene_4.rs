@@ -25,9 +25,9 @@ struct Scene4Frame {
 
 impl SceneFrame for Scene4Frame {
     fn get_pixel_color(&self, coord: Vec2, scene_time: f32) -> Color {
-        let c_dist = self.circle.dist_round(&coord, self.round_radius);
-        let r_dist = self.rectangle.dist_round(&coord, self.round_radius);
-        let t_dist = self.triangle.dist_round(&coord, self.round_radius);
+        let c_dist = self.circle.dist_round(coord, self.round_radius);
+        let r_dist = self.rectangle.dist_round(coord, self.round_radius);
+        let t_dist = self.triangle.dist_round(coord, self.round_radius);
 
         let (dist, color) = smooth_union_color(
             c_dist,

@@ -64,8 +64,8 @@ impl RayMarchingSceneFrame {
 
         // let point = Vec3::new(point.x + dy, point.y + dx, point.z);
 
-        let sphere_1_dist = self.sphere_1.dist(&point);
-        let sphere_2_dist = self.sphere_2.dist(&point);
+        let sphere_1_dist = self.sphere_1.dist(point);
+        let sphere_2_dist = self.sphere_2.dist(point);
 
         let (dist, color) = smooth_union_color(
             sphere_1_dist,

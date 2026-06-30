@@ -16,11 +16,11 @@ impl Vec2 {
         Self { x: 0.0, y: 0.0 }
     }
 
-    pub fn len(&self) -> f32 {
+    pub fn len(self) -> f32 {
         self.len_squared().sqrt()
     }
 
-    pub fn len_squared(&self) -> f32 {
+    pub fn len_squared(self) -> f32 {
         self.x * self.x + self.y * self.y
     }
 
@@ -28,11 +28,11 @@ impl Vec2 {
         self / self.len()
     }
 
-    pub fn dist_squared(&self, other: &Vec2) -> f32 {
+    pub fn dist_squared(self, other: Self) -> f32 {
         (self.x - other.x) * (self.x - other.x) + (self.y - other.y) * (self.y - other.y)
     }
 
-    pub fn dist(&self, other: &Vec2) -> f32 {
+    pub fn dist(self, other: Self) -> f32 {
         self.dist_squared(other).sqrt()
     }
 
@@ -74,44 +74,44 @@ impl Vec2 {
         Self::new(self.x * cos - self.y * sin, self.x * sin + self.y * cos)
     }
 
-    pub fn sin(&self) -> Self {
+    pub fn sin(self) -> Self {
         Self {
             x: self.x.sin(),
             y: self.y.sin(),
         }
     }
 
-    pub fn cos(&self) -> Self {
+    pub fn cos(self) -> Self {
         Self {
             x: self.x.cos(),
             y: self.y.cos(),
         }
     }
 
-    pub fn exp(&self) -> Self {
+    pub fn exp(self) -> Self {
         Self {
             x: self.x.exp(),
             y: self.y.exp(),
         }
     }
 
-    pub fn round(&self) -> Self {
+    pub fn round(self) -> Self {
         Self {
             x: self.x.round(),
             y: self.y.round(),
         }
     }
 
-    pub fn to_lattice_cell(&self, spacing: f32) -> (Self, Self) {
+    pub fn to_lattice_cell(self, spacing: f32) -> (Self, Self) {
         self.to_lattice_cell_axes(spacing, AxisSet::XY)
     }
 
-    pub fn to_lattice_cell_axes(&self, spacing: f32, axes: AxisSet) -> (Self, Self) {
+    pub fn to_lattice_cell_axes(self, spacing: f32, axes: AxisSet) -> (Self, Self) {
         let cell_index = Self::new(
             if axes.has_x() { (self.x / spacing).round() } else { 0.0 },
             if axes.has_y() { (self.y / spacing).round() } else { 0.0 },
         );
-        let local_point = *self - cell_index * spacing;
+        let local_point = self - cell_index * spacing;
         (local_point, cell_index)
     }
 

@@ -21,11 +21,11 @@ impl Vec3 {
         Self { x: v2d.x, y: v2d.y, z }
     }
 
-    pub fn len(&self) -> f32 {
+    pub fn len(self) -> f32 {
         self.len_squared().sqrt()
     }
 
-    pub fn len_squared(&self) -> f32 {
+    pub fn len_squared(self) -> f32 {
         self.x * self.x + self.y * self.y + self.z * self.z
     }
 
@@ -33,13 +33,13 @@ impl Vec3 {
         self / self.len()
     }
 
-    pub fn dist_squared(&self, other: &Vec3) -> f32 {
+    pub fn dist_squared(self, other: Self) -> f32 {
         (self.x - other.x) * (self.x - other.x)
             + (self.y - other.y) * (self.y - other.y)
             + (self.z - other.z) * (self.z - other.z)
     }
 
-    pub fn dist(&self, other: &Vec3) -> f32 {
+    pub fn dist(self, other: Self) -> f32 {
         self.dist_squared(other).sqrt()
     }
 
@@ -103,7 +103,7 @@ impl Vec3 {
         )
     }
 
-    pub fn sin(&self) -> Self {
+    pub fn sin(self) -> Self {
         Self {
             x: self.x.sin(),
             y: self.y.sin(),
@@ -111,7 +111,7 @@ impl Vec3 {
         }
     }
 
-    pub fn cos(&self) -> Self {
+    pub fn cos(self) -> Self {
         Self {
             x: self.x.cos(),
             y: self.y.cos(),
@@ -119,7 +119,7 @@ impl Vec3 {
         }
     }
 
-    pub fn exp(&self) -> Self {
+    pub fn exp(self) -> Self {
         Self {
             x: self.x.exp(),
             y: self.y.exp(),
@@ -127,7 +127,7 @@ impl Vec3 {
         }
     }
 
-    pub fn pow(&self, n: f32) -> Self {
+    pub fn pow(self, n: f32) -> Self {
         Self {
             x: self.x.powf(n),
             y: self.y.powf(n),
@@ -135,7 +135,7 @@ impl Vec3 {
         }
     }
 
-    pub fn round(&self) -> Self {
+    pub fn round(self) -> Self {
         Self {
             x: self.x.round(),
             y: self.y.round(),
@@ -143,17 +143,17 @@ impl Vec3 {
         }
     }
 
-    pub fn to_lattice_cell(&self, spacing: f32) -> (Self, Self) {
+    pub fn to_lattice_cell(self, spacing: f32) -> (Self, Self) {
         self.to_lattice_cell_axes(spacing, AxisSet::XYZ)
     }
 
-    pub fn to_lattice_cell_axes(&self, spacing: f32, axes: AxisSet) -> (Self, Self) {
+    pub fn to_lattice_cell_axes(self, spacing: f32, axes: AxisSet) -> (Self, Self) {
         let cell_index = Self::new(
             if axes.has_x() { (self.x / spacing).round() } else { 0.0 },
             if axes.has_y() { (self.y / spacing).round() } else { 0.0 },
             if axes.has_z() { (self.z / spacing).round() } else { 0.0 },
         );
-        let local_point = *self - cell_index * spacing;
+        let local_point = self - cell_index * spacing;
         (local_point, cell_index)
     }
 

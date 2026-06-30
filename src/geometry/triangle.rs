@@ -10,14 +10,14 @@ pub struct Triangle {
 }
 
 impl Sdf for Triangle {
-    fn dist(&self, v: &Vec2) -> f32 {
+    fn dist(&self, point: Vec2) -> f32 {
         let e0 = self.p1 - self.p0;
         let e1 = self.p2 - self.p1;
         let e2 = self.p0 - self.p2;
 
-        let v0 = *v - self.p0;
-        let v1 = *v - self.p1;
-        let v2 = *v - self.p2;
+        let v0 = point - self.p0;
+        let v1 = point - self.p1;
+        let v2 = point - self.p2;
 
         let pq0 = closest_segment_delta(v0, e0);
         let pq1 = closest_segment_delta(v1, e1);

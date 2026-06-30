@@ -65,7 +65,7 @@ impl Scene6Frame {
     fn sample_scene(&self, point: Vec3) -> SdfSample {
         let dist = self
             .scene_object
-            .dist(&point, self.displacement_strength, self.noise_scale);
+            .dist(point, self.displacement_strength, self.noise_scale);
         SdfSample::new(dist, self.scene_object.color)
     }
 }

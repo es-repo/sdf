@@ -80,7 +80,7 @@ impl DomainRepetitionSceneFrame {
             0.5 + 0.5 * cell_index.z.sin(),
         );
 
-        let dist = self.sphere.dist(&local_point);
+        let dist = self.sphere.dist(local_point);
 
         SdfSample::new(dist, color)
     }
