@@ -1,5 +1,6 @@
 mod axis_set;
 mod circle;
+mod plane;
 mod quat;
 mod rectangle;
 mod signed_distance_2d;
@@ -11,6 +12,7 @@ mod vec3;
 
 pub use axis_set::AxisSet;
 pub use circle::Circle;
+pub use plane::Plane;
 pub use quat::Quat;
 pub use rectangle::Rectangle;
 pub use signed_distance_2d::SignedDistance2d;

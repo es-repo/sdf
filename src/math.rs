@@ -35,12 +35,50 @@ pub fn min_pair<T>(a: (f32, T), b: (f32, T)) -> (f32, T) {
     if a.0.total_cmp(&b.0).is_le() { a } else { b }
 }
 
+/// Returns the pair with the smallest first value from an iterator.
+///
+/// Returns `None` when no pairs are provided. Floating-point values use the
+/// same deterministic ordering as [`min_pair`].
+pub fn min_pair_many<T, I>(pairs: I) -> Option<(f32, T)>
+where
+    I: IntoIterator<Item = (f32, T)>,
+{
+    pairs.into_iter().reduce(min_pair)
+}
+
+/// Returns the pair with the smallest first value from one or more arguments.
+///
+/// Unlike the [`min_pair_many`] function, this macro requires at least one
+/// pair and returns the selected pair directly instead of wrapping it in
+/// `Option`.
+#[macro_export]
+macro_rules! min_pair_many {
+    ($first:expr $(, $rest:expr)* $(,)?) => {{
+        let result = $first;
+        $(
+            let result = $crate::math::min_pair(result, $rest);
+        )*
+        result
+    }};
+}
+
 /// Returns the pair whose first value is larger.
 ///
 /// The second value is carried along unchanged. Floating-point values are
 /// compared with `total_cmp`, so `NaN` ordering is deterministic.
 pub fn max_pair<T>(a: (f32, T), b: (f32, T)) -> (f32, T) {
     if a.0.total_cmp(&b.0).is_ge() { a } else { b }
+}
+
+/// Returns the pair with the largest first value from an iterator.
+///
+/// Returns `None` when no pairs are provided. Floating-point values use the
+/// same deterministic ordering as [`max_pair`].
+pub fn max_pair_many<T, I>(pairs: I) -> Option<(f32, T)>
+where
+    I: IntoIterator<Item = (f32, T)>,
+{
+    pairs.into_iter().reduce(max_pair)
 }
 
 /// Returns the interpolation parameter for `value` between `a` and `b`.

@@ -1,14 +1,15 @@
 use super::ray_march_settings_controls::ray_march_settings_ui;
 use crate::color_ext::ColorExt;
-use crate::geometry::{SignedDistance3d, Sphere, Vec2, Vec3};
+use crate::geometry::{Plane, SignedDistance3d, Sphere, Vec2, Vec3};
 use crate::input::InputState;
-use crate::procedural::smooth_combine::smooth_union_color;
+use crate::min_pair_many;
 use crate::rendering::{
     AmbientLight, Camera, CameraController, CameraFrame, PhongMaterial, PointLight, RayMarchResult, RayMarchSettings,
     SdfSample, estimate_normal_tetrahedral, phong_lighting, ray_march,
 };
 use crate::scene::{FrameTime, Scene, SceneFrame};
 use pixels::wgpu::Color;
+use std::f32::consts::PI;
 
 pub struct RayMarchingScene {
     state: RayMarchingSceneState,
@@ -50,7 +51,8 @@ struct RayMarchingSceneFrame {
     camera_frame: CameraFrame,
     sphere_1: Sphere,
     sphere_2: Sphere,
-    //sphere_3: Sphere,
+    sphere_3: Sphere,
+    floor: Plane,
     light: PointLight,
     ambient_light: AmbientLight,
     ray_march_settings: RayMarchSettings,
@@ -58,29 +60,18 @@ struct RayMarchingSceneFrame {
 
 impl RayMarchingSceneFrame {
     fn sample_scene(&self, point: Vec3) -> SdfSample {
-        let r = 2.5;
-        let dx = (r * point.x).sin();
-        let dy = (r * point.y).cos();
-
-        // let point = Vec3::new(point.x + dy, point.y + dx, point.z);
-
         let sphere_1_dist = self.sphere_1.dist(point);
         let sphere_2_dist = self.sphere_2.dist(point);
+        let sphere_3_dist = self.sphere_3.dist(point);
+        let floor_dist = self.floor.dist(point);
 
-        let (dist, color) = smooth_union_color(
-            sphere_1_dist,
-            self.sphere_1.color.lerp(Color::RED, 0.5 + 0.5 * point.y.sin()),
-            sphere_2_dist,
-            self.sphere_2
-                .color
-                .lerp(Color::rgb(1.0, 1.0, 0.0), 0.5 + 0.5 * point.x.sin()),
-            0.5,
+        let (dist, color) = min_pair_many!(
+            (sphere_1_dist, self.sphere_1.color),
+            (sphere_2_dist, self.sphere_2.color),
+            (sphere_3_dist, self.sphere_3.color),
+            (floor_dist, self.floor.color)
         );
 
-        //let dist = sphere_1_dist.min(sphere_2_dist);
-        //let dist = sphere_2_dist;
-
-        //SdfSample::new(dist, self.sphere_1.color)
         SdfSample::new(dist, color)
     }
 }
@@ -137,19 +128,48 @@ impl Scene for RayMarchingScene {
     }
 
     fn prepare_frame(&self, scene_time: f32) -> Box<dyn SceneFrame> {
-        let animation_time = scene_time * 2.0;
+        let animation_time = scene_time * 1.0;
+        let sphere_radius = 1.0;
+        let sphere_remoteness = 3.0;
+        let sphere_angle = PI * 2.0 / 3.0;
+
         Box::new(RayMarchingSceneFrame {
             camera_frame: self.state.camera.prepare_frame(),
+
             sphere_1: Sphere {
-                center: Vec3::new(0.5 + animation_time.sin(), 0.0, 3.0 + animation_time.cos()),
-                radius: 1.0,
-                color: Color::GREEN,
+                center: Vec3::new(
+                    sphere_remoteness * (sphere_angle + animation_time).sin(),
+                    1.5,
+                    sphere_remoteness * (sphere_angle + animation_time).cos(),
+                ),
+                radius: sphere_radius,
+                color: Color::rgb(1.0, 0.0, 0.0),
             },
 
             sphere_2: Sphere {
-                center: Vec3::new(-0.5 - animation_time.sin(), 0.0, 4.0 - animation_time.cos()),
-                radius: 2.0,
-                color: Color::BLUE,
+                center: Vec3::new(
+                    sphere_remoteness * (sphere_angle * 2.0 + animation_time).sin(),
+                    sphere_radius,
+                    sphere_remoteness * (sphere_angle * 2.0 + animation_time).cos(),
+                ),
+                radius: sphere_radius,
+                color: Color::rgb(0.0, 1.0, 0.0),
+            },
+
+            sphere_3: Sphere {
+                center: Vec3::new(
+                    sphere_remoteness * (sphere_angle * 3.0 + animation_time).sin(),
+                    sphere_radius,
+                    sphere_remoteness * (sphere_angle * 3.0 + animation_time).cos(),
+                ),
+                radius: sphere_radius,
+                color: Color::rgb(0.0, 0.0, 1.0),
+            },
+
+            floor: Plane {
+                normal: Vec3::new(0.0, 1.0, 0.0),
+                offset: 0.0,
+                color: Color::rgb(0.7, 0.7, 0.7),
             },
 
             light: PointLight {
