@@ -1,4 +1,4 @@
-use crate::geometry::{Sdf, Vec2};
+use crate::geometry::{SignedDistance2d, Vec2};
 use pixels::wgpu::Color;
 
 #[derive(Copy, Clone, Debug)]
@@ -9,7 +9,7 @@ pub struct Rectangle {
     pub rotation: f32,
 }
 
-impl Sdf for Rectangle {
+impl SignedDistance2d for Rectangle {
     fn dist(&self, point: Vec2) -> f32 {
         let p = (point - self.center).rotate(-self.rotation);
         let d = p.abs() - self.vertex;

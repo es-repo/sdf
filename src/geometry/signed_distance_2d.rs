@@ -1,6 +1,6 @@
 use super::Vec2;
 
-pub trait Sdf {
+pub trait SignedDistance2d {
     fn dist(&self, point: Vec2) -> f32;
 
     fn dist_round(&self, point: Vec2, radius: f32) -> f32 {

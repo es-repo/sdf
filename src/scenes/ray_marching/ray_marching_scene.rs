@@ -1,6 +1,6 @@
 use super::ray_march_settings_controls::ray_march_settings_ui;
 use crate::color_ext::ColorExt;
-use crate::geometry::{Sdf3d, Sphere, Vec2, Vec3};
+use crate::geometry::{SignedDistance3d, Sphere, Vec2, Vec3};
 use crate::input::InputState;
 use crate::procedural::smooth_combine::smooth_union_color;
 use crate::rendering::{

@@ -1,6 +1,6 @@
 use super::sdf_displacement_scene_controls::SdfDisplacementSceneControls;
 use crate::color_ext::ColorExt;
-use crate::geometry::{Sdf3d, Sphere, Vec2, Vec3};
+use crate::geometry::{SignedDistance3d, Sphere, Vec2, Vec3};
 use crate::input::InputState;
 use crate::procedural::{Fbm, NoiseSimplex};
 use crate::rendering::{

@@ -1,4 +1,4 @@
-use crate::geometry::{Sdf3d, Sphere, Vec3};
+use crate::geometry::{SignedDistance3d, Sphere, Vec3};
 use crate::procedural::smooth_combine::smooth_union_many;
 use pixels::wgpu::Color;
 

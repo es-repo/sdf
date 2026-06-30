@@ -1,5 +1,5 @@
 use crate::color_ext::ColorExt;
-use crate::geometry::{Circle, Rectangle, Sdf, Triangle, Vec2};
+use crate::geometry::{Circle, Rectangle, SignedDistance2d, Triangle, Vec2};
 use crate::math::min_pair;
 use crate::scene::{Scene, SceneFrame};
 use pixels::wgpu::Color;

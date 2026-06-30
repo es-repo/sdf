@@ -1,6 +1,6 @@
 use super::domain_warping_scene_controls::DomainWarpingSceneControls;
 use crate::color_ext::ColorExt;
-use crate::geometry::{Circle, Sdf, Vec2};
+use crate::geometry::{Circle, SignedDistance2d, Vec2};
 use crate::procedural::{Fbm, NoiseSimplex};
 use crate::scene::{Scene, SceneFrame};
 use pixels::wgpu::Color;

@@ -1,6 +1,6 @@
 use super::domain_repetition_scene_controls::DomainRepetitionSceneControls;
 use crate::color_ext::ColorExt;
-use crate::geometry::{Sdf3d, Sphere, Vec2, Vec3};
+use crate::geometry::{SignedDistance3d, Sphere, Vec2, Vec3};
 use crate::input::InputState;
 use crate::rendering::{
     estimate_normal_tetrahedral, phong_lighting, ray_march, AmbientLight, Camera, CameraController, CameraFrame,

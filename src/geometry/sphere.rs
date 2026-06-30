@@ -1,4 +1,4 @@
-use crate::geometry::{Sdf3d, Vec3};
+use crate::geometry::{SignedDistance3d, Vec3};
 use egui_wgpu::wgpu::Color;
 
 #[derive(Copy, Clone, Debug)]
@@ -8,7 +8,7 @@ pub struct Sphere {
     pub color: Color,
 }
 
-impl Sdf3d for Sphere {
+impl SignedDistance3d for Sphere {
     fn dist(&self, point: Vec3) -> f32 {
         self.center.dist(point) - self.radius
     }

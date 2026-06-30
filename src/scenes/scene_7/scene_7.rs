@@ -1,7 +1,7 @@
 use super::scene_7_controls::Scene7Controls;
 use super::scene_object::SceneObject;
 use crate::color_ext::ColorExt;
-use crate::geometry::{Sdf3d, Vec2, Vec3};
+use crate::geometry::{SignedDistance3d, Vec2, Vec3};
 use crate::input::InputState;
 use crate::rendering::{
     AmbientLight, Camera, CameraController, CameraFrame, PhongMaterial, PointLight, RayMarchResult, RayMarchSettings,

@@ -2,7 +2,7 @@ use super::scene_4_controls::Scene4Controls;
 use crate::audio::AudioAnalysis;
 use crate::color_ext::ColorExt;
 use crate::geometry::{Circle, Rectangle, Triangle};
-use crate::geometry::{Sdf as _, Vec2};
+use crate::geometry::{SignedDistance2d as _, Vec2};
 use crate::math::smoothstep;
 use crate::procedural::smooth_combine::smooth_union_color;
 use crate::scene::{Scene, SceneFrame};

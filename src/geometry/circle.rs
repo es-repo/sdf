@@ -1,4 +1,4 @@
-use super::{Sdf, Vec2};
+use super::{SignedDistance2d, Vec2};
 use pixels::wgpu::Color;
 
 #[derive(Copy, Clone, Debug)]
@@ -18,7 +18,7 @@ impl Circle {
     }
 }
 
-impl Sdf for Circle {
+impl SignedDistance2d for Circle {
     fn dist(&self, point: Vec2) -> f32 {
         self.center.dist(point) - self.radius
     }

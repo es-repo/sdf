@@ -1,4 +1,4 @@
-use super::{Sdf, Vec2};
+use super::{SignedDistance2d, Vec2};
 use pixels::wgpu::Color;
 
 #[derive(Copy, Clone, Debug)]
@@ -9,7 +9,7 @@ pub struct Triangle {
     pub color: Color,
 }
 
-impl Sdf for Triangle {
+impl SignedDistance2d for Triangle {
     fn dist(&self, point: Vec2) -> f32 {
         let e0 = self.p1 - self.p0;
         let e1 = self.p2 - self.p1;
