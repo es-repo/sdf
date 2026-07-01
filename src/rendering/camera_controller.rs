@@ -20,6 +20,8 @@ pub struct CameraControls {
     pub backward: KeyCode,
     pub left: KeyCode,
     pub right: KeyCode,
+    pub up: KeyCode,
+    pub down: KeyCode,
     pub roll_left: KeyCode,
     pub roll_right: KeyCode,
     pub look_button: Option<MouseButton>,
@@ -32,6 +34,8 @@ impl Default for CameraControls {
             backward: KeyCode::KeyS,
             left: KeyCode::KeyA,
             right: KeyCode::KeyD,
+            up: KeyCode::KeyZ,
+            down: KeyCode::KeyX,
             roll_left: KeyCode::KeyQ,
             roll_right: KeyCode::KeyE,
             look_button: Some(MouseButton::Left),
@@ -110,6 +114,16 @@ impl CameraController {
 
         if input.is_key_pressed(self.controls.right) {
             direction = direction + camera_frame.basis.right;
+        }
+
+        if self.mode == CameraControlMode::Flight {
+            if input.is_key_pressed(self.controls.up) {
+                direction = direction + camera_frame.basis.up;
+            }
+
+            if input.is_key_pressed(self.controls.down) {
+                direction = direction - camera_frame.basis.up;
+            }
         }
 
         if direction.len_squared() > 0.0 {
