@@ -21,8 +21,9 @@ pub struct RayMarchingScene {
 pub struct RayMarchingSceneState {
     camera: Camera,
     ray_march_settings: RayMarchSettings,
-    fog_density: f32,
-    fog_start_distance: f32,
+    animate_ground: bool,
+    #[serde(default)]
+    show_convergence_failure_debug: bool,
 }
 
 crate::stateful_scene!(RayMarchingScene, RayMarchingSceneState);
@@ -41,14 +42,14 @@ impl Default for RayMarchingScene {
             state: RayMarchingSceneState {
                 camera,
                 ray_march_settings: RayMarchSettings {
-                    max_steps: 120,
-                    hit_epsilon: 0.0001,
+                    max_steps: 400,
+                    hit_epsilon: 0.001,
                     max_distance: 100.0,
                     min_step: 0.005,
                     near_clip: 0.05,
                 },
-                fog_density: 0.1,
-                fog_start_distance: 50.0,
+                animate_ground: true,
+                show_convergence_failure_debug: false,
             },
             camera_controller: CameraController::flight(10.0),
         }
@@ -64,16 +65,18 @@ struct RayMarchingSceneFrame {
     light: PointLight,
     ambient_light: AmbientLight,
     fog: ExponentialFog,
+    animate_ground: bool,
+    show_convergence_failure_debug: bool,
     ray_march_settings: RayMarchSettings,
 }
 
 impl RayMarchingSceneFrame {
-    fn sample_scene(&self, point: Vec3, _scene_time: f32) -> SdfSample {
+    fn sample_scene(&self, point: Vec3, scene_time: f32) -> SdfSample {
         let sphere_1_dist = self.sphere_1.dist(point);
         let sphere_2_dist = self.sphere_2.dist(point);
         let sphere_3_dist = self.sphere_3.dist(point);
 
-        let ground_sample = self.ground.sample(point);
+        let ground_sample = self.ground.sample(point, scene_time, self.animate_ground);
 
         let (dist, color) = min_pair_many!(
             (sphere_1_dist, self.sphere_1.color),
@@ -95,7 +98,7 @@ impl SceneFrame for RayMarchingSceneFrame {
         }) {
             RayMarchResult::Hit(hit) => hit,
             RayMarchResult::Miss(miss) => {
-                if miss.steps >= self.ray_march_settings.max_steps {
+                if self.show_convergence_failure_debug && miss.steps >= self.ray_march_settings.max_steps {
                     return Color::rgb(1.0, 0.0, 1.0); // convergence failure debug
                 }
 
@@ -138,23 +141,24 @@ impl Scene for RayMarchingScene {
     }
 
     fn controls_ui(&mut self, ui: &mut egui::Ui) {
-        ray_march_settings_ui(
-            ui,
-            &mut self.state.ray_march_settings,
-            RayMarchSettings {
+        ray_march_settings_ui(ui, &mut self.state.ray_march_settings);
+        ui.checkbox(&mut self.state.animate_ground, "Animate ground");
+        ui.checkbox(
+            &mut self.state.show_convergence_failure_debug,
+            "Show convergence failure debug",
+        );
+
+        if ui.button("Reset").clicked() {
+            self.state.ray_march_settings = RayMarchSettings {
                 max_steps: 120,
                 hit_epsilon: 0.0001,
                 max_distance: 100.0,
                 min_step: 0.005,
                 near_clip: 0.05,
-            },
-        );
-        ui.add(egui::Slider::new(&mut self.state.fog_density, 0.0..=0.2).text("Fog density"));
-        let max_fog_start_distance = self.state.ray_march_settings.max_distance;
-        ui.add(
-            egui::Slider::new(&mut self.state.fog_start_distance, 0.0..=max_fog_start_distance)
-                .text("Fog start distance"),
-        );
+            };
+            self.state.animate_ground = true;
+            self.state.show_convergence_failure_debug = false;
+        }
     }
 
     fn prepare_frame(&self, scene_time: f32) -> Box<dyn SceneFrame> {
@@ -210,11 +214,11 @@ impl Scene for RayMarchingScene {
 
             ambient_light,
 
-            fog: ExponentialFog::new(
-                ambient_light.color,
-                self.state.fog_density,
-                self.state.fog_start_distance,
-            ),
+            fog: ExponentialFog::new(ambient_light.color, 0.1, 50.0),
+
+            animate_ground: self.state.animate_ground,
+
+            show_convergence_failure_debug: self.state.show_convergence_failure_debug,
 
             ray_march_settings: self.state.ray_march_settings,
         })

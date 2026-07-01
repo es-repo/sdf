@@ -1,6 +1,5 @@
 use crate::color_ext::ColorExt;
 use crate::geometry::{Plane, SignedDistance3d, Vec3};
-use crate::procedural::NoiseSimplex;
 use crate::rendering::SdfSample;
 use pixels::wgpu::Color;
 
@@ -20,13 +19,20 @@ impl Ground {
         }
     }
 
-    pub fn dist(&self, point: Vec3) -> f32 {
+    pub fn dist(&self, point: Vec3, scene_time: f32, animated: bool) -> f32 {
         let dist = self.plane.dist(point);
-        let dist = dist + 0.01 * (point * 2.0).noise_simplex();
+
+        if !animated {
+            return dist;
+        }
+
+        let s = 0.2;
+        let speed = 2.0;
+        let dist = dist + s * (point.x + scene_time * speed).sin() + s * (point.z + scene_time * speed).sin();
         dist
     }
 
-    pub fn sample(&self, point: Vec3) -> SdfSample {
+    pub fn sample(&self, point: Vec3, scene_time: f32, animated: bool) -> SdfSample {
         let size = 0.5;
         let x_even = (point.x * size).floor() as i32 % 2 == 0;
         let z_even = (point.z * size).floor() as i32 % 2 == 0;
@@ -37,6 +43,6 @@ impl Ground {
             self.plane.color
         };
 
-        SdfSample::new(self.dist(point), color)
+        SdfSample::new(self.dist(point, scene_time, animated), color)
     }
 }

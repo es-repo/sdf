@@ -1,6 +1,6 @@
 use crate::rendering::RayMarchSettings;
 
-pub fn ray_march_settings_ui(ui: &mut egui::Ui, settings: &mut RayMarchSettings, default_settings: RayMarchSettings) {
+pub fn ray_march_settings_ui(ui: &mut egui::Ui, settings: &mut RayMarchSettings) {
     ui.add(egui::Slider::new(&mut settings.max_steps, 1..=512).text("Max steps"));
     ui.add(
         egui::Slider::new(&mut settings.hit_epsilon, 0.00001..=0.01)
@@ -14,8 +14,4 @@ pub fn ray_march_settings_ui(ui: &mut egui::Ui, settings: &mut RayMarchSettings,
             .text("Min step"),
     );
     ui.add(egui::Slider::new(&mut settings.near_clip, 0.0..=1.0).text("Near clip"));
-
-    if ui.button("Reset").clicked() {
-        *settings = default_settings;
-    }
 }
