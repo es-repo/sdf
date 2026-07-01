@@ -20,6 +20,8 @@ pub struct CameraControls {
     pub backward: KeyCode,
     pub left: KeyCode,
     pub right: KeyCode,
+    pub roll_left: KeyCode,
+    pub roll_right: KeyCode,
     pub look_button: Option<MouseButton>,
 }
 
@@ -30,6 +32,8 @@ impl Default for CameraControls {
             backward: KeyCode::KeyS,
             left: KeyCode::KeyA,
             right: KeyCode::KeyD,
+            roll_left: KeyCode::KeyQ,
+            roll_right: KeyCode::KeyE,
             look_button: Some(MouseButton::Left),
         }
     }
@@ -40,6 +44,7 @@ pub struct CameraController {
     pub mode: CameraControlMode,
     pub speed: f32,
     pub look_sensitivity: f32,
+    pub roll_speed: f32,
     pub scroll_move_sensitivity: f32,
     yaw: f32,
     pitch: f32,
@@ -54,6 +59,7 @@ impl CameraController {
             mode: CameraControlMode::Fps,
             speed,
             look_sensitivity: 0.003,
+            roll_speed: FRAC_PI_2,
             scroll_move_sensitivity: 0.005,
             yaw: 0.0,
             pitch: 0.0,
@@ -85,6 +91,7 @@ impl CameraController {
         }
 
         self.update_camera_rotation(camera, input);
+        self.update_flight_roll(camera, real_time_delta, input);
 
         let camera_frame = camera.prepare_frame();
         let mut direction = Vec3::zero();
@@ -150,6 +157,30 @@ impl CameraController {
         let pitch = Quat::from_axis_angle(camera_frame.basis.right, mouse_delta.y * self.look_sensitivity);
 
         camera.rotate_by(yaw * pitch);
+    }
+
+    fn update_flight_roll(&self, camera: &mut Camera, real_time_delta: f32, input: &InputState) {
+        if self.mode != CameraControlMode::Flight {
+            return;
+        }
+
+        let mut roll_direction = 0.0;
+
+        if input.is_key_pressed(self.controls.roll_left) {
+            roll_direction += 1.0;
+        }
+
+        if input.is_key_pressed(self.controls.roll_right) {
+            roll_direction -= 1.0;
+        }
+
+        if roll_direction == 0.0 {
+            return;
+        }
+
+        let forward = camera.prepare_frame().basis.forward;
+        let roll = Quat::from_axis_angle(forward, roll_direction * self.roll_speed * real_time_delta);
+        camera.rotate_by(roll);
     }
 
     fn update_arcball_camera(&mut self, camera: &mut Camera, real_time_delta: f32, input: &InputState) {
