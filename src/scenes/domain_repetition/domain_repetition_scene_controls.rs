@@ -6,6 +6,7 @@ pub struct DomainRepetitionSceneControls {
     pub axes: AxisSet,
     pub max_distance: f32,
     pub fog_density: f32,
+    pub fog_start_distance: f32,
 }
 
 impl Default for DomainRepetitionSceneControls {
@@ -15,6 +16,7 @@ impl Default for DomainRepetitionSceneControls {
             axes: AxisSet::XYZ,
             max_distance: 70.0,
             fog_density: 0.05,
+            fog_start_distance: 0.0,
         }
     }
 }
@@ -24,6 +26,10 @@ impl DomainRepetitionSceneControls {
         ui.add(egui::Slider::new(&mut self.spacing, 1.2..=16.0).text("Spacing"));
         ui.add(egui::Slider::new(&mut self.max_distance, 10.0..=200.0).text("Max distance"));
         ui.add(egui::Slider::new(&mut self.fog_density, 0.0..=0.9).text("Fog density"));
+        let max_fog_start_distance = self.max_distance;
+        ui.add(
+            egui::Slider::new(&mut self.fog_start_distance, 0.0..=max_fog_start_distance).text("Fog start distance"),
+        );
 
         egui::ComboBox::from_label("Axes")
             .selected_text(self.axes.label())

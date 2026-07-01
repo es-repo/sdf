@@ -151,7 +151,11 @@ impl Scene for DomainRepetitionScene {
                 shininess: 50.0,
             },
 
-            fog: ExponentialFog::new(self.ambient_light.color, self.controls.fog_density),
+            fog: ExponentialFog::new(
+                self.ambient_light.color,
+                self.controls.fog_density,
+                self.controls.fog_start_distance,
+            ),
 
             ray_march_settings,
 

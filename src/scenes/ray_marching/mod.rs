@@ -1,3 +1,4 @@
+mod ground;
 mod ray_march_settings_controls;
 mod ray_marching_scene;
 

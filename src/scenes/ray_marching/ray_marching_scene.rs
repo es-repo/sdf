@@ -1,11 +1,12 @@
+use super::ground::Ground;
 use super::ray_march_settings_controls::ray_march_settings_ui;
 use crate::color_ext::ColorExt;
-use crate::geometry::{Plane, SignedDistance3d, Sphere, Vec2, Vec3};
+use crate::geometry::{Quat, SignedDistance3d, Sphere, Vec2, Vec3};
 use crate::input::InputState;
 use crate::min_pair_many;
 use crate::rendering::{
-    AmbientLight, Camera, CameraController, CameraFrame, PhongMaterial, PointLight, RayMarchResult, RayMarchSettings,
-    SdfSample, estimate_normal_tetrahedral, phong_lighting, ray_march,
+    AmbientLight, Camera, CameraController, CameraFrame, ExponentialFog, PhongMaterial, PointLight, RayMarchResult,
+    RayMarchSettings, SdfSample, estimate_normal_tetrahedral, phong_lighting, ray_march,
 };
 use crate::scene::{FrameTime, Scene, SceneFrame};
 use pixels::wgpu::Color;
@@ -20,6 +21,8 @@ pub struct RayMarchingScene {
 pub struct RayMarchingSceneState {
     camera: Camera,
     ray_march_settings: RayMarchSettings,
+    fog_density: f32,
+    fog_start_distance: f32,
 }
 
 crate::stateful_scene!(RayMarchingScene, RayMarchingSceneState);
@@ -27,23 +30,28 @@ crate::stateful_scene!(RayMarchingScene, RayMarchingSceneState);
 impl Default for RayMarchingScene {
     fn default() -> Self {
         let fov_y = 60f32.to_radians();
+        let mut camera = Camera::new(fov_y, 1.0);
+        camera.position.z = -10.0;
+        camera.position.y = 8.0;
+        let downward_pitch = Quat::from_axis_angle(Vec3::x_axis(), 25.0_f32.to_radians());
+
+        camera.set_rotation(downward_pitch);
+
         Self {
             state: RayMarchingSceneState {
-                camera: Camera::new(fov_y, 1.0),
-                ray_march_settings: default_ray_march_settings(),
+                camera,
+                ray_march_settings: RayMarchSettings {
+                    max_steps: 120,
+                    hit_epsilon: 0.0001,
+                    max_distance: 100.0,
+                    min_step: 0.005,
+                    near_clip: 0.05,
+                },
+                fog_density: 0.1,
+                fog_start_distance: 50.0,
             },
             camera_controller: CameraController::flight(10.0),
         }
-    }
-}
-
-fn default_ray_march_settings() -> RayMarchSettings {
-    RayMarchSettings {
-        max_steps: 100,
-        hit_epsilon: 0.0001,
-        max_distance: 100.0,
-        min_step: 0.005,
-        near_clip: 0.05,
     }
 }
 
@@ -52,24 +60,26 @@ struct RayMarchingSceneFrame {
     sphere_1: Sphere,
     sphere_2: Sphere,
     sphere_3: Sphere,
-    floor: Plane,
+    ground: Ground,
     light: PointLight,
     ambient_light: AmbientLight,
+    fog: ExponentialFog,
     ray_march_settings: RayMarchSettings,
 }
 
 impl RayMarchingSceneFrame {
-    fn sample_scene(&self, point: Vec3) -> SdfSample {
+    fn sample_scene(&self, point: Vec3, _scene_time: f32) -> SdfSample {
         let sphere_1_dist = self.sphere_1.dist(point);
         let sphere_2_dist = self.sphere_2.dist(point);
         let sphere_3_dist = self.sphere_3.dist(point);
-        let floor_dist = self.floor.dist(point);
+
+        let ground_sample = self.ground.sample(point);
 
         let (dist, color) = min_pair_many!(
             (sphere_1_dist, self.sphere_1.color),
             (sphere_2_dist, self.sphere_2.color),
             (sphere_3_dist, self.sphere_3.color),
-            (floor_dist, self.floor.color)
+            (ground_sample.dist, ground_sample.color)
         );
 
         SdfSample::new(dist, color)
@@ -77,10 +87,12 @@ impl RayMarchingSceneFrame {
 }
 
 impl SceneFrame for RayMarchingSceneFrame {
-    fn get_pixel_color(&self, coord: Vec2, _scene_time: f32) -> Color {
+    fn get_pixel_color(&self, coord: Vec2, scene_time: f32) -> Color {
         let ray = self.camera_frame.ray(coord);
 
-        let hit = match ray_march(ray, self.ray_march_settings, |point| self.sample_scene(point)) {
+        let hit = match ray_march(ray, self.ray_march_settings, |point| {
+            self.sample_scene(point, scene_time)
+        }) {
             RayMarchResult::Hit(hit) => hit,
             RayMarchResult::Miss(miss) => {
                 if miss.steps >= self.ray_march_settings.max_steps {
@@ -92,10 +104,10 @@ impl SceneFrame for RayMarchingSceneFrame {
         };
 
         let surface_normal = estimate_normal_tetrahedral(hit.point, self.ray_march_settings.hit_epsilon, |point| {
-            self.sample_scene(point).dist
+            self.sample_scene(point, scene_time).dist
         });
 
-        phong_lighting(
+        let lit_color = phong_lighting(
             ray.origin,
             hit.point,
             surface_normal,
@@ -107,7 +119,9 @@ impl SceneFrame for RayMarchingSceneFrame {
                 shininess: 10.0,
             },
             self.ambient_light,
-        )
+        );
+
+        self.fog.apply(lit_color, hit.distance)
     }
 }
 
@@ -124,7 +138,23 @@ impl Scene for RayMarchingScene {
     }
 
     fn controls_ui(&mut self, ui: &mut egui::Ui) {
-        ray_march_settings_ui(ui, &mut self.state.ray_march_settings, default_ray_march_settings());
+        ray_march_settings_ui(
+            ui,
+            &mut self.state.ray_march_settings,
+            RayMarchSettings {
+                max_steps: 120,
+                hit_epsilon: 0.0001,
+                max_distance: 100.0,
+                min_step: 0.005,
+                near_clip: 0.05,
+            },
+        );
+        ui.add(egui::Slider::new(&mut self.state.fog_density, 0.0..=0.2).text("Fog density"));
+        let max_fog_start_distance = self.state.ray_march_settings.max_distance;
+        ui.add(
+            egui::Slider::new(&mut self.state.fog_start_distance, 0.0..=max_fog_start_distance)
+                .text("Fog start distance"),
+        );
     }
 
     fn prepare_frame(&self, scene_time: f32) -> Box<dyn SceneFrame> {
@@ -132,6 +162,10 @@ impl Scene for RayMarchingScene {
         let sphere_radius = 1.0;
         let sphere_remoteness = 3.0;
         let sphere_angle = PI * 2.0 / 3.0;
+        let ambient_light = AmbientLight {
+            color: Color::rgb(0.7, 0.7, 1.0),
+            intensity: 0.75,
+        };
 
         Box::new(RayMarchingSceneFrame {
             camera_frame: self.state.camera.prepare_frame(),
@@ -166,11 +200,7 @@ impl Scene for RayMarchingScene {
                 color: Color::rgb(0.0, 0.0, 1.0),
             },
 
-            floor: Plane {
-                normal: Vec3::new(0.0, 1.0, 0.0),
-                offset: 0.0,
-                color: Color::rgb(0.7, 0.7, 0.7),
-            },
+            ground: Ground::new(Color::rgb(0.7, 0.7, 0.7), 0.0),
 
             light: PointLight {
                 position: Vec3::new(50.0, 10.0, -50.0),
@@ -178,10 +208,13 @@ impl Scene for RayMarchingScene {
                 intensity: 1.0,
             },
 
-            ambient_light: AmbientLight {
-                color: Color::rgb(0.7, 0.7, 1.0),
-                intensity: 0.75,
-            },
+            ambient_light,
+
+            fog: ExponentialFog::new(
+                ambient_light.color,
+                self.state.fog_density,
+                self.state.fog_start_distance,
+            ),
 
             ray_march_settings: self.state.ray_march_settings,
         })
