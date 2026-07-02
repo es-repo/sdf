@@ -51,6 +51,16 @@ impl Quat {
             w: self.w / len,
         }
     }
+
+    /// Returns the inverse rotation for a normalized quaternion.
+    pub fn conjugate(self) -> Self {
+        Self {
+            x: -self.x,
+            y: -self.y,
+            z: -self.z,
+            w: self.w,
+        }
+    }
 }
 
 impl Default for Quat {

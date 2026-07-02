@@ -47,7 +47,7 @@ impl Ground {
         let z_even = (point.z * size).floor() as i32 % 2 == 0;
 
         let color = if (x_even && !z_even) || (!x_even && z_even) {
-            self.plane.color.lerp(Color::WHITE, 0.5)
+            self.plane.color.lerp(Color::WHITE, 0.8)
         } else {
             self.plane.color
         };
