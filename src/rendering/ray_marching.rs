@@ -107,25 +107,29 @@ where
     })
 }
 
-/// Computes hard-shadow visibility for a surface point and a point light.
+/// Computes shadow visibility for a surface point and a point light.
 ///
 /// A secondary ray is marched from the surface toward `light_position`. The
 /// `sample_sdf` callback must return the signed distance to the closest scene
-/// surface. The function returns `0.0` as soon as geometry is hit before the
-/// light, or `1.0` when the ray reaches the light unobstructed. Geometry beyond
-/// the light cannot cast a shadow on the surface point.
+/// surface. An actual hit returns `0.0`. Otherwise, the returned visibility is
+/// between `0.0` and `1.0` based on how closely the ray passes nearby geometry.
+/// Geometry beyond the light cannot cast a shadow on the surface point.
+///
+/// A `softness` of `0.0` produces hard shadows. Increasing it creates a wider
+/// penumbra by reducing visibility where the ray passes close to geometry.
 ///
 /// The ray origin is offset along `surface_normal` to avoid immediately hitting
 /// the surface that produced the primary ray hit. The bias accounts for both
 /// `hit_epsilon` and possible overshoot caused by `min_step`. If `max_steps` is
-/// exhausted without confirming an occluder, the point is treated as visible.
-/// The result is intended to scale direct diffuse and specular lighting while
-/// leaving ambient lighting unchanged.
-pub fn hard_shadow<F>(
+/// exhausted, the best visibility estimate collected so far is returned. The
+/// result is intended to scale direct diffuse and specular lighting while leaving
+/// ambient lighting unchanged.
+pub fn shadow<F>(
     surface_point: Vec3,
     surface_normal: Vec3,
     light_position: Vec3,
     settings: RayMarchSettings,
+    softness: f32,
     sample_sdf: F,
 ) -> f32
 where
@@ -143,10 +147,12 @@ where
 
     let shadow_ray = Ray::new(shadow_origin, to_light / light_distance);
     let mut march_dist = 0.0;
+    let mut visibility: f32 = 1.0;
+    let softness = softness.max(0.0);
 
     for _ in 0..settings.max_steps {
         if march_dist >= light_distance {
-            return 1.0;
+            return visibility.clamp(0.0, 1.0);
         }
 
         let dist = sample_sdf(shadow_ray.at(march_dist));
@@ -155,10 +161,14 @@ where
             return 0.0;
         }
 
+        if softness > 0.0 && march_dist > 0.0 {
+            visibility = visibility.min(dist / (softness * march_dist));
+        }
+
         march_dist += dist.max(settings.min_step);
     }
 
-    1.0
+    visibility.clamp(0.0, 1.0)
 }
 
 /// Estimates an SDF surface normal using four tetrahedral samples.

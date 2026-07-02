@@ -7,7 +7,7 @@ use crate::min_pair_many;
 use crate::procedural::smooth_subtraction;
 use crate::rendering::{
     AmbientLight, Camera, CameraController, CameraFrame, ExponentialFog, PhongMaterial, PointLight, RayMarchResult,
-    RayMarchSettings, SdfSample, estimate_normal_tetrahedral, hard_shadow, phong_lighting, ray_march,
+    RayMarchSettings, SdfSample, estimate_normal_tetrahedral, phong_lighting, ray_march, shadow,
 };
 use crate::scene::{FrameTime, Scene, SceneFrame};
 use pixels::wgpu::Color;
@@ -65,6 +65,7 @@ struct RayMarchingSceneFrame {
     animate_ground: bool,
     show_convergence_failure_debug: bool,
     ray_march_settings: RayMarchSettings,
+    shadow_softness: f32,
 }
 
 impl RayMarchingSceneFrame {
@@ -124,11 +125,12 @@ impl SceneFrame for RayMarchingSceneFrame {
             self.sample_scene(point, scene_time).dist
         });
 
-        let light_visibility = hard_shadow(
+        let light_visibility = shadow(
             hit.point,
             surface_normal,
             self.light.position,
             self.ray_march_settings,
+            self.shadow_softness,
             |point| self.sample_scene(point, scene_time).dist,
         );
         let light = PointLight {
@@ -309,6 +311,8 @@ impl Scene for RayMarchingScene {
             show_convergence_failure_debug: self.state.controls.show_convergence_failure_debug,
 
             ray_march_settings: self.state.controls.ray_march_settings,
+
+            shadow_softness: self.state.controls.shadow_softness,
         })
     }
 }

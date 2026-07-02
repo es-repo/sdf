@@ -3,8 +3,14 @@ use crate::rendering::RayMarchSettings;
 #[derive(Clone, Copy, serde::Serialize, serde::Deserialize)]
 pub(super) struct RayMarchSceneControls {
     pub ray_march_settings: RayMarchSettings,
+    #[serde(default = "default_shadow_softness")]
+    pub shadow_softness: f32,
     pub animate_ground: bool,
     pub show_convergence_failure_debug: bool,
+}
+
+fn default_shadow_softness() -> f32 {
+    0.05
 }
 
 impl Default for RayMarchSceneControls {
@@ -17,6 +23,7 @@ impl Default for RayMarchSceneControls {
                 min_step: 0.005,
                 near_clip: 0.05,
             },
+            shadow_softness: default_shadow_softness(),
             animate_ground: false,
             show_convergence_failure_debug: false,
         }
@@ -38,6 +45,7 @@ impl RayMarchSceneControls {
                 .text("Min step"),
         );
         ui.add(egui::Slider::new(&mut self.ray_march_settings.near_clip, 0.0..=1.0).text("Near clip"));
+        ui.add(egui::Slider::new(&mut self.shadow_softness, 0.0..=0.5).text("Shadow softness"));
         ui.checkbox(&mut self.animate_ground, "Animate ground");
         ui.checkbox(
             &mut self.show_convergence_failure_debug,

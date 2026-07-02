@@ -16,5 +16,5 @@ pub use lighting::{AmbientLight, PhongMaterial, PointLight, phong_lighting};
 pub use ray::Ray;
 pub use ray_marching::{
     RayMarchHit, RayMarchMiss, RayMarchResult, RayMarchSettings, SdfSample, estimate_normal_central_differences,
-    estimate_normal_tetrahedral, hard_shadow, ray_march,
+    estimate_normal_tetrahedral, ray_march, shadow,
 };
