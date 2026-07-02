@@ -7,7 +7,7 @@ use crate::min_pair_many;
 use crate::procedural::smooth_subtraction;
 use crate::rendering::{
     AmbientLight, Camera, CameraController, CameraFrame, ExponentialFog, PhongMaterial, PointLight, RayMarchResult,
-    RayMarchSettings, SdfSample, estimate_normal_tetrahedral, phong_lighting, ray_march,
+    RayMarchSettings, SdfSample, estimate_normal_tetrahedral, hard_shadow, phong_lighting, ray_march,
 };
 use crate::scene::{FrameTime, Scene, SceneFrame};
 use pixels::wgpu::Color;
@@ -124,11 +124,23 @@ impl SceneFrame for RayMarchingSceneFrame {
             self.sample_scene(point, scene_time).dist
         });
 
+        let light_visibility = hard_shadow(
+            hit.point,
+            surface_normal,
+            self.light.position,
+            self.ray_march_settings,
+            |point| self.sample_scene(point, scene_time).dist,
+        );
+        let light = PointLight {
+            intensity: self.light.intensity * light_visibility,
+            ..self.light
+        };
+
         let lit_color = phong_lighting(
             ray.origin,
             hit.point,
             surface_normal,
-            self.light,
+            light,
             PhongMaterial {
                 diffuse_color: hit.sample.color,
                 specular_color: Color::WHITE,
@@ -161,7 +173,7 @@ impl Scene for RayMarchingScene {
     fn prepare_frame(&self, scene_time: f32) -> Box<dyn SceneFrame> {
         let animation_time = scene_time * 0.5;
         let sphere_radius = 1.0;
-        let objects_y = 2.0;
+        let objects_y = 1.5;
         let object_remoteness = 4.0;
         let object_angle = PI * 2.0 / 6.0;
         let ambient_light = AmbientLight {
@@ -283,7 +295,7 @@ impl Scene for RayMarchingScene {
             ground: Ground::new(Color::rgb(0.7, 0.7, 0.7), 0.0, 7.0),
 
             light: PointLight {
-                position: Vec3::new(50.0, 10.0, -50.0),
+                position: Vec3::new(50.0, 50.0, -50.0),
                 color: Color::WHITE,
                 intensity: 1.0,
             },

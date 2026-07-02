@@ -107,6 +107,60 @@ where
     })
 }
 
+/// Computes hard-shadow visibility for a surface point and a point light.
+///
+/// A secondary ray is marched from the surface toward `light_position`. The
+/// `sample_sdf` callback must return the signed distance to the closest scene
+/// surface. The function returns `0.0` as soon as geometry is hit before the
+/// light, or `1.0` when the ray reaches the light unobstructed. Geometry beyond
+/// the light cannot cast a shadow on the surface point.
+///
+/// The ray origin is offset along `surface_normal` to avoid immediately hitting
+/// the surface that produced the primary ray hit. The bias accounts for both
+/// `hit_epsilon` and possible overshoot caused by `min_step`. If `max_steps` is
+/// exhausted without confirming an occluder, the point is treated as visible.
+/// The result is intended to scale direct diffuse and specular lighting while
+/// leaving ambient lighting unchanged.
+pub fn hard_shadow<F>(
+    surface_point: Vec3,
+    surface_normal: Vec3,
+    light_position: Vec3,
+    settings: RayMarchSettings,
+    sample_sdf: F,
+) -> f32
+where
+    F: Fn(Vec3) -> f32,
+{
+    // The primary march may overshoot the surface by up to `min_step`.
+    let shadow_bias = settings.hit_epsilon.max(settings.min_step) * 2.0;
+    let shadow_origin = surface_point + surface_normal * shadow_bias;
+    let to_light = light_position - shadow_origin;
+    let light_distance = to_light.len();
+
+    if light_distance <= settings.hit_epsilon {
+        return 1.0;
+    }
+
+    let shadow_ray = Ray::new(shadow_origin, to_light / light_distance);
+    let mut march_dist = 0.0;
+
+    for _ in 0..settings.max_steps {
+        if march_dist >= light_distance {
+            return 1.0;
+        }
+
+        let dist = sample_sdf(shadow_ray.at(march_dist));
+
+        if dist < settings.hit_epsilon {
+            return 0.0;
+        }
+
+        march_dist += dist.max(settings.min_step);
+    }
+
+    1.0
+}
+
 /// Estimates an SDF surface normal using four tetrahedral samples.
 pub fn estimate_normal_tetrahedral<F>(p: Vec3, e: f32, sdf: F) -> Vec3
 where
