@@ -1,7 +1,7 @@
 use super::ground::Ground;
 use super::ray_march_scene_controls::RayMarchSceneControls;
 use crate::color_ext::ColorExt;
-use crate::geometry::{Cuboid, Cylinder, Pyramid, Quat, SignedDistance3d, Sphere, Vec2, Vec3};
+use crate::geometry::{Cuboid, Cylinder, Pyramid, Quat, SignedDistance3d, Sphere, Torus, Vec2, Vec3};
 use crate::input::InputState;
 use crate::min_pair_many;
 use crate::procedural::smooth_subtraction;
@@ -32,8 +32,8 @@ impl Default for RayMarchingScene {
         let fov_y = 60f32.to_radians();
         let mut camera = Camera::new(fov_y, 1.0);
         camera.position.z = -8.0;
-        camera.position.y = 3.0;
-        let downward_pitch = Quat::from_axis_angle(Vec3::x_axis(), 10.0_f32.to_radians());
+        camera.position.y = 5.0;
+        let downward_pitch = Quat::from_axis_angle(Vec3::x_axis(), 20.0_f32.to_radians());
 
         camera.set_rotation(downward_pitch);
 
@@ -54,7 +54,7 @@ struct RayMarchingSceneFrame {
     sphere_2: Sphere,
     sphere_2_inner_cube_1: Cuboid,
     sphere_2_inner_cube_2: Cuboid,
-    sphere_3: Sphere,
+    torus: Torus,
     cuboid: Cuboid,
     pyramid: Pyramid,
     cylinder: Cylinder,
@@ -83,7 +83,7 @@ impl RayMarchingSceneFrame {
         let (sphere_2_dist, _) = smooth_subtraction(sphere_2_dist, sphere_2_inner_cube_1, r * 2.0);
         let (sphere_2_dist, _) = smooth_subtraction(sphere_2_dist, sphere_2_inner_cube_2, r * 2.0);
 
-        let sphere_3_dist = self.sphere_3.dist(point);
+        let torus_dist = self.torus.dist(point);
 
         let cuboid_dist = self.cuboid.dist_round(point, r);
         let pyramid_dist = self.pyramid.dist_round(point, r);
@@ -92,7 +92,7 @@ impl RayMarchingSceneFrame {
         let (dist, color) = min_pair_many!(
             (sphere_1_dist, self.sphere_1.color),
             (sphere_2_dist, self.sphere_2.color),
-            (sphere_3_dist, self.sphere_3.color),
+            (torus_dist, self.torus.color),
             (cuboid_dist, self.cuboid.color),
             (pyramid_dist, self.pyramid.color),
             (cylinder_dist, self.cylinder.color),
@@ -226,13 +226,17 @@ impl Scene for RayMarchingScene {
                 color: Color::rgb(0.5, 0.5, 0.5),
             },
 
-            sphere_3: Sphere {
+            torus: Torus {
                 center: Vec3::new(
                     object_remoteness * (object_angle * 3.0 + animation_time).sin(),
                     objects_y,
                     object_remoteness * (object_angle * 3.0 + animation_time).cos(),
                 ),
-                radius: sphere_radius,
+                major_radius: 0.75,
+                minor_radius: 0.3,
+                rotation: (Quat::from_axis_angle(Vec3::x_axis(), scene_time * 0.8)
+                    * Quat::from_axis_angle(Vec3::z_axis(), scene_time * 0.6))
+                .normalize(),
                 color: Color::rgb(0.0, 0.5, 1.0),
             },
 
@@ -276,7 +280,7 @@ impl Scene for RayMarchingScene {
                 color: Color::rgb(1.0, 1.0, 0.0),
             },
 
-            ground: Ground::new(Color::rgb(0.7, 0.7, 0.7), 0.0, 10.0),
+            ground: Ground::new(Color::rgb(0.7, 0.7, 0.7), 0.0, 7.0),
 
             light: PointLight {
                 position: Vec3::new(50.0, 10.0, -50.0),
