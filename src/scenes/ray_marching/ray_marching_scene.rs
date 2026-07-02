@@ -1,5 +1,5 @@
 use super::ground::Ground;
-use super::ray_march_settings_controls::ray_march_settings_ui;
+use super::ray_march_scene_controls::RayMarchSceneControls;
 use crate::color_ext::ColorExt;
 use crate::geometry::{Quat, SignedDistance3d, Sphere, Vec2, Vec3};
 use crate::input::InputState;
@@ -20,10 +20,8 @@ pub struct RayMarchingScene {
 #[derive(Clone, serde::Serialize, serde::Deserialize)]
 pub struct RayMarchingSceneState {
     camera: Camera,
-    ray_march_settings: RayMarchSettings,
-    animate_ground: bool,
     #[serde(default)]
-    show_convergence_failure_debug: bool,
+    controls: RayMarchSceneControls,
 }
 
 crate::stateful_scene!(RayMarchingScene, RayMarchingSceneState);
@@ -41,15 +39,7 @@ impl Default for RayMarchingScene {
         Self {
             state: RayMarchingSceneState {
                 camera,
-                ray_march_settings: RayMarchSettings {
-                    max_steps: 400,
-                    hit_epsilon: 0.001,
-                    max_distance: 100.0,
-                    min_step: 0.005,
-                    near_clip: 0.05,
-                },
-                animate_ground: true,
-                show_convergence_failure_debug: false,
+                controls: RayMarchSceneControls::default(),
             },
             camera_controller: CameraController::flight(10.0),
         }
@@ -72,11 +62,11 @@ struct RayMarchingSceneFrame {
 
 impl RayMarchingSceneFrame {
     fn sample_scene(&self, point: Vec3, scene_time: f32) -> SdfSample {
+        let ground_sample = self.ground.sample(point, scene_time, self.animate_ground);
+
         let sphere_1_dist = self.sphere_1.dist(point);
         let sphere_2_dist = self.sphere_2.dist(point);
         let sphere_3_dist = self.sphere_3.dist(point);
-
-        let ground_sample = self.ground.sample(point, scene_time, self.animate_ground);
 
         let (dist, color) = min_pair_many!(
             (sphere_1_dist, self.sphere_1.color),
@@ -141,24 +131,7 @@ impl Scene for RayMarchingScene {
     }
 
     fn controls_ui(&mut self, ui: &mut egui::Ui) {
-        ray_march_settings_ui(ui, &mut self.state.ray_march_settings);
-        ui.checkbox(&mut self.state.animate_ground, "Animate ground");
-        ui.checkbox(
-            &mut self.state.show_convergence_failure_debug,
-            "Show convergence failure debug",
-        );
-
-        if ui.button("Reset").clicked() {
-            self.state.ray_march_settings = RayMarchSettings {
-                max_steps: 120,
-                hit_epsilon: 0.0001,
-                max_distance: 100.0,
-                min_step: 0.005,
-                near_clip: 0.05,
-            };
-            self.state.animate_ground = true;
-            self.state.show_convergence_failure_debug = false;
-        }
+        self.state.controls.ui(ui);
     }
 
     fn prepare_frame(&self, scene_time: f32) -> Box<dyn SceneFrame> {
@@ -204,7 +177,7 @@ impl Scene for RayMarchingScene {
                 color: Color::rgb(0.0, 0.0, 1.0),
             },
 
-            ground: Ground::new(Color::rgb(0.7, 0.7, 0.7), 0.0),
+            ground: Ground::new(Color::rgb(0.7, 0.7, 0.7), 0.0, 10.0),
 
             light: PointLight {
                 position: Vec3::new(50.0, 10.0, -50.0),
@@ -216,11 +189,11 @@ impl Scene for RayMarchingScene {
 
             fog: ExponentialFog::new(ambient_light.color, 0.1, 50.0),
 
-            animate_ground: self.state.animate_ground,
+            animate_ground: self.state.controls.animate_ground,
 
-            show_convergence_failure_debug: self.state.show_convergence_failure_debug,
+            show_convergence_failure_debug: self.state.controls.show_convergence_failure_debug,
 
-            ray_march_settings: self.state.ray_march_settings,
+            ray_march_settings: self.state.controls.ray_march_settings,
         })
     }
 }

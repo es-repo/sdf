@@ -6,21 +6,30 @@ use pixels::wgpu::Color;
 #[derive(Copy, Clone, Debug)]
 pub(super) struct Ground {
     plane: Plane,
+    size: f32,
 }
 
 impl Ground {
-    pub fn new(color: Color, offset: f32) -> Self {
+    pub fn new(color: Color, offset: f32, size: f32) -> Self {
         Self {
             plane: Plane {
                 normal: Vec3::y_axis(),
                 offset,
                 color,
             },
+            size,
         }
     }
 
     pub fn dist(&self, point: Vec3, scene_time: f32, animated: bool) -> f32 {
         let dist = self.plane.dist(point);
+
+        let dist = dist
+            .max(point.x - self.size)
+            .max(-point.x - self.size)
+            .max(point.z - self.size)
+            .max(-point.z - self.size)
+            .max(-point.y - 1.0);
 
         if !animated {
             return dist;
@@ -33,7 +42,7 @@ impl Ground {
     }
 
     pub fn sample(&self, point: Vec3, scene_time: f32, animated: bool) -> SdfSample {
-        let size = 0.5;
+        let size = 1.5;
         let x_even = (point.x * size).floor() as i32 % 2 == 0;
         let z_even = (point.z * size).floor() as i32 % 2 == 0;
 
