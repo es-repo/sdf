@@ -343,6 +343,10 @@ impl Viewer {
             scene_time,
         };
         self.fps_counter.tick();
+
+        #[cfg(target_arch = "wasm32")]
+        crate::wasm_boot::store_playback_metrics(scene_time, self.fps_counter.count());
+
         let egui_frame = self.prepare_egui_frame();
         self.sync_audio_volume();
         let audio_analysis = self.audio_analysis();

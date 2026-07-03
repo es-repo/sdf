@@ -140,7 +140,7 @@
         #scene-control-bar {
             display: flex;
             align-items: center;
-            min-height: 44px;
+            min-height: 36px;
             color: #111;
             background: #e8e8e8;
             border-top: 1px solid #aaa;
@@ -150,11 +150,25 @@
             flex: 1;
         }
 
+        .scene-control-metric {
+            box-sizing: border-box;
+            min-width: 72px;
+            padding: 0 10px;
+            color: #111;
+            font: 600 13px/36px ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+            text-align: center;
+            white-space: nowrap;
+        }
+
+        #scene-fps {
+            min-width: 82px;
+        }
+
         .scene-control-button {
             display: inline-grid;
             place-items: center;
-            width: 44px;
-            height: 44px;
+            width: 36px;
+            height: 36px;
             padding: 0;
             color: #111;
             background: transparent;
@@ -178,8 +192,8 @@
         }
 
         .scene-control-button svg {
-            width: 22px;
-            height: 22px;
+            width: 19px;
+            height: 19px;
             fill: none;
             stroke: currentColor;
             stroke-width: 2;
@@ -407,6 +421,8 @@
                 <path d="m8 5 11 7-11 7V5Z"/>
             </svg>
         </button>
+        <output class="scene-control-metric" id="scene-time" aria-label="Scene time">0.00</output>
+        <output class="scene-control-metric" id="scene-fps" aria-label="Frames per second">0.0 fps</output>
         <div class="scene-control-spacer"></div>
         <button class="scene-control-button" id="audio-toggle" type="button" aria-label="Unmute scene audio" aria-pressed="false" title="Unmute scene audio" hidden>
             <svg class="audio-icon-muted" viewBox="0 0 24 24" aria-hidden="true">
@@ -440,6 +456,8 @@
     const sceneLinks = [...document.querySelectorAll("[data-scene-link]")];
     const resetSceneTime = document.getElementById("reset-scene-time");
     const timeToggle = document.getElementById("time-toggle");
+    const sceneTimeOutput = document.getElementById("scene-time");
+    const sceneFpsOutput = document.getElementById("scene-fps");
     const audioToggle = document.getElementById("audio-toggle");
     let currentScene = resolveScene(new URLSearchParams(window.location.search).get("scene"));
     let docsRenderVersion = 0;
@@ -461,6 +479,7 @@
     const sceneSize = getSceneHostSize();
     wasmSceneViewer.start(currentScene, sceneSize.width, sceneSize.height);
     requestAnimationFrame(syncSceneTimePaused);
+    requestAnimationFrame(updatePlaybackMetrics);
     maybeAutoEnableAudio();
     await docsReady;
     observeSceneHostSize();
@@ -590,6 +609,15 @@
     function syncSceneTimePaused() {
         sceneTimePaused = wasmSceneViewer.scene_time_paused();
         updateTimeToggle();
+    }
+
+    function updatePlaybackMetrics() {
+        const sceneTime = wasmSceneViewer.scene_time();
+        const framesPerSecond = wasmSceneViewer.frames_per_second();
+
+        sceneTimeOutput.value = sceneTime.toFixed(2);
+        sceneFpsOutput.value = `${framesPerSecond.toFixed(1)} fps`;
+        requestAnimationFrame(updatePlaybackMetrics);
     }
 
     function handleUserInteraction(event) {

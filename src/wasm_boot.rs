@@ -43,10 +43,17 @@ const DEFAULT_SCENE_HEIGHT: u32 = 400;
 thread_local! {
     static EVENT_PROXY: RefCell<Option<EventLoopProxy<AppEvent>>> = const { RefCell::new(None) };
     static SCENE_TIME_PAUSED: Cell<bool> = const { Cell::new(false) };
+    static SCENE_TIME: Cell<f32> = const { Cell::new(0.0) };
+    static FRAMES_PER_SECOND: Cell<f64> = const { Cell::new(0.0) };
 }
 
 pub(crate) fn store_scene_time_paused(paused: bool) {
     SCENE_TIME_PAUSED.set(paused);
+}
+
+pub(crate) fn store_playback_metrics(scene_time: f32, frames_per_second: f64) {
+    SCENE_TIME.set(scene_time);
+    FRAMES_PER_SECOND.set(frames_per_second);
 }
 
 struct SceneEntry {
@@ -267,6 +274,16 @@ pub fn set_scene_time_paused(paused: bool) -> Result<(), wasm_bindgen::JsValue> 
 #[wasm_bindgen::prelude::wasm_bindgen]
 pub fn scene_time_paused() -> bool {
     SCENE_TIME_PAUSED.get()
+}
+
+#[wasm_bindgen::prelude::wasm_bindgen]
+pub fn scene_time() -> f32 {
+    SCENE_TIME.get()
+}
+
+#[wasm_bindgen::prelude::wasm_bindgen]
+pub fn frames_per_second() -> f64 {
+    FRAMES_PER_SECOND.get()
 }
 
 #[wasm_bindgen::prelude::wasm_bindgen]
