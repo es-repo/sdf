@@ -33,23 +33,13 @@ jobs:
       - name: Build static site
         run: bash scripts/build-web-single-thread.sh
 
-      - name: Archive Pages artifact
-        run: |
-          tar \
-            --dereference \
-            --hard-dereference \
-            --directory dist \
-            -cvf "$RUNNER_TEMP/artifact.tar" \
-            --exclude=.git \
-            --exclude=.github \
-            .
+      - name: Configure Pages
+        uses: actions/configure-pages@v5
 
-      - uses: actions/upload-artifact@v6
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v4
         with:
-          name: github-pages
-          path: ${{ runner.temp }}/artifact.tar
-          retention-days: 1
-          if-no-files-found: error
+          path: dist
 
   deploy:
     needs: build
