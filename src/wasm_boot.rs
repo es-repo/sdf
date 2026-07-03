@@ -292,12 +292,10 @@ pub fn resize_scene(scene_width: u32, scene_height: u32) -> Result<(), wasm_bind
         let Some(event_proxy) = event_proxy.borrow().as_ref().cloned() else {
             return Err(wasm_bindgen::JsValue::from_str("Viewer is not running."));
         };
+        let (width, height) = scene_size(scene_width, scene_height);
 
         event_proxy
-            .send_event(AppEvent::ResizeScene {
-                width: scene_dimension(scene_width, DEFAULT_SCENE_WIDTH),
-                height: scene_dimension(scene_height, DEFAULT_SCENE_HEIGHT),
-            })
+            .send_event(AppEvent::ResizeScene { width, height })
             .map_err(|_| wasm_bindgen::JsValue::from_str("Failed to resize scene."))
     })
 }
@@ -318,10 +316,8 @@ pub fn start(scene_slug: &str, scene_width: u32, scene_height: u32) -> Result<()
         proxy.replace(Some(event_proxy.clone()));
     });
 
-    let size_logical = LogicalSize::<u32>::new(
-        scene_dimension(scene_width, DEFAULT_SCENE_WIDTH),
-        scene_dimension(scene_height, DEFAULT_SCENE_HEIGHT),
-    );
+    let (scene_width, scene_height) = scene_size(scene_width, scene_height);
+    let size_logical = LogicalSize::<u32>::new(scene_width, scene_height);
     let selected_slug = if available_scene_slugs().any(|candidate| candidate == scene_slug) {
         scene_slug
     } else {
@@ -334,6 +330,17 @@ pub fn start(scene_slug: &str, scene_width: u32, scene_height: u32) -> Result<()
     Ok(())
 }
 
-fn scene_dimension(value: u32, default: u32) -> u32 {
-    if value == 0 { default } else { value.min(default) }
+fn scene_size(width: u32, height: u32) -> (u32, u32) {
+    if width == 0 || height == 0 {
+        return (DEFAULT_SCENE_WIDTH, DEFAULT_SCENE_HEIGHT);
+    }
+
+    let scale = (DEFAULT_SCENE_WIDTH as f32 / width as f32)
+        .min(DEFAULT_SCENE_HEIGHT as f32 / height as f32)
+        .min(1.0);
+
+    (
+        (width as f32 * scale).round().max(1.0) as u32,
+        (height as f32 * scale).round().max(1.0) as u32,
+    )
 }

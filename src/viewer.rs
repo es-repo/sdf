@@ -520,18 +520,29 @@ impl Viewer {
             WindowEvent::Resized(size_physical) => {
                 if size_physical.width > 0 && size_physical.height > 0 {
                     let Some(pixels) = self.pixels.as_mut() else {
-                        self.size_logical = size_physical.to_logical::<u32>(self.scale_factor);
+                        #[cfg(not(target_arch = "wasm32"))]
+                        {
+                            self.size_logical = size_physical.to_logical::<u32>(self.scale_factor);
+                        }
                         return;
                     };
 
+                    #[cfg(target_arch = "wasm32")]
+                    let surface_size = web_surface_size(size_physical);
+                    #[cfg(not(target_arch = "wasm32"))]
+                    let surface_size = size_physical;
+
                     pixels
-                        .resize_surface(size_physical.width, size_physical.height)
+                        .resize_surface(surface_size.width, surface_size.height)
                         .unwrap();
 
-                    self.size_logical = size_physical.to_logical::<u32>(self.scale_factor);
-                    pixels
-                        .resize_buffer(self.size_logical.width, self.size_logical.height)
-                        .unwrap();
+                    #[cfg(not(target_arch = "wasm32"))]
+                    {
+                        self.size_logical = size_physical.to_logical::<u32>(self.scale_factor);
+                        pixels
+                            .resize_buffer(self.size_logical.width, self.size_logical.height)
+                            .unwrap();
+                    }
 
                     self.window.as_ref().unwrap().request_redraw();
                 }
@@ -591,14 +602,14 @@ impl Viewer {
             return;
         };
 
-        let _ = window.request_inner_size(self.size_logical);
-
         if let Some(pixels) = self.pixels.as_mut() {
-            let size_physical = self.size_logical.to_physical(self.scale_factor);
+            let surface_size = web_surface_size(window.inner_size());
 
-            pixels
-                .resize_surface(size_physical.width, size_physical.height)
-                .unwrap();
+            if surface_size.width > 0 && surface_size.height > 0 {
+                pixels
+                    .resize_surface(surface_size.width, surface_size.height)
+                    .unwrap();
+            }
             pixels
                 .resize_buffer(self.size_logical.width, self.size_logical.height)
                 .unwrap();
@@ -856,6 +867,23 @@ fn collapse_controls_window(context: &egui::Context) {
         state.store(context);
         context.request_repaint();
     }
+}
+
+#[cfg(target_arch = "wasm32")]
+fn web_surface_size(size: PhysicalSize<u32>) -> PhysicalSize<u32> {
+    if size.width == 0 || size.height == 0 {
+        return size;
+    }
+
+    let max_dimension = pixels::wgpu::Limits::downlevel_webgl2_defaults().max_texture_dimension_2d;
+    let scale = (max_dimension as f64 / size.width as f64)
+        .min(max_dimension as f64 / size.height as f64)
+        .min(1.0);
+
+    PhysicalSize::new(
+        (size.width as f64 * scale).round().max(1.0) as u32,
+        (size.height as f64 * scale).round().max(1.0) as u32,
+    )
 }
 
 #[cfg(target_arch = "wasm32")]
