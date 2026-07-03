@@ -21,6 +21,10 @@
             align-items: center;
         }
 
+        body.scene-fullscreen-fallback {
+            overflow: hidden;
+        }
+
         :where(nav a, .scene-control-button, .code-tabs-button) {
             transition:
                 color 0.12s ease,
@@ -120,9 +124,11 @@
             overflow: hidden;
         }
 
-        #scene-output:fullscreen {
+        #scene-output:fullscreen,
+        #scene-output.fullscreen-fallback {
             position: fixed;
             inset: 0;
+            z-index: 1000;
             display: flex;
             flex-direction: column;
             width: 100vw;
@@ -134,7 +140,8 @@
             border: 0;
         }
 
-        #scene-output:fullscreen #scene-host {
+        #scene-output:fullscreen #scene-host,
+        #scene-output.fullscreen-fallback #scene-host {
             flex: 1 1 0;
             width: 100%;
             height: 0;
@@ -142,14 +149,16 @@
             aspect-ratio: auto;
         }
 
-        #scene-output:fullscreen #scene-host canvas {
+        #scene-output:fullscreen #scene-host canvas,
+        #scene-output.fullscreen-fallback #scene-host canvas {
             position: absolute;
             inset: 0;
             width: 100% !important;
             height: 100% !important;
         }
 
-        #scene-output:fullscreen #scene-control-bar {
+        #scene-output:fullscreen #scene-control-bar,
+        #scene-output.fullscreen-fallback #scene-control-bar {
             flex: 0 0 auto;
         }
 
@@ -686,6 +695,12 @@
     });
 
     fullscreenToggle.addEventListener("click", async () => {
+        if (!nativeFullscreenAvailable()) {
+            setFallbackFullscreen(!sceneOutput.classList.contains("fullscreen-fallback"));
+            focusSceneCanvas();
+            return;
+        }
+
         try {
             if (document.fullscreenElement) {
                 await document.exitFullscreen();
@@ -784,14 +799,27 @@
     }
 
     function updateFullscreenToggle() {
-        const isFullscreen = document.fullscreenElement === sceneOutput;
+        const isFullscreen = document.fullscreenElement === sceneOutput
+            || sceneOutput.classList.contains("fullscreen-fallback");
         const label = isFullscreen ? "Exit fullscreen" : "Enter fullscreen";
 
-        fullscreenToggle.hidden = !document.fullscreenEnabled || typeof sceneOutput.requestFullscreen !== "function";
         fullscreenToggle.title = label;
         fullscreenToggle.setAttribute("aria-label", label);
         fullscreenToggle.setAttribute("aria-pressed", String(isFullscreen));
         fullscreenToggle.classList.toggle("fullscreen-active", isFullscreen);
+    }
+
+    function nativeFullscreenAvailable() {
+        return document.fullscreenEnabled && typeof sceneOutput.requestFullscreen === "function";
+    }
+
+    function setFallbackFullscreen(enabled) {
+        sceneOutput.classList.toggle("fullscreen-fallback", enabled);
+        document.body.classList.toggle("scene-fullscreen-fallback", enabled);
+        updateFullscreenToggle();
+        requestAnimationFrame(() => {
+            requestAnimationFrame(resizeSceneToHost);
+        });
     }
 
     function syncSceneTimePaused() {
