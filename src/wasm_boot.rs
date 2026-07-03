@@ -36,7 +36,7 @@ impl fmt::Debug for AppEvent {
     }
 }
 
-const DEFAULT_SCENE_SLUG: &str = "scene-1";
+const DEFAULT_SCENE_SLUG: &str = "ray-marching";
 const DEFAULT_SCENE_WIDTH: u32 = 640;
 const DEFAULT_SCENE_HEIGHT: u32 = 400;
 

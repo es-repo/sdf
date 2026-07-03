@@ -553,6 +553,7 @@
     }
 
     const sceneSlugs = csvSlugs(wasmSceneViewer.available_scene_slugs_csv());
+    const defaultScene = "ray-marching";
     renderSceneLinks("demos", csvSlugs(wasmSceneViewer.demo_scene_slugs_csv()));
     renderSceneLinks("techniques", csvSlugs(wasmSceneViewer.technique_scene_slugs_csv()));
     const sceneLinks = [...document.querySelectorAll("[data-scene-link]")];
@@ -693,7 +694,7 @@
     }
 
     function resolveScene(sceneSlug) {
-        return sceneSlugs.includes(sceneSlug) ? sceneSlug : sceneSlugs[0];
+        return sceneSlugs.includes(sceneSlug) ? sceneSlug : defaultScene;
     }
 
     function csvSlugs(csv) {
