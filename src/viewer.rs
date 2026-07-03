@@ -11,7 +11,7 @@ use std::sync::Arc;
 use web_time::Instant;
 use winit::application::ApplicationHandler;
 use winit::dpi::{LogicalSize, PhysicalSize};
-use winit::event::{ElementState, MouseScrollDelta, WindowEvent};
+use winit::event::{ElementState, MouseScrollDelta, TouchPhase, WindowEvent};
 use winit::event_loop::ActiveEventLoop;
 use winit::keyboard::{KeyCode, PhysicalKey};
 use winit::window::{Window, WindowAttributes, WindowId};
@@ -516,7 +516,7 @@ impl Viewer {
 
             WindowEvent::CursorMoved { position, .. } => {
                 self.input
-                    .set_mouse_position(Vec2::new(position.x as f32, position.y as f32));
+                    .set_pointer_position(Vec2::new(position.x as f32, position.y as f32));
             }
 
             WindowEvent::MouseWheel { delta, .. } => {
@@ -525,7 +525,23 @@ impl Viewer {
                 }
             }
 
-            WindowEvent::CursorLeft { .. } => self.input.clear_mouse_position(),
+            WindowEvent::Touch(touch) => {
+                let position = Vec2::new(touch.location.x as f32, touch.location.y as f32);
+
+                match touch.phase {
+                    TouchPhase::Started if !gui_consumed => {
+                        self.input.start_touch(touch.id, position);
+                        self.sync_scene_audio();
+                    }
+                    TouchPhase::Moved if !gui_consumed => {
+                        self.input.move_touch(touch.id, position, self.scale_factor as f32);
+                    }
+                    TouchPhase::Ended | TouchPhase::Cancelled => self.input.end_touch(touch.id),
+                    _ => {}
+                }
+            }
+
+            WindowEvent::CursorLeft { .. } => self.input.clear_pointer_position(),
 
             WindowEvent::Focused(false) => self.input.clear(),
 

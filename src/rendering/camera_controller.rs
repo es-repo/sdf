@@ -142,15 +142,15 @@ impl CameraController {
             return;
         }
 
-        let mouse_delta = input.mouse_delta();
+        let pointer_delta = input.pointer_delta();
 
-        if mouse_delta.len_squared() == 0.0 {
+        if pointer_delta.len_squared() == 0.0 {
             return;
         }
 
         match self.mode {
-            CameraControlMode::Fps => self.update_fps_rotation(camera, mouse_delta),
-            CameraControlMode::Flight => self.update_flight_rotation(camera, mouse_delta),
+            CameraControlMode::Fps => self.update_fps_rotation(camera, pointer_delta),
+            CameraControlMode::Flight => self.update_flight_rotation(camera, pointer_delta),
             CameraControlMode::Arcball => {}
         }
     }
@@ -199,9 +199,9 @@ impl CameraController {
 
     fn update_arcball_camera(&mut self, camera: &mut Camera, real_time_delta: f32, input: &InputState) {
         if self.is_look_active(input) {
-            let mouse_delta = input.mouse_delta();
-            self.yaw += mouse_delta.x * self.look_sensitivity;
-            self.pitch = (self.pitch + mouse_delta.y * self.look_sensitivity).clamp(-MAX_PITCH, MAX_PITCH);
+            let pointer_delta = input.pointer_delta();
+            self.yaw += pointer_delta.x * self.look_sensitivity;
+            self.pitch = (self.pitch + pointer_delta.y * self.look_sensitivity).clamp(-MAX_PITCH, MAX_PITCH);
         }
 
         if input.is_key_pressed(self.controls.left) {
@@ -234,9 +234,10 @@ impl CameraController {
     }
 
     fn is_look_active(&self, input: &InputState) -> bool {
-        match self.controls.look_button {
-            Some(button) => input.is_mouse_button_pressed(button),
-            None => true,
-        }
+        input.is_touch_look_active()
+            || match self.controls.look_button {
+                Some(button) => input.is_mouse_button_pressed(button),
+                None => true,
+            }
     }
 }
