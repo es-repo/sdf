@@ -99,7 +99,7 @@ impl InputState {
                 self.pointer_delta = self.pointer_delta + delta;
             }
             2 => {
-                let logical_delta = delta / scale_factor.max(1.0);
+                let logical_delta = delta / scale_factor.max(1.0) * -1.0;
                 self.scroll_delta = self.scroll_delta + logical_delta * 0.5;
             }
             _ => {}
