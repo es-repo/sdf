@@ -254,18 +254,30 @@ impl Viewer {
 
         let scene = self.scene.as_mut();
         let window = self.window.as_ref()?;
+        let window_surface_size = window.inner_size();
+
+        #[cfg(target_arch = "wasm32")]
+        let surface_size = {
+            let pixels = self.pixels.as_ref()?;
+            web_surface_size(
+                window_surface_size,
+                pixels.context().device.limits().max_texture_dimension_2d,
+            )
+        };
+        #[cfg(not(target_arch = "wasm32"))]
+        let surface_size = {
+            // Device-pixel sizes can truncate fractional logical pixels while
+            // LogicalSize::to_physical can round them up. Keep egui's scissor
+            // rectangles no larger than the actual render target.
+            let expected_surface_size = self.size_logical.to_physical::<u32>(self.scale_factor);
+            PhysicalSize::new(
+                expected_surface_size.width.min(window_surface_size.width),
+                expected_surface_size.height.min(window_surface_size.height),
+            )
+        };
+
         let egui = self.egui.as_mut()?;
         let mut raw_input = egui.state.take_egui_input(window);
-
-        // Browser device-pixel sizes can truncate fractional CSS pixels while
-        // LogicalSize::to_physical can round them up. Keep egui's scissor
-        // rectangles no larger than the actual render target.
-        let expected_surface_size = self.size_logical.to_physical::<u32>(self.scale_factor);
-        let window_surface_size = window.inner_size();
-        let surface_size = PhysicalSize::new(
-            expected_surface_size.width.min(window_surface_size.width),
-            expected_surface_size.height.min(window_surface_size.height),
-        );
         let pixels_per_point = egui_winit::pixels_per_point(&egui.context, window);
         let screen_size_in_points = egui::vec2(
             surface_size.width as f32 / pixels_per_point,
@@ -528,7 +540,10 @@ impl Viewer {
                     };
 
                     #[cfg(target_arch = "wasm32")]
-                    let surface_size = web_surface_size(size_physical);
+                    let surface_size = web_surface_size(
+                        size_physical,
+                        pixels.context().device.limits().max_texture_dimension_2d,
+                    );
                     #[cfg(not(target_arch = "wasm32"))]
                     let surface_size = size_physical;
 
@@ -603,7 +618,10 @@ impl Viewer {
         };
 
         if let Some(pixels) = self.pixels.as_mut() {
-            let surface_size = web_surface_size(window.inner_size());
+            let surface_size = web_surface_size(
+                window.inner_size(),
+                pixels.context().device.limits().max_texture_dimension_2d,
+            );
 
             if surface_size.width > 0 && surface_size.height > 0 {
                 pixels
@@ -791,19 +809,10 @@ impl ApplicationHandler<AppEvent> for Viewer {
         let proxy = self.event_proxy.clone();
         let width = self.size_logical.width;
         let height = self.size_logical.height;
-        let device_descriptor = pixels::wgpu::DeviceDescriptor {
-            label: Some("sdf-web-device"),
-            required_features: pixels::wgpu::Features::empty(),
-            required_limits: pixels::wgpu::Limits::downlevel_webgl2_defaults(),
-            experimental_features: pixels::wgpu::ExperimentalFeatures::disabled(),
-            memory_hints: pixels::wgpu::MemoryHints::default(),
-            trace: pixels::wgpu::Trace::Off,
-        };
 
         wasm_bindgen_futures::spawn_local(async move {
             let mut pixels = pixels::PixelsBuilder::new(width, height, surface_texture)
                 .wgpu_backend(pixels::wgpu::Backends::GL)
-                .device_descriptor(device_descriptor)
                 .enable_vsync(true)
                 .build_async()
                 .await
@@ -870,12 +879,11 @@ fn collapse_controls_window(context: &egui::Context) {
 }
 
 #[cfg(target_arch = "wasm32")]
-fn web_surface_size(size: PhysicalSize<u32>) -> PhysicalSize<u32> {
+fn web_surface_size(size: PhysicalSize<u32>, max_dimension: u32) -> PhysicalSize<u32> {
     if size.width == 0 || size.height == 0 {
         return size;
     }
 
-    let max_dimension = pixels::wgpu::Limits::downlevel_webgl2_defaults().max_texture_dimension_2d;
     let scale = (max_dimension as f64 / size.width as f64)
         .min(max_dimension as f64 / size.height as f64)
         .min(1.0);
