@@ -995,8 +995,8 @@
         };
     }
 
-    function getSceneRenderSize() {
-        const {width, height} = getSceneHostSize();
+    function getSceneRenderSize(hostSize = getSceneHostSize()) {
+        const {width, height} = hostSize;
 
         return {
             width: Math.max(1, Math.round(width * renderScale)),
@@ -1005,8 +1005,13 @@
     }
 
     function resizeSceneToHost() {
-        const {width, height} = getSceneRenderSize();
-        wasmSceneViewer.resize_scene(width, height);
+        const hostSize = getSceneHostSize();
+        const {width, height} = getSceneRenderSize(hostSize);
+        const pixelRatio = window.devicePixelRatio > 0 ? window.devicePixelRatio : 1;
+        const surfaceWidth = Math.max(1, Math.round(hostSize.width * pixelRatio));
+        const surfaceHeight = Math.max(1, Math.round(hostSize.height * pixelRatio));
+
+        wasmSceneViewer.resize_scene(width, height, surfaceWidth, surfaceHeight);
         updateRenderScaleInfo(width, height);
     }
 

@@ -606,7 +606,7 @@ impl Viewer {
     }
 
     #[cfg(target_arch = "wasm32")]
-    fn resize_scene(&mut self, width: u32, height: u32) {
+    fn resize_scene(&mut self, width: u32, height: u32, surface_size: Option<PhysicalSize<u32>>) {
         if width == 0 || height == 0 {
             return;
         }
@@ -619,7 +619,7 @@ impl Viewer {
 
         if let Some(pixels) = self.pixels.as_mut() {
             let surface_size = web_surface_size(
-                window.inner_size(),
+                surface_size.unwrap_or_else(|| window.inner_size()),
                 pixels.context().device.limits().max_texture_dimension_2d,
             );
 
@@ -830,7 +830,7 @@ impl ApplicationHandler<AppEvent> for Viewer {
                     self.egui = Some(EguiState::new(window, &pixels));
                 }
                 self.pixels = Some(pixels);
-                self.resize_scene(self.size_logical.width, self.size_logical.height);
+                self.resize_scene(self.size_logical.width, self.size_logical.height, None);
                 self.sync_scene_audio();
                 self.window.as_ref().unwrap().request_redraw();
             }
@@ -845,7 +845,16 @@ impl ApplicationHandler<AppEvent> for Viewer {
                 self.sync_scene_audio();
                 self.window.as_ref().unwrap().request_redraw();
             }
-            AppEvent::ResizeScene { width, height } => self.resize_scene(width, height),
+            AppEvent::ResizeScene {
+                width,
+                height,
+                surface_width,
+                surface_height,
+            } => self.resize_scene(
+                width,
+                height,
+                Some(PhysicalSize::new(surface_width, surface_height)),
+            ),
             AppEvent::SetAudioEnabled(enabled) => self.set_audio_enabled(enabled),
             AppEvent::ResetSceneTime => self.reset_scene_time(),
             AppEvent::SetSceneTimePaused(paused) => self.set_scene_time_paused(paused),

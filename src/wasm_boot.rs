@@ -17,7 +17,12 @@ pub use wasm_bindgen_rayon::init_thread_pool;
 pub enum AppEvent {
     PixelsReady(pixels::Pixels<'static>),
     SwitchScene(Box<dyn Scene>),
-    ResizeScene { width: u32, height: u32 },
+    ResizeScene {
+        width: u32,
+        height: u32,
+        surface_width: u32,
+        surface_height: u32,
+    },
     SetAudioEnabled(bool),
     ResetSceneTime,
     SetSceneTimePaused(bool),
@@ -287,7 +292,12 @@ pub fn frames_per_second() -> f64 {
 }
 
 #[wasm_bindgen::prelude::wasm_bindgen]
-pub fn resize_scene(scene_width: u32, scene_height: u32) -> Result<(), wasm_bindgen::JsValue> {
+pub fn resize_scene(
+    scene_width: u32,
+    scene_height: u32,
+    surface_width: u32,
+    surface_height: u32,
+) -> Result<(), wasm_bindgen::JsValue> {
     EVENT_PROXY.with(|event_proxy| {
         let Some(event_proxy) = event_proxy.borrow().as_ref().cloned() else {
             return Err(wasm_bindgen::JsValue::from_str("Viewer is not running."));
@@ -295,7 +305,12 @@ pub fn resize_scene(scene_width: u32, scene_height: u32) -> Result<(), wasm_bind
         let (width, height) = scene_size(scene_width, scene_height);
 
         event_proxy
-            .send_event(AppEvent::ResizeScene { width, height })
+            .send_event(AppEvent::ResizeScene {
+                width,
+                height,
+                surface_width,
+                surface_height,
+            })
             .map_err(|_| wasm_bindgen::JsValue::from_str("Failed to resize scene."))
     })
 }
