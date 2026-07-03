@@ -220,6 +220,33 @@ impl Viewer {
         }
     }
 
+    fn update_scene_time_paused(&mut self, paused: bool) {
+        self.scene_time_paused = paused;
+
+        #[cfg(target_arch = "wasm32")]
+        crate::wasm_boot::store_scene_time_paused(paused);
+    }
+
+    fn set_scene_time_paused(&mut self, paused: bool) {
+        self.update_scene_time_paused(paused);
+        self.save_persisted_state();
+
+        if let Some(window) = self.window.as_ref() {
+            window.request_redraw();
+        }
+    }
+
+    #[cfg(target_arch = "wasm32")]
+    fn reset_scene_time(&mut self) {
+        self.scene_time = 0.0;
+        self.last_frame_time = Instant::now();
+        self.save_persisted_state();
+
+        if let Some(window) = self.window.as_ref() {
+            window.request_redraw();
+        }
+    }
+
     fn prepare_egui_frame(&mut self) -> Option<EguiFrame> {
         if !self.scene.has_controls_ui() {
             return None;
@@ -454,9 +481,7 @@ impl Viewer {
                     }
 
                     if !gui_consumed && matches!(event.physical_key, PhysicalKey::Code(KeyCode::Space)) {
-                        self.scene_time_paused = !self.scene_time_paused;
-                        self.save_persisted_state();
-                        self.window.as_ref().unwrap().request_redraw();
+                        self.set_scene_time_paused(!self.scene_time_paused);
                     }
                 }
             }
@@ -598,7 +623,7 @@ impl Viewer {
         self.scale_factor = window.scale_factor();
         self.window = Some(Arc::clone(&window));
         self.scene_time = 0.0;
-        self.scene_time_paused = false;
+        self.update_scene_time_paused(false);
         self.last_frame_time = Instant::now();
         self.cached_audio_analysis = AudioAnalysis::default();
         self.fps_counter.reset();
@@ -644,7 +669,7 @@ impl Viewer {
         } else {
             0.0
         };
-        self.scene_time_paused = state.scene_time_paused;
+        self.update_scene_time_paused(state.scene_time_paused);
 
         if let Some(scene_state) = state.scene_state.as_ref() {
             self.scene.load_state(scene_state);
@@ -788,7 +813,7 @@ impl ApplicationHandler<AppEvent> for Viewer {
             AppEvent::SwitchScene(scene) => {
                 self.scene = scene;
                 self.scene_time = 0.0;
-                self.scene_time_paused = false;
+                self.update_scene_time_paused(false);
                 self.last_frame_time = Instant::now();
                 self.cached_audio_analysis = AudioAnalysis::default();
                 self.fps_counter.reset();
@@ -798,6 +823,8 @@ impl ApplicationHandler<AppEvent> for Viewer {
             }
             AppEvent::ResizeScene { width, height } => self.resize_scene(width, height),
             AppEvent::SetAudioEnabled(enabled) => self.set_audio_enabled(enabled),
+            AppEvent::ResetSceneTime => self.reset_scene_time(),
+            AppEvent::SetSceneTimePaused(paused) => self.set_scene_time_paused(paused),
         }
     }
 

@@ -5,7 +5,7 @@ use sdf::scenes::{
     Scene5, Scene6, Scene7, Scene8, SdfDisplacementScene, SdfScene, SimplexNoise3dScene, SimplexNoiseScene,
     SmoothUnionScene,
 };
-use std::cell::RefCell;
+use std::cell::{Cell, RefCell};
 use std::fmt;
 use winit::dpi::LogicalSize;
 use winit::event_loop::{ControlFlow, EventLoop, EventLoopProxy};
@@ -19,6 +19,8 @@ pub enum AppEvent {
     SwitchScene(Box<dyn Scene>),
     ResizeScene { width: u32, height: u32 },
     SetAudioEnabled(bool),
+    ResetSceneTime,
+    SetSceneTimePaused(bool),
 }
 
 impl fmt::Debug for AppEvent {
@@ -28,6 +30,8 @@ impl fmt::Debug for AppEvent {
             Self::SwitchScene(_) => f.write_str("SwitchScene"),
             Self::ResizeScene { .. } => f.write_str("ResizeScene"),
             Self::SetAudioEnabled(_) => f.write_str("SetAudioEnabled"),
+            Self::ResetSceneTime => f.write_str("ResetSceneTime"),
+            Self::SetSceneTimePaused(_) => f.write_str("SetSceneTimePaused"),
         }
     }
 }
@@ -38,6 +42,11 @@ const DEFAULT_SCENE_HEIGHT: u32 = 400;
 
 thread_local! {
     static EVENT_PROXY: RefCell<Option<EventLoopProxy<AppEvent>>> = const { RefCell::new(None) };
+    static SCENE_TIME_PAUSED: Cell<bool> = const { Cell::new(false) };
+}
+
+pub(crate) fn store_scene_time_paused(paused: bool) {
+    SCENE_TIME_PAUSED.set(paused);
 }
 
 struct SceneEntry {
@@ -227,6 +236,37 @@ pub fn set_audio_enabled(enabled: bool) -> Result<(), wasm_bindgen::JsValue> {
             .send_event(AppEvent::SetAudioEnabled(enabled))
             .map_err(|_| wasm_bindgen::JsValue::from_str("Failed to update audio state."))
     })
+}
+
+#[wasm_bindgen::prelude::wasm_bindgen]
+pub fn reset_scene_time() -> Result<(), wasm_bindgen::JsValue> {
+    EVENT_PROXY.with(|event_proxy| {
+        let Some(event_proxy) = event_proxy.borrow().as_ref().cloned() else {
+            return Err(wasm_bindgen::JsValue::from_str("Viewer is not running."));
+        };
+
+        event_proxy
+            .send_event(AppEvent::ResetSceneTime)
+            .map_err(|_| wasm_bindgen::JsValue::from_str("Failed to reset scene time."))
+    })
+}
+
+#[wasm_bindgen::prelude::wasm_bindgen]
+pub fn set_scene_time_paused(paused: bool) -> Result<(), wasm_bindgen::JsValue> {
+    EVENT_PROXY.with(|event_proxy| {
+        let Some(event_proxy) = event_proxy.borrow().as_ref().cloned() else {
+            return Err(wasm_bindgen::JsValue::from_str("Viewer is not running."));
+        };
+
+        event_proxy
+            .send_event(AppEvent::SetSceneTimePaused(paused))
+            .map_err(|_| wasm_bindgen::JsValue::from_str("Failed to update scene time."))
+    })
+}
+
+#[wasm_bindgen::prelude::wasm_bindgen]
+pub fn scene_time_paused() -> bool {
+    SCENE_TIME_PAUSED.get()
 }
 
 #[wasm_bindgen::prelude::wasm_bindgen]
