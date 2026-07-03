@@ -335,12 +335,5 @@ fn scene_size(width: u32, height: u32) -> (u32, u32) {
         return (DEFAULT_SCENE_WIDTH, DEFAULT_SCENE_HEIGHT);
     }
 
-    let scale = (DEFAULT_SCENE_WIDTH as f32 / width as f32)
-        .min(DEFAULT_SCENE_HEIGHT as f32 / height as f32)
-        .min(1.0);
-
-    (
-        (width as f32 * scale).round().max(1.0) as u32,
-        (height as f32 * scale).round().max(1.0) as u32,
-    )
+    (width, height)
 }

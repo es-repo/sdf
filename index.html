@@ -201,6 +201,28 @@
             min-width: 82px;
         }
 
+        .scene-control-select {
+            box-sizing: border-box;
+            width: 64px;
+            height: 36px;
+            padding: 0 6px;
+            color: #111;
+            background: transparent;
+            border: 0;
+            font: 600 12px/36px ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+            cursor: pointer;
+        }
+
+        .scene-control-select:hover,
+        .scene-control-select:focus-visible {
+            background: #ccc;
+        }
+
+        .scene-control-select:focus-visible {
+            outline: 2px solid #555;
+            outline-offset: -2px;
+        }
+
         .scene-control-button {
             display: inline-grid;
             place-items: center;
@@ -473,6 +495,18 @@
         <output class="scene-control-metric" id="scene-time" aria-label="Scene time">0.00</output>
         <output class="scene-control-metric" id="scene-fps" aria-label="Frames per second">0.0 fps</output>
         <div class="scene-control-spacer"></div>
+        <select class="scene-control-select" id="render-scale" aria-label="Render scale" title="Render scale">
+            <option value="0.1">10%</option>
+            <option value="0.2">20%</option>
+            <option value="0.3">30%</option>
+            <option value="0.4">40%</option>
+            <option value="0.5">50%</option>
+            <option value="0.6">60%</option>
+            <option value="0.7">70%</option>
+            <option value="0.8">80%</option>
+            <option value="0.9">90%</option>
+            <option value="1" selected>100%</option>
+        </select>
         <button class="scene-control-button" id="audio-toggle" type="button" aria-label="Unmute scene audio" aria-pressed="false" title="Unmute scene audio" hidden>
             <svg class="audio-icon-muted" viewBox="0 0 24 24" aria-hidden="true">
                 <path d="M11 5 6 9H3v6h3l5 4V5Z"/>
@@ -521,6 +555,7 @@
     const timeToggle = document.getElementById("time-toggle");
     const sceneTimeOutput = document.getElementById("scene-time");
     const sceneFpsOutput = document.getElementById("scene-fps");
+    const renderScaleSelect = document.getElementById("render-scale");
     const audioToggle = document.getElementById("audio-toggle");
     const sceneOutput = document.getElementById("scene-output");
     const fullscreenToggle = document.getElementById("fullscreen-toggle");
@@ -530,11 +565,13 @@
     let sceneTimePaused = false;
     let audioEnabled = false;
     let audioUserMuted = false;
+    let renderScale = Number(renderScaleSelect.value);
 
     updateSceneLinks(currentScene);
     updateTimeToggle();
     updateAudioToggle(currentScene);
     updateFullscreenToggle();
+    updateRenderScaleTitle();
 
     const docsReady = renderSceneDocs(currentScene);
 
@@ -542,7 +579,7 @@
         await wasmSceneViewer.initThreadPool(wasmThreadPoolSize());
     }
 
-    const sceneSize = getSceneHostSize();
+    const sceneSize = getSceneRenderSize();
     wasmSceneViewer.start(currentScene, sceneSize.width, sceneSize.height);
     requestAnimationFrame(syncSceneTimePaused);
     requestAnimationFrame(updatePlaybackMetrics);
@@ -592,6 +629,12 @@
             audioUserMuted = previousAudioUserMuted;
         }
 
+        focusSceneCanvas();
+    });
+
+    renderScaleSelect.addEventListener("change", () => {
+        renderScale = Number(renderScaleSelect.value);
+        resizeSceneToHost();
         focusSceneCanvas();
     });
 
@@ -877,9 +920,24 @@
         };
     }
 
-    function resizeSceneToHost() {
+    function getSceneRenderSize() {
         const {width, height} = getSceneHostSize();
+
+        return {
+            width: Math.max(1, Math.round(width * renderScale)),
+            height: Math.max(1, Math.round(height * renderScale)),
+        };
+    }
+
+    function resizeSceneToHost() {
+        const {width, height} = getSceneRenderSize();
         wasmSceneViewer.resize_scene(width, height);
+        updateRenderScaleTitle(width, height);
+    }
+
+    function updateRenderScaleTitle(width, height) {
+        const resolution = width && height ? ` (${width}×${height})` : "";
+        renderScaleSelect.title = `Render scale: ${Math.round(renderScale * 100)}%${resolution}`;
     }
 
     function wasmThreadPoolSize() {
@@ -913,7 +971,7 @@
 
             lastWidth = width;
             lastHeight = height;
-            wasmSceneViewer.resize_scene(width, height);
+            resizeSceneToHost();
         }
 
         function scheduleSync() {
