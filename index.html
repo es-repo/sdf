@@ -264,6 +264,46 @@
             stroke-linejoin: round;
         }
 
+        @media (max-width: 480px) {
+            #scene-control-bar {
+                min-height: 34px;
+            }
+
+            #scene-fps {
+                display: none;
+            }
+
+            .scene-control-metric {
+                min-width: 60px;
+                padding: 0 6px;
+                font-size: 12px;
+                line-height: 34px;
+            }
+
+            #render-resolution {
+                min-width: 90px;
+            }
+
+            .scene-control-select {
+                width: 60px;
+                height: 34px;
+                padding: 0 4px;
+                font-size: 11px;
+                line-height: 34px;
+            }
+
+            .scene-control-button {
+                width: 34px;
+                height: 34px;
+            }
+        }
+
+        @media (max-width: 360px) {
+            #render-resolution {
+                display: none;
+            }
+        }
+
         #audio-toggle .audio-icon-on {
             display: none;
         }
