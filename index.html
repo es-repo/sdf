@@ -201,6 +201,10 @@
             min-width: 82px;
         }
 
+        #render-resolution {
+            min-width: 100px;
+        }
+
         .scene-control-select {
             box-sizing: border-box;
             width: 64px;
@@ -494,6 +498,7 @@
         </button>
         <output class="scene-control-metric" id="scene-time" aria-label="Scene time">0.00</output>
         <output class="scene-control-metric" id="scene-fps" aria-label="Frames per second">0.0 fps</output>
+        <output class="scene-control-metric" id="render-resolution" aria-label="Render resolution">0 × 0</output>
         <div class="scene-control-spacer"></div>
         <select class="scene-control-select" id="render-scale" aria-label="Render scale" title="Render scale">
             <option value="0.1">10%</option>
@@ -555,6 +560,7 @@
     const timeToggle = document.getElementById("time-toggle");
     const sceneTimeOutput = document.getElementById("scene-time");
     const sceneFpsOutput = document.getElementById("scene-fps");
+    const renderResolutionOutput = document.getElementById("render-resolution");
     const renderScaleSelect = document.getElementById("render-scale");
     const audioToggle = document.getElementById("audio-toggle");
     const sceneOutput = document.getElementById("scene-output");
@@ -571,7 +577,6 @@
     updateTimeToggle();
     updateAudioToggle(currentScene);
     updateFullscreenToggle();
-    updateRenderScaleTitle();
 
     const docsReady = renderSceneDocs(currentScene);
 
@@ -580,6 +585,7 @@
     }
 
     const sceneSize = getSceneRenderSize();
+    updateRenderScaleInfo(sceneSize.width, sceneSize.height);
     wasmSceneViewer.start(currentScene, sceneSize.width, sceneSize.height);
     requestAnimationFrame(syncSceneTimePaused);
     requestAnimationFrame(updatePlaybackMetrics);
@@ -932,12 +938,13 @@
     function resizeSceneToHost() {
         const {width, height} = getSceneRenderSize();
         wasmSceneViewer.resize_scene(width, height);
-        updateRenderScaleTitle(width, height);
+        updateRenderScaleInfo(width, height);
     }
 
-    function updateRenderScaleTitle(width, height) {
-        const resolution = width && height ? ` (${width}×${height})` : "";
-        renderScaleSelect.title = `Render scale: ${Math.round(renderScale * 100)}%${resolution}`;
+    function updateRenderScaleInfo(width, height) {
+        const resolution = `${width} × ${height}`;
+        renderResolutionOutput.value = resolution;
+        renderScaleSelect.title = `Render scale: ${Math.round(renderScale * 100)}% (${resolution})`;
     }
 
     function wasmThreadPoolSize() {
