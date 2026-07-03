@@ -163,8 +163,8 @@ impl Scene for Scene8 {
     crate::scene_state!();
 
     fn update(&mut self, time: FrameTime, input: &InputState) {
-        self.state.camera.position.z += 1.0;
-        self.state.camera.position.x += 0.2;
+        self.state.camera.position.z += time.scene_time_delta * 5.0;
+        self.state.camera.position.x += time.scene_time_delta * 1.0;
 
         self.camera_controller
             .update_camera(&mut self.state.camera, time.real_time_delta, input);
