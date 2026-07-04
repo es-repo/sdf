@@ -170,14 +170,6 @@ impl Scene for Scene8 {
             .update_camera(&mut self.state.camera, time.real_time_delta, input);
     }
 
-    fn has_controls_ui(&self) -> bool {
-        true
-    }
-
-    fn controls_ui(&mut self, ui: &mut egui::Ui) {
-        self.state.controls.ui(ui);
-    }
-
     fn prepare_frame(&self, scene_time: f32) -> Box<dyn SceneFrame> {
         let animation_time = scene_time * 0.5;
         let sphere_radius = 1.0;
