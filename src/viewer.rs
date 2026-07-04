@@ -66,6 +66,7 @@ pub struct Viewer {
     scene_time_paused: bool,
     last_frame_time: Instant,
     input: InputState,
+    touch_input_seen: bool,
     fps_counter: FpsCounter,
     show_fps: bool,
     audio_track: Option<AudioTrack>,
@@ -128,6 +129,7 @@ impl Viewer {
             scene_time_paused: false,
             last_frame_time: now,
             input: InputState::default(),
+            touch_input_seen: false,
             fps_counter: FpsCounter::new(),
             show_fps: false,
             scale_factor: 1.0,
@@ -151,6 +153,7 @@ impl Viewer {
             scene_time_paused: false,
             last_frame_time: now,
             input: InputState::default(),
+            touch_input_seen: false,
             fps_counter: FpsCounter::new(),
             show_fps: false,
             scale_factor: 1.0,
@@ -252,6 +255,7 @@ impl Viewer {
             return None;
         }
 
+        let touch_input_seen = self.touch_input_seen;
         let scene = self.scene.as_mut();
         let window = self.window.as_ref()?;
         let window_surface_size = window.inner_size();
@@ -294,7 +298,7 @@ impl Viewer {
                 .text_styles
                 .insert(egui::TextStyle::Heading, egui::FontId::proportional(13.0));
             compact_style.spacing.icon_width = 12.0;
-            compact_style.spacing.interact_size.y = 16.0;
+            compact_style.spacing.interact_size.y = if touch_input_seen { 32.0 } else { 16.0 };
             compact_style.spacing.window_margin = egui::Margin::symmetric(6, 2);
             let compact_frame = egui::Frame::window(&compact_style).shadow(egui::Shadow::NONE);
             context.set_style(compact_style);
@@ -526,6 +530,7 @@ impl Viewer {
             }
 
             WindowEvent::Touch(touch) => {
+                self.touch_input_seen = true;
                 let position = Vec2::new(touch.location.x as f32, touch.location.y as f32);
 
                 match touch.phase {
